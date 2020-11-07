@@ -1,0 +1,6 @@
+Validate JSON: https://jsonformatter.curiousconcept.com/#
+
+
+JSON to Table:
+https://www.red-gate.com/simple-talk/blogs/consuming-hierarchical-json-documents-sql-server-using-openjson/
+https://www.convertjson.com/json-to-sql.htm

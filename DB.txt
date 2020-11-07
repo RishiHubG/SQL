@@ -1,0 +1,20 @@
+Per methodolgy:
+1. column list with params with SQL expression statement,active
+2. column list/data table
+3. column with calculated params - 1. actual calculation/value for a param 
+					   2. sql expression	
+4. lookup table - for labels 
+5. lookup range - or ranges(0-15) - min,max - lookupname value
+Type (range/value) min max  value
+range			   10   20  
+value						100 
+6. History for all 5 tables :  via trigger (insert/update/delete)
+
+Date/Datetime/time
+Nvarchar/BIGINT/DATETIME/DECIMAL(
+
+UserCreated
+UserModified
+DateCreated DATETIME
+DateModified
+Snapshot ID

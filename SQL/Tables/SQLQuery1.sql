@@ -1,0 +1,23 @@
+
+--STORES THE LIST OF COLUMNS
+CREATE TABLE ColList(
+ID BIGINT PRIMARY KEY,
+UserCreated BIGINT,
+DateCreated DATETIME2(0),
+UserModified BIGINT,
+DateModified DATETIME2(0),
+SnapshotID INT,
+ActualColumnName VARCHAR(MAX),
+TableColumnName VARCHAR(100),
+SQLExpression VARCHAR(MAX),
+IsActive BIT DEFAULT 1
+)
+
+CREATE TABLE ColList(
+ID BIGINT PRIMARY KEY,
+UserCreated BIGINT,
+DateCreated DATETIME2(0),
+UserModified BIGINT
+DateModified DATETIME2(0)
+SnapshotID INT
+)

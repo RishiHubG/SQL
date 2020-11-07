@@ -1,0 +1,20 @@
+﻿<root>
+	<TableName label="Framework">
+		<Step label="General" key="general">
+			<StepItem description="abcd" tooltip="efgh" prefix="aa" suffix="bb" hidden="true" hideLabel="true" showWordCount="true" showCharCount="true" mask="true" tableView="true" key="name" type="textfield" input="true" hideOnChildrenHidden="false"
+				  required="true" minLength="3" maxLength="500">Name
+			</StepItem>	
+			<StepItem  tableView="true" key="description" type="textfield" input="true" hideOnChildrenHidden="false"
+				  required="true">Description
+			</StepItem>
+			<StepItem dataType="dropdown" tableView="true" key="description" type="multiselect" input="true" hideOnChildrenHidden="false"
+				  required="true">
+				<StepItemChild name="Red"></StepItemChild>
+				<StepItemChild name="blue"></StepItemChild>
+				<StepItemChild name="black"></StepItemChild>
+				RiskCategory
+			</StepItem>
+		</Step>
+	</TableName>
+</root>
+ 

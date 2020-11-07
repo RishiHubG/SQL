@@ -1,0 +1,55 @@
+1. 
+lookups:
+for type selecteboxes-put comma separated values mgmt,strategic with App.Factor(Step Name) in LookupName
+lookupType=comma separated of value from json
+
+2.
+for type select:
+Label=LookupName
+value=LooupValue = can be one of string,value,range
+lookupType=string or value or range
+
+3.
+Remove AttributeType column
+
+4. Pending:
+Add Parent to json
+
+5. Pending: will not be available in json
+Common stepitems: USERCREATED,DATECREATED etc. needs to have a Parent in json to identify the common elements
+
+6. Pending: will not be available in json
+Submit - needs to have a Parent in json to exclude such elements
+
+7. Pending:
+Create history tables and triggers: dynamic triggers based on dynamic tables??
+
+8. done:
+Insert/Update/Delete logic to be applied: will there be only one Insert trigger as all operations(including update/delete) will have an insert with a new version no.???
+Live table will have only one version
+
+10.Pending:
+history will keep having inserts
+
+9. done:
+Version num. is linked to a key of the StepItem under a Step? Will increment each time the same key of the StepItem under a Step is altered??
+
+10.Pending: schema only
+create _data table
+
+Key name under a step can't change: done
+keys moved to a different step: done
+
+11. Pending:
+on change of step version no. remains intact
+
+12. Pending:
+Frameworks_List and history table
+
+13. Pending:
+_history tables with CurrentIdentifier,HistoryID,OperationType (I/U/D),UserActionID
+
+14. Pending:
+Recreate constraints in framework tables
+
+
