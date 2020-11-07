@@ -2,8 +2,23 @@
 USE JUNK
 GO
 
-DROP TABLE  IF EXISTS dbo.Framework_Metafield_Lookups,Framework_Metafield_Attributes,Framework_Metafield
+DROP TABLE  IF EXISTS dbo.Framework_Metafield_Lookups,Framework_Metafield_Attributes,Framework_Metafield,Frameworks_List
 
+
+DROP TABLE  IF EXISTS dbo.Frameworks_List
+CREATE TABLE dbo.Frameworks_List
+	(
+	ID INT IDENTITY(1,1),
+	JSONFile VARCHAR(500) NOT NULL,
+	UserCreated INT NOT NULL,
+	DateCreated DATETIME2(0) NOT NULL,
+	UserModified INT,
+	DateModified DATETIME2(0),
+	VersionNum INT NOT NULL,
+	CONSTRAINT PK_Frameworks_Listd_ID PRIMARY KEY(ID)
+	)
+
+	
 DROP TABLE  IF EXISTS dbo.Framework_Metafield_Steps
 CREATE TABLE dbo.Framework_Metafield_Steps
 	(
@@ -22,7 +37,6 @@ CREATE TABLE dbo.Framework_Metafield
 (
 MetaFieldID INT IDENTITY(1,1) ,
 StepID INT NOT NULL,
-StepName NVARCHAR(100) NOT NULL,
 StepItemName NVARCHAR(100) NOT NULL,
 StepItemType NVARCHAR(100) NOT NULL,
 StepItemKey NVARCHAR(100) NOT NULL,

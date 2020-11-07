@@ -8,7 +8,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 '{
     "name": {
         "label": "Name",
-        "tableView": false,
+        "tableView": true,
         "validate": {
             "required": true,
             "minLength": 1,
@@ -302,22 +302,54 @@ DECLARE @inputJSON VARCHAR(MAX)=
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (2)-- (2,6),7
+	   AND Element_ID IN (6,7)-- (2,6),7
 	    
  
- SELECT * FROM #TMP_Objects
+ --SELECT * FROM #TMP_Objects
+
+	--FOR _DATA TABLE
+	DROP TABLE IF EXISTS #TMP_DATA
+	 SELECT TOB.Element_ID, TOB.NAME,TA.StringValue
+		INTO #TMP_DATA
+	 FROM #TMP_Objects TOB
+		 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TOB.Element_ID
+	 WHERE TA.Name = 'type'
+
+--	 SELECT * FROM #TMP_DATA
+
  --RETURN
 
 	DECLARE @ID INT,		
 			@StepID INT,
-			@StepName VARCHAR(500) ='XYZ',
+			@StepName VARCHAR(500) ='ABC',
 			@StepItemType VARCHAR(500),		 
 			@StepItemName VARCHAR(500),
 			@LookupValues VARCHAR(1000),
 			@MetaFieldID INT,
 			@UserCreated INT = 1,
 			@VersionNum INT,
-			@StepItemKey VARCHAR(100)
+			@StepItemKey VARCHAR(100),
+			@JSONFileKey VARCHAR(100) = 'json'
+	
+	--GET THE VERSION NO.
+	SELECT TOP 1 @VersionNum = VersionNum + 1
+	FROM dbo.Frameworks_List
+	WHERE JSONFile = @JSONFileKey		  
+	ORDER BY VersionNum DESC
+	
+	IF @VersionNum IS NULL
+		SET @VersionNum = 1
+	
+	IF NOT EXISTS(SELECT 1 FROM dbo.Frameworks_List WHERE JSONFile = @JSONFileKey)
+		INSERT INTO dbo.Frameworks_List (JSONFile,UserCreated,DateCreated,VersionNum)
+			SELECT  @JSONFileKey,			
+					@UserCreated,
+					GETDATE(),
+					@VersionNum
+	ELSE
+		UPDATE dbo.Frameworks_List
+			SET VersionNum = @VersionNum
+		WHERE JSONFile = @JSONFileKey
 
 	DECLARE @Framework_Metafield TABLE
 	(
@@ -392,16 +424,16 @@ DECLARE @inputJSON VARCHAR(MAX)=
 			   @StepItemName = (SELECT StringValue FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
 			   @StepItemKey = (SELECT StringValue FROM #TMP WHERE KeyName ='key' AND Parent_ID = @ID)	
 			   			    
-		SELECT TOP 1 @VersionNum = FMS.VersionNum + 1
-		FROM dbo.Framework_Metafield_Steps FMS
-			 INNER JOIN dbo.Framework_Metafield FM ON FM.StepID = FMS.StepID
-		WHERE FMS.StepName = @StepName
-			  AND FM.StepItemKey = @StepItemKey
-		ORDER BY FMS.VersionNum DESC
+		--SELECT TOP 1 @VersionNum = FMS.VersionNum + 1
+		--FROM dbo.Framework_Metafield_Steps FMS
+		--	 INNER JOIN dbo.Framework_Metafield FM ON FM.StepID = FMS.StepID
+		--WHERE FMS.StepName = @StepName
+		--	  AND FM.StepItemKey = @StepItemKey
+		--ORDER BY FMS.VersionNum DESC
 		
-		IF @VersionNum IS NULL
-			SET @VersionNum = 1
-		SELECT @VersionNum
+		--IF @VersionNum IS NULL
+		--	SET @VersionNum = 1
+		--SELECT @VersionNum
 		--RETURN
 		IF NOT EXISTS(SELECT 1 FROM dbo.Framework_Metafield_Steps WHERE StepName = @StepName)
 		BEGIN
@@ -424,9 +456,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 
 				IF NOT EXISTS(SELECT 1 FROM Framework_Metafield WHERE StepItemKey = @StepItemKey)
 				BEGIN
-					INSERT INTO dbo.Framework_Metafield (StepID,StepName,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
-						SELECT  @StepID,
-								@StepName,
+					INSERT INTO dbo.Framework_Metafield (StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
+						SELECT  @StepID,								
 								@StepItemName,
 								@StepItemType,
 								@StepItemKey,
@@ -445,6 +476,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 						SET VersionNum = @VersionNum
 					WHERE StepItemKey = @StepItemKey
 
+				SELECT	@MetaFieldID
+
 				IF @MetaFieldID IS NULL
 					SELECT @MetaFieldID = MetaFieldID
 					FROM dbo.Framework_Metafield
@@ -453,7 +486,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 				DELETE FROM #TMP WHERE KeyName IN ('Label','type','key') AND Parent_ID = @ID	
 
 				--SELECT * FROM #TMP 
-				--RETURN
+				--RETURN				
 
 				--GET THE STEPITEM ATTRIBUTES	
 				MERGE dbo.Framework_Metafield_Attributes FMA
@@ -472,7 +505,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 				WHEN NOT MATCHED BY TARGET 
 					THEN INSERT (MetaFieldID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)
 							VALUES (TAB.MetaFieldID,TAB.StringValue,TAB.KeyName,TAB.SequenceNo,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
-				WHEN NOT MATCHED BY SOURCE 
+				WHEN NOT MATCHED BY SOURCE AND FMA.MetaFieldID=@MetaFieldID
 					THEN DELETE;
 						
 				UPDATE FMA
@@ -509,7 +542,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 						WHEN NOT MATCHED BY TARGET 
 							THEN INSERT (MetaFieldID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
 									VALUES (TAB.MetaFieldID,TAB.LookupValues,TAB.LookupName,TAB.OrderBy,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
-						WHEN NOT MATCHED BY SOURCE 
+						WHEN NOT MATCHED BY SOURCE AND FML.MetaFieldID=@MetaFieldID
 							THEN DELETE;					
 
 				END
@@ -560,7 +593,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 							WHEN NOT MATCHED BY TARGET 
 								THEN INSERT (MetaFieldID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
 										VALUES (TAB.MetaFieldID,TAB.LookupValue,TAB.LookupName,TAB.Parent_ID,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
-							WHEN NOT MATCHED BY SOURCE 
+							WHEN NOT MATCHED BY SOURCE AND FML.MetaFieldID=@MetaFieldID
 								THEN DELETE;
 						
 				END
@@ -584,9 +617,10 @@ DECLARE @inputJSON VARCHAR(MAX)=
 						WHEN NOT MATCHED BY TARGET 
 							THEN INSERT (MetaFieldID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
 									VALUES (TAB.MetaFieldID,TAB.LookupValue,TAB.KeyName,TAB.SequenceNo,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
-						WHEN NOT MATCHED BY SOURCE 
+						WHEN NOT MATCHED BY SOURCE AND FML.MetaFieldID=@MetaFieldID
 							THEN DELETE;
 					
+					UPDATE dbo.Framework_Metafield_Lookups SET VersionNum = @VersionNum
 		
 		END	--END OF OUTERMOSET IF -> IF @StepID IS NOT NULL
 
@@ -596,10 +630,15 @@ DECLARE @inputJSON VARCHAR(MAX)=
 		DROP TABLE IF EXISTS #TMP
 		DROP TABLE IF EXISTS #TMP_Lookups
 
+		SET @MetaFieldID = NULL
+
  END
 
-		
+		SELECT * from dbo.Frameworks_List
 		SELECT * from dbo.Framework_Metafield_Steps
 		SELECT * from dbo.Framework_Metafield
 		SELECT * from dbo.Framework_Metafield_Attributes
 		SELECT * from dbo.Framework_Metafield_Lookups
+
+
+	
