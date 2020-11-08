@@ -302,7 +302,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (6,7)-- (2,6),7
+	   AND Element_ID IN (2,6,7)-- (2,6),7
 	    
  
  --SELECT * FROM #TMP_Objects
@@ -329,17 +329,30 @@ DECLARE @inputJSON VARCHAR(MAX)=
 			@UserCreated INT = 1,
 			@VersionNum INT,
 			@StepItemKey VARCHAR(100),
-			@JSONFileKey VARCHAR(100) = 'json'
+			@JSONFileKey VARCHAR(100) = 'TAB',
+			@SQL NVARCHAR(MAX)
+			
+			DECLARE @TableName SYSNAME = CONCAT(@JSONFileKey,'_Frameworks_List_history')
 	
-	--GET THE VERSION NO.
-	SELECT TOP 1 @VersionNum = VersionNum + 1
-	FROM dbo.Frameworks_List
-	WHERE JSONFile = @JSONFileKey		  
-	ORDER BY VersionNum DESC
+	--GET THE VERSION NO.	
+	SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
+	SET @SQL = CONCAT(@SQL,' SELECT @VersionNum = MAX(VersionNum) + 1 FROM ',@TableName,' WHERE JSONFile = ''', @JSONFileKey,'''');	
+	PRINT @SQL  
+	EXEC sp_executesql @SQL, N'@VersionNum INT OUTPUT', @VersionNum OUTPUT;
+	
+	--SELECT @VersionNum= MAX(VersionNum) + 1 FROM dbo.Frameworks_List_history WHERE JSONFile = @JSONFileKey
+
+	--SELECT @VersionNum
+	--RETURN
+
+	--SELECT TOP 1 @VersionNum = VersionNum + 1
+	--FROM dbo.Frameworks_List
+	--WHERE JSONFile = @JSONFileKey		  
+	--ORDER BY VersionNum DESC
 	
 	IF @VersionNum IS NULL
-		SET @VersionNum = 1
-	
+		SET @VersionNum = 1	
+	 
 	IF NOT EXISTS(SELECT 1 FROM dbo.Frameworks_List WHERE JSONFile = @JSONFileKey)
 		INSERT INTO dbo.Frameworks_List (JSONFile,UserCreated,DateCreated,VersionNum)
 			SELECT  @JSONFileKey,			
@@ -351,42 +364,6 @@ DECLARE @inputJSON VARCHAR(MAX)=
 			SET VersionNum = @VersionNum
 		WHERE JSONFile = @JSONFileKey
 
-	DECLARE @Framework_Metafield TABLE
-	(
-	ID INT NULL,
-	StepID INT NOT NULL,
-	StepName VARCHAR(100) NOT NULL,
-	StepItemName VARCHAR(100) NOT NULL,
-	StepItemType VARCHAR(100) NOT NULL,
-	StepItemKey VARCHAR(100) NOT NULL,
-	OrderBy INT
-	)
-
-	DECLARE @Framework_Attributes TABLE
-	(
-	ID INT,
-	MetaFieldID INT NOT NULL,
-	AttributeKey VARCHAR(100) NOT NULL,	
-	AttributeValue VARCHAR(100) NOT NULL,
-	OrderBy INT
-	)
-
-	DECLARE @Framework_Metafield_Lookups TABLE
-	(
-	ID INT,
-	MetaFieldAttributeID INT NULL,
-	LookupName VARCHAR(100) NOT NULL,
-	LookupValue VARCHAR(100) NOT NULL,
-	OrderBy INT
-	)
-
-	DECLARE @Framework_Metafield_Steps TABLE
-	(
-	StepID INT IDENTITY(1,1),
-	StepName VARCHAR(500) NOT NULL,
-	DateCreated DATETIME2(0),
-	UserCreated INT
-	)
 
 --PROCESS THE STEP ITEMS ONE BY ONE
  WHILE EXISTS(SELECT 1 FROM #TMP_Objects)
@@ -475,8 +452,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 					UPDATE dbo.Framework_Metafield
 						SET VersionNum = @VersionNum
 					WHERE StepItemKey = @StepItemKey
-
-				SELECT	@MetaFieldID
+			
 
 				IF @MetaFieldID IS NULL
 					SELECT @MetaFieldID = MetaFieldID
@@ -640,5 +616,141 @@ DECLARE @inputJSON VARCHAR(MAX)=
 		SELECT * from dbo.Framework_Metafield_Attributes
 		SELECT * from dbo.Framework_Metafield_Lookups
 
+		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
+		--DECLARE @CurrentIdentifier INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_List_history WHERE JSONFile = @JSONFileKey)
 
-	
+		--IF @CurrentIdentifier IS NULL
+		--	SET @CurrentIdentifier = 1
+
+		
+		INSERT INTO [dbo].[Frameworks_List_history]
+				   (ID,
+					[JSONFile]
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   CurrentIdentifier)
+		SELECT     ID,
+				   [JSONFile]
+				  ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   @VersionNum
+		FROM [dbo].[Frameworks_List]
+
+		INSERT INTO [dbo].[Framework_Metafield_Steps_history]
+				   (StepID,
+					[StepName]
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   CurrentIdentifier)
+		SELECT		StepID,
+					[StepName]
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   @VersionNum
+		FROM dbo.[Framework_Metafield_Steps]
+
+
+				INSERT INTO [dbo].[Framework_Metafield_history]
+						   (MetaFieldID,
+							[StepID]
+						   ,[StepItemName]
+						   ,[StepItemType]
+						   ,[StepItemKey]
+						   ,[OrderBy]
+						   ,[UserCreated]
+						   ,[DateCreated]
+						   ,[UserModified]
+						   ,[DateModified]
+						   ,[VersionNum],
+						   CurrentIdentifier)
+				SELECT MetaFieldID,
+					  [StepID]
+					,[StepItemName]
+					,[StepItemType]
+					,[StepItemKey]
+					,[OrderBy]
+					,[UserCreated]
+					,[DateCreated]
+					,[UserModified]
+					,[DateModified]
+					,[VersionNum],
+					@VersionNum
+				FROM dbo.Framework_Metafield        
+
+ 
+		INSERT INTO [dbo].[Framework_Metafield_Attributes_history]
+				   (MetaFieldAttributeID,
+				    [MetaFieldID]
+				   ,[AttributeKey]
+				   ,[AttributeValue]
+				   ,[OrderBy]
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   CurrentIdentifier)
+		SELECT MetaFieldAttributeID,
+					[MetaFieldID]
+				   ,[AttributeKey]
+				   ,[AttributeValue]
+				   ,[OrderBy]
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   @VersionNum
+		FROM dbo.[Framework_Metafield_Attributes]
+
+		INSERT INTO [dbo].[Framework_Metafield_Lookups_history]
+				   (ID,
+					[MetaFieldID]
+				   ,[LookupName]
+				   ,[LookupValue]
+				   ,[LookupType]
+				   ,[OrderBy]
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   CurrentIdentifier)
+		SELECT ID,
+					[MetaFieldID]
+				   ,[LookupName]
+				   ,[LookupValue]
+				   ,[LookupType]
+				   ,[OrderBy]
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   @VersionNum    
+		FROM dbo.Framework_Metafield_Lookups
+
+		UPDATE dbo.Frameworks_List_history SET CurrentIdentifier = @VersionNum
+		UPDATE dbo.Framework_Metafield_Steps_history SET CurrentIdentifier = @VersionNum
+		UPDATE dbo.Framework_Metafield_history SET CurrentIdentifier = @VersionNum
+		UPDATE dbo.Framework_Metafield_Attributes_history SET CurrentIdentifier = @VersionNum
+		UPDATE dbo.Framework_Metafield_Lookups_history SET CurrentIdentifier = @VersionNum 
+
+		SELECT * from dbo.Frameworks_List_history
+		SELECT * from dbo.Framework_Metafield_Steps_history
+		SELECT * from dbo.Framework_Metafield_history
+		SELECT * from dbo.Framework_Metafield_Attributes_history
+		SELECT * from dbo.Framework_Metafield_Lookups_history
+	--**********************************************************************************************************************************	
