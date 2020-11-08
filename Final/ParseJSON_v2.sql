@@ -1,6 +1,18 @@
 --https://www.red-gate.com/simple-talk/blogs/consuming-hierarchical-json-documents-sql-server-using-openjson/
 USE junk
 GO
+
+TRUNCATE TABLE dbo.Framework_Metafield_Lookups_history
+TRUNCATE TABLE dbo.Framework_Metafield_Attributes_history
+TRUNCATE TABLE dbo.Framework_Metafield_history
+TRUNCATE TABLE dbo.Framework_Metafield_Steps_history
+TRUNCATE TABLE dbo.Frameworks_List_history
+
+DELETE FROM dbo.Framework_Metafield_Lookups
+DELETE FROM  dbo.Framework_Metafield_Attributes
+DELETE FROM  dbo.Framework_Metafield
+DELETE FROM  dbo.Framework_Metafield_Steps
+DELETE FROM  dbo.Frameworks_List
  
 DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
@@ -8,7 +20,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 '{
     "name": {
         "label": "Name",
-        "tableView": true,
+        "tableView": false,
         "validate": {
             "required": true,
             "minLength": 1,

@@ -2,7 +2,7 @@
 USE JUNK
 GO
 
-DROP TABLE  IF EXISTS dbo.Framework_Metafield_Lookups,Framework_Metafield_Attributes,Framework_Metafield,Frameworks_List
+DROP TABLE  IF EXISTS dbo.Framework_Metafield_Lookups,Framework_Metafield_Attributes,Framework_Metafield,Frameworks_List,Framework_Metafield_Steps
 
 
 DROP TABLE  IF EXISTS dbo.Frameworks_List
