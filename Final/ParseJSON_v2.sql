@@ -313,24 +313,11 @@ DECLARE @inputJSON VARCHAR(MAX)=
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (2,6,7)-- (2,6),7
+	  -- AND Element_ID IN (2,6,7)-- (2,6),7
 	    
  
  --SELECT * FROM #TMP_Objects
-
-	--FOR _DATA TABLE
-	DROP TABLE IF EXISTS #TMP_DATA
-	 SELECT TOB.Element_ID, TOB.NAME,TA.StringValue
-		INTO #TMP_DATA
-	 FROM #TMP_Objects TOB
-		 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TOB.Element_ID
-	 WHERE TA.Name = 'type'
-
---	 SELECT * FROM #TMP_DATA
-
- --RETURN
-
-	DECLARE @ID INT,		
+	 	DECLARE @ID INT,		
 			@StepID INT,
 			@StepName VARCHAR(500) ='ABC',
 			@StepItemType VARCHAR(500),		 
@@ -342,11 +329,59 @@ DECLARE @inputJSON VARCHAR(MAX)=
 			@StepItemKey VARCHAR(100),
 			@JSONFileKey VARCHAR(100) = 'TAB',
 			@SQL NVARCHAR(MAX)
+	 	
+	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
+	 DROP TABLE IF EXISTS TAB_DATA -- REMOVE THIS LATER, NOT REQUIRED
+	 DECLARE @SQL_ID VARCHAR(MAX)='ID INT IDENTITY(1,1)'
+	 DECLARE @StaticCols VARCHAR(MAX) =	 
+	 'UserCreated INT NOT NULL, 
+	 DateCreated DATETIME2(0) NOT NULL, 
+	 UserModified INT,
+	 DateModified DATETIME2(0),
+	 VersionNum INT NOT NULL'
+	 
+	 DROP TABLE IF EXISTS #TMP_DATA
+
+	 SELECT TOB.Element_ID, TOB.NAME,TA.StringValue, CAST(NULL AS VARCHAR(50)) AS DataType,
+			CAST(NULL AS VARCHAR(50)) AS DataTypeLength
+		INTO #TMP_DATA
+	 FROM #TMP_Objects TOB
+		 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TOB.Element_ID
+	 WHERE TA.Name = 'type'
+
+	 UPDATE #TMP_DATA
+		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea') THEN 'NVARCHAR' 
+							WHEN StringValue = 'number' THEN 'INT' 
+						END
+	
+	UPDATE #TMP_DATA
+		SET DataTypeLength = CASE WHEN DataType = 'NVARCHAR' THEN '(MAX)'
+							 END
 			
-			DECLARE @TableName SYSNAME = CONCAT(@JSONFileKey,'_Frameworks_List_history')
+	-- SELECT * FROM #TMP_DATA
+
+	 DECLARE @DataCols VARCHAR(MAX) 
+	 SET @DataCols = --STUFF(
+					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
+					 FROM #TMP_DATA
+					 FOR XML PATH('')
+					 )
+					 --,1,1,'')
+	PRINT @DataCols	
+
+	SET @DataCols = CONCAT(@SQL_ID,@DataCols,CHAR(10),',',@StaticCols)
+	SET @SQL = CONCAT(N' CREATE TABLE dbo.', @JSONFileKey ,'_data',CHAR(10), '(', @DataCols, ') ')
+	PRINT @SQL
+	
+	EXEC sp_executesql @SQL	
+	--===========================================================================================================================
+
+			
+	DECLARE @TableName SYSNAME = CONCAT(@JSONFileKey,'_Frameworks_List_history')
+	SET @SQL = ''
 	
 	--GET THE VERSION NO.	
-	SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
+	SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
 	SET @SQL = CONCAT(@SQL,' SELECT @VersionNum = MAX(VersionNum) + 1 FROM ',@TableName,' WHERE JSONFile = ''', @JSONFileKey,'''');	
 	PRINT @SQL  
 	EXEC sp_executesql @SQL, N'@VersionNum INT OUTPUT', @VersionNum OUTPUT;
@@ -609,7 +644,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 					
 					UPDATE dbo.Framework_Metafield_Lookups SET VersionNum = @VersionNum
 		
-		END	--END OF OUTERMOSET IF -> IF @StepID IS NOT NULL
+		END	--END OF OUTERMOST IF -> IF @StepID IS NOT NULL
 
 		DELETE FROM #TMP_Objects WHERE Element_ID = @ID
 		--DELETE FROM @Framework_Metafield

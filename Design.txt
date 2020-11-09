@@ -1,0 +1,6 @@
+1. Create Template tables for Framework: Tables.sql
+2. Create Template tables for history (exact same schema as in Step# 1 with a few more columns for history): Tables.History.sql
+3. Parse JSON populating both the template tables (main template table & history template table): ParseJSON_v2.sql
+4. Create _data table: ParseJSON_v2.sql
+5. Create the framework tables (main & history tables) dynamically based off the template tables: CreateTables_v1.sql
+6. Move/Copy the data from template tables to the framework tables(main & history tables): CreateTables_v1.sql

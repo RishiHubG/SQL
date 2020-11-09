@@ -2,11 +2,11 @@ USE JUNK
 GO
  
 
-DROP TABLE IF EXISTS TAB_Framework_Metafield_Lookups
-drop table IF EXISTS TAB_Framework_Metafield_Attributes
-drop table IF EXISTS TAB_Framework_Metafield
-drop table IF EXISTS TAB_Framework_Metafield_steps
-DROP TABLE IF EXISTS TAB_Frameworks_List
+--DROP TABLE IF EXISTS TAB_Framework_Metafield_Lookups
+--drop table IF EXISTS TAB_Framework_Metafield_Attributes
+--drop table IF EXISTS TAB_Framework_Metafield
+--drop table IF EXISTS TAB_Framework_Metafield_steps
+--DROP TABLE IF EXISTS TAB_Frameworks_List
 
 /*
 DROP TABLE IF EXISTS TAB_Framework_Metafield_Lookups_history
@@ -73,7 +73,7 @@ BEGIN
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 
-		--SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName)
+		SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName)
 		SET @SQL = CONCAT(@SQL, N'; CREATE TABLE ', @NewTableName , '(', @cols, ') ', CHAR(10), CHAR(10))
 			
 		PRINT @SQL

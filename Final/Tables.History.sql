@@ -16,7 +16,9 @@ CREATE TABLE dbo.Frameworks_List_history
 	UserModified INT,
 	DateModified DATETIME2(0),
 	VersionNum INT NOT NULL,
-	CurrentIdentifier INT NOT NULL
+	CurrentIdentifier INT NOT NULL,
+	OperationType VARCHAR(50),
+	UserActionID INT
 	--CONSTRAINT PK_Frameworks_List_history_HistoryID PRIMARY KEY(HistoryID)
 	)
 
@@ -32,7 +34,9 @@ CREATE TABLE dbo.Framework_Metafield_Steps_history
 	UserModified INT,
 	DateModified DATETIME2(0),
 	VersionNum INT NOT NULL,
-	CurrentIdentifier INT NOT NULL
+	CurrentIdentifier INT NOT NULL,
+	OperationType VARCHAR(50),
+	UserActionID INT
 	--,CONSTRAINT PK_Framework_Metafield_Steps_history_HistoryID PRIMARY KEY(HistoryID)
 	)
 
@@ -51,7 +55,9 @@ DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
-CurrentIdentifier INT NOT NULL
+CurrentIdentifier INT NOT NULL,
+OperationType VARCHAR(50),
+UserActionID INT
 --,CONSTRAINT PK_Framework_Metafield_history_HistoryID PRIMARY KEY(HistoryID)
 )
 
@@ -72,7 +78,9 @@ DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
-CurrentIdentifier INT NOT NULL
+CurrentIdentifier INT NOT NULL,
+OperationType VARCHAR(50),
+UserActionID INT
 --,CONSTRAINT PK_Framework_Metafield_Attributes_history_HistoryID PRIMARY KEY(HistoryID)
 )
 
@@ -93,7 +101,9 @@ DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
-CurrentIdentifier INT NOT NULL
+CurrentIdentifier INT NOT NULL,
+OperationType VARCHAR(50),
+UserActionID INT
 )
 
 --ALTER TABLE dbo.Framework_Metafield_Lookups_history ADD CONSTRAINT FK_Framework_Metafield_Lookups_history_MetaFieldAttributeID FOREIGN KEY(MetaFieldID) REFERENCES dbo.Framework_Metafield_history(MetaFieldID)
