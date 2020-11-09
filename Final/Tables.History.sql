@@ -18,8 +18,8 @@ CREATE TABLE dbo.Frameworks_List_history
 	VersionNum INT NOT NULL,
 	CurrentIdentifier INT NOT NULL,
 	OperationType VARCHAR(50),
-	UserActionID INT
-	--CONSTRAINT PK_Frameworks_List_history_HistoryID PRIMARY KEY(HistoryID)
+	UserActionID INT,
+	CONSTRAINT PK_Frameworks_List_history_HistoryID PRIMARY KEY(HistoryID)
 	)
 
 	
@@ -36,8 +36,8 @@ CREATE TABLE dbo.Framework_Metafield_Steps_history
 	VersionNum INT NOT NULL,
 	CurrentIdentifier INT NOT NULL,
 	OperationType VARCHAR(50),
-	UserActionID INT
-	--,CONSTRAINT PK_Framework_Metafield_Steps_history_HistoryID PRIMARY KEY(HistoryID)
+	UserActionID INT,
+	CONSTRAINT PK_Framework_Metafield_Steps_history_HistoryID PRIMARY KEY(HistoryID)
 	)
 
 DROP TABLE  IF EXISTS dbo.Framework_Metafield_history
@@ -57,8 +57,8 @@ DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
 CurrentIdentifier INT NOT NULL,
 OperationType VARCHAR(50),
-UserActionID INT
---,CONSTRAINT PK_Framework_Metafield_history_HistoryID PRIMARY KEY(HistoryID)
+UserActionID INT,
+CONSTRAINT PK_Framework_Metafield_history_HistoryID PRIMARY KEY(HistoryID)
 )
 
 --ALTER TABLE dbo.Framework_Metafield_history ADD CONSTRAINT FK_Framework_Metafield_history_StepID FOREIGN KEY(StepID) REFERENCES dbo.Framework_Metafield_Steps_history(StepID)
@@ -81,7 +81,7 @@ VersionNum INT NOT NULL,
 CurrentIdentifier INT NOT NULL,
 OperationType VARCHAR(50),
 UserActionID INT
---,CONSTRAINT PK_Framework_Metafield_Attributes_history_HistoryID PRIMARY KEY(HistoryID)
+,CONSTRAINT PK_Framework_Metafield_Attributes_history_HistoryID PRIMARY KEY(HistoryID)
 )
 
 --ALTER TABLE dbo.Framework_Metafield_Attributes_history ADD CONSTRAINT FK_Framework_Metafield_Attributes_history_MetaFieldID FOREIGN KEY(MetaFieldID) REFERENCES dbo.Framework_Metafield_history(MetaFieldID)

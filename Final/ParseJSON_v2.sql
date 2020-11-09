@@ -20,7 +20,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 '{
     "name": {
         "label": "Name",
-        "tableView": false,
+        "tableView": true,
         "validate": {
             "required": true,
             "minLength": 1,
@@ -102,7 +102,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
             "values": [
                 {
                     "label": "Nature",
-                    "value": "1-2"
+                    "value": "Nature"
                 },
                 {
                     "label": "Machinery",
@@ -313,7 +313,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	  -- AND Element_ID IN (2,6,7)-- (2,6),7
+	   AND Element_ID IN (2)-- (2,6),7
 	    
  
  --SELECT * FROM #TMP_Objects

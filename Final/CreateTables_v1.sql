@@ -159,7 +159,7 @@ BEGIN
  
 		EXEC sp_executesql @SQL 
 		PRINT @sql  	
-			
+	
 	DELETE FROM @TBL_List WHERE ID = @ID
 	DELETE FROM @TBL WHERE NewTableName = @NewTableName
 	SELECT @cols = '',@SQL='',@DropConstraintsSQL=''
