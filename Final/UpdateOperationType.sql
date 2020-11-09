@@ -10,7 +10,7 @@ SELECT *
 	INTO #TMP_StepItems
 FROM
 (
-SELECT DISTINCT Curr.HistoryID, Curr.StepItemKey AS KeyValue,Curr.StepItemName AS KeyName,Curr.VersionNum
+SELECT DISTINCT Curr.HistoryID, Curr.StepItemKey AS KeyName,Curr.StepItemName AS KeyValue,Curr.VersionNum
 FROM TAB_Framework_Metafield_history Curr
 	 INNER JOIN TAB_Framework_Metafield_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
 WHERE Curr.VersionNum = 1
@@ -28,13 +28,13 @@ WHERE Curr.VersionNum = 2
 
 	SELECT * FROM #TMP_StepItems
 
-SELECT KeyValue,
-	   MAX(CASE WHEN VersionNum =1 THEN KeyName END) AS OldValue,
-	   MAX(CASE WHEN VersionNum =2 THEN KeyName END) AS NewValue,
+SELECT KeyName,
+	   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
+	   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
 	   CAST(NULL AS VARCHAR(50)) AS OperationType
 	INTO #TMP_StepItemsChanges 
 FROM #TMP_StepItems
-GROUP BY KeyValue
+GROUP BY KeyName
 
 SELECT * FROM #TMP_StepItemsChanges
 
@@ -64,7 +64,7 @@ SELECT *
 	INTO #TMP_Attributes
 FROM
 (
-SELECT DISTINCT Curr.HistoryID, Curr.AttributeKey AS KeyValue,Curr.AttributeValue AS KeyName,Curr.VersionNum
+SELECT DISTINCT Curr.HistoryID, Curr.AttributeKey AS KeyName,Curr.AttributeValue AS KeyValue,Curr.VersionNum
 FROM TAB_Framework_Metafield_Attributes_history Curr	
 	 INNER JOIN TAB_Framework_Metafield_history Curr_Met ON Curr_Met.MetaFieldID = Curr.MetaFieldID	
 	 INNER JOIN TAB_Framework_Metafield_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
@@ -84,13 +84,13 @@ WHERE Curr.VersionNum = 2
 
 	SELECT * FROM #TMP_Attributes
 
-SELECT KeyValue,
-	   MAX(CASE WHEN VersionNum =1 THEN KeyName END) AS OldValue,
-	   MAX(CASE WHEN VersionNum =2 THEN KeyName END) AS NewValue,
+SELECT KeyName,
+	   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
+	   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
 	   CAST(NULL AS VARCHAR(50)) AS OperationType
 	INTO #TMP_AttributesChanges 
 FROM #TMP_Attributes
-GROUP BY KeyValue
+GROUP BY KeyName
 
 SELECT * FROM #TMP_AttributesChanges
 
@@ -119,7 +119,7 @@ SELECT *
 	INTO #TMP_Lookups
 FROM
 (
-SELECT DISTINCT Curr.HistoryID,Curr.LookupName AS KeyName,Curr.LookupValue AS KeyValue,Curr.VersionNum
+SELECT DISTINCT Curr.HistoryID,Curr.LookupValue AS KeyName,Curr.LookupName AS KeyValue,Curr.VersionNum
 FROM TAB_Framework_Metafield_Lookups_history Curr	
 	 INNER JOIN TAB_Framework_Metafield_history Curr_Met ON Curr_Met.MetaFieldID = Curr.MetaFieldID	
 	 INNER JOIN TAB_Framework_Metafield_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
@@ -139,11 +139,11 @@ WHERE Curr.VersionNum = 2
 
 	  SELECT * FROM #TMP_Lookups
 
-SELECT KeyValue,
-	   MAX(CASE WHEN VersionNum =1 THEN KeyName END) AS OldValue,
-	   MAX(CASE WHEN VersionNum =2 THEN KeyName END) AS NewValue,
+SELECT KeyName,
+	   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
+	   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
 	   CAST(NULL AS VARCHAR(50)) AS OperationType
 	INTO #TMP_LookupChanges
 FROM #TMP_Lookups
-GROUP BY KeyValue
+GROUP BY KeyName
 --==================================================================================================================================
