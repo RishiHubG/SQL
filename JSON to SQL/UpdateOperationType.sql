@@ -1,9 +1,5 @@
---ASSUMPTION: SCRIPT WILL RUN ONLY IF VERSIONNUM > 1
 USE JUNK
 GO
-	
-	DROP TABLE IF EXISTS #TMP_OperationType
-	CREATE TABLE #TMP_OperationType(ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50))
 
 
 --FOR METAFIELD/STEPITEMS====================================================================================================================
@@ -30,36 +26,33 @@ WHERE Curr.VersionNum = 2
 
 )TAB
 
-	--SELECT * FROM #TMP_StepItems
+	SELECT * FROM #TMP_StepItems
 
-INSERT INTO #TMP_OperationType(ModuleName,KeyName,OldValue,NewValue,OperationType)
-	SELECT 'StepItems' AS ModuleName,
-		   KeyName,
-		   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
-		   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
-		   CAST(NULL AS VARCHAR(50)) AS OperationType
-	FROM #TMP_StepItems
-	GROUP BY KeyName
+SELECT KeyName,
+	   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
+	   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
+	   CAST(NULL AS VARCHAR(50)) AS OperationType
+	INTO #TMP_StepItemsChanges 
+FROM #TMP_StepItems
+GROUP BY KeyName
 
-UPDATE #TMP_OperationType
+SELECT * FROM #TMP_StepItemsChanges
+
+UPDATE #TMP_StepItemsChanges
 	SET OperationType = 'UPDATE'
-WHERE ModuleName ='StepItems'
-	  AND OldValue <> NewValue
+WHERE OldValue <> NewValue
 	  AND OldValue IS NOT NULL
 
-UPDATE #TMP_OperationType
+UPDATE #TMP_StepItemsChanges
 	SET OperationType = 'DELETE'
-WHERE ModuleName ='StepItems'
-	  AND NewValue IS NULL
+WHERE NewValue IS NULL
 	  AND OldValue IS NOT NULL
 
-UPDATE #TMP_OperationType
+UPDATE #TMP_StepItemsChanges
 	SET OperationType = 'INSERT'
-WHERE ModuleName ='StepItems'
-	  AND NewValue IS NOT NULL
+WHERE NewValue IS NOT NULL
 	  AND OldValue IS NULL
 
-	  --SELECT * FROM #TMP_OperationType
 --===============================================================================================================================
 
 
@@ -89,32 +82,31 @@ WHERE Curr.VersionNum = 2
 
 )TAB
 
+	SELECT * FROM #TMP_Attributes
 
-INSERT INTO #TMP_OperationType(ModuleName,KeyName,OldValue,NewValue,OperationType)
-	SELECT 'Attributes' AS ModuleName,
-		   KeyName,
-		   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
-		   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
-		   CAST(NULL AS VARCHAR(50)) AS OperationType		
-	FROM #TMP_Attributes
-	GROUP BY KeyName
+SELECT KeyName,
+	   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
+	   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
+	   CAST(NULL AS VARCHAR(50)) AS OperationType
+	INTO #TMP_AttributesChanges 
+FROM #TMP_Attributes
+GROUP BY KeyName
 
-UPDATE #TMP_OperationType
+SELECT * FROM #TMP_AttributesChanges
+
+UPDATE #TMP_AttributesChanges
 	SET OperationType = 'UPDATE'
-WHERE ModuleName ='Attributes'
-	  AND OldValue <> NewValue
+WHERE OldValue <> NewValue
 	  AND OldValue IS NOT NULL
 
-UPDATE #TMP_OperationType
+UPDATE #TMP_AttributesChanges
 	SET OperationType = 'DELETE'
-WHERE ModuleName ='Attributes'
-	  AND NewValue IS NULL
+WHERE NewValue IS NULL
 	  AND OldValue IS NOT NULL
 
-UPDATE #TMP_OperationType
+UPDATE #TMP_AttributesChanges
 	SET OperationType = 'INSERT'
-WHERE ModuleName ='Attributes'
-	  AND NewValue IS NOT NULL
+WHERE NewValue IS NOT NULL
 	  AND OldValue IS NULL
 
 --===============================================================================================================================
@@ -145,34 +137,13 @@ WHERE Curr.VersionNum = 2
 
 )TAB
 
-	  --SELECT * FROM #TMP_Lookups
+	  SELECT * FROM #TMP_Lookups
 
-INSERT INTO #TMP_OperationType(ModuleName,KeyName,OldValue,NewValue,OperationType)
-	SELECT 'Lookups' AS ModuleName,
-			KeyName,
-		   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
-		   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
-		   CAST(NULL AS VARCHAR(50)) AS OperationType
-	FROM #TMP_Lookups
-	GROUP BY KeyName
-	
-UPDATE #TMP_OperationType
-	SET OperationType = 'UPDATE'
-WHERE ModuleName ='Lookups'
-	  AND OldValue <> NewValue
-	  AND OldValue IS NOT NULL
-
-UPDATE #TMP_OperationType
-	SET OperationType = 'DELETE'
-WHERE ModuleName ='Lookups'
-	  AND NewValue IS NULL
-	  AND OldValue IS NOT NULL
-
-UPDATE #TMP_OperationType
-	SET OperationType = 'INSERT'
-WHERE ModuleName ='Lookups'
-	  AND NewValue IS NOT NULL
-	  AND OldValue IS NULL
+SELECT KeyName,
+	   MAX(CASE WHEN VersionNum =1 THEN KeyValue END) AS OldValue,
+	   MAX(CASE WHEN VersionNum =2 THEN KeyValue END) AS NewValue,
+	   CAST(NULL AS VARCHAR(50)) AS OperationType
+	INTO #TMP_LookupChanges
+FROM #TMP_Lookups
+GROUP BY KeyName
 --==================================================================================================================================
-
-SELECT * FROM #TMP_OperationType
