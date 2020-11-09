@@ -22,8 +22,11 @@ DECLARE @ID INT, @TemplateTableName VARCHAR(100),@ParentTableName VARCHAR(100), 
 DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX))
 DECLARE @TBL_List_Constraints TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX))
 DECLARE @ConstraintSQL NVARCHAR(MAX),@HistoryTable VARCHAR(50)= '_history',@HistoryTableCheck VARCHAR(500)
-DECLARE @DropConstraintsSQL NVARCHAR(MAX),@AddHistoryIdentitySQL VARCHAR(100) = ' ALTER TABLE DBO.T1 ALTER COLUMN HistoryID INT IDENTITY(1,1)' 
+DECLARE @DropConstraintsSQL NVARCHAR(MAX)
 
+	--GET THE CURRENT VERSION NO.: THIS WILL ACTUALLY BE PASSED FROM THE PREVIOUS SCRIPT/CODE:ParseJSON_v2.sql
+	DECLARE @VersionNum INT = (SELECT MAX(VersionNum) FROM dbo.Frameworks_List_history)
+ 
 --DECLARE @DropConstraints_SQL VARCHAR(MAX) = 'ALTER TABLE [dbo].[Framework_Metafield] DROP CONSTRAINT [FK_Framework_Metafield_StepID];
 --									ALTER TABLE [dbo].[Framework_Metafield_Attributes] DROP CONSTRAINT [FK_Framework_Metafield_Attributes_MetaFieldID];
 --									ALTER TABLE [dbo].[Framework_Metafield_Lookups] DROP CONSTRAINT [FK_Framework_Metafield_Lookups_MetaFieldAttributeID];
@@ -111,7 +114,12 @@ BEGIN
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
 
-		--TO DO: UPDATE CURRENT IDENTIFIER IN HISTORY TABLE
+		--UPDATE CURRENT IDENTIFIER IN HISTORY TABLE FOR OLDER VERSIONS		
+		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
+		SET @SQL = CONCAT(@SQL, 'SET CurrentIdentifier = 0', CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE VersionNum < ',@VersionNum, CHAR(10))
+		PRINT @SQL
+		EXEC sp_executesql @SQL
 		---------------------------------------------------------------------------------------------------------------------------
 		--RETURN
 

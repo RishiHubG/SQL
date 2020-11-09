@@ -29,8 +29,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
         "key": "name",
         "type": "textfield",
         "input": false,
-        "hideOnChildrenHidden": false,
-		"test": true
+        "hideOnChildrenHidden": false
     },
     "reference": {
         "label": "Reference",
@@ -634,6 +633,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 		--IF @CurrentIdentifier IS NULL
 		--	SET @CurrentIdentifier = 1
 
+		DECLARE @CurrentIdentifier TINYINT = 1
 		
 		INSERT INTO [dbo].[Frameworks_List_history]
 				   (ID,
@@ -670,7 +670,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   @VersionNum
+				   @CurrentIdentifier
 		FROM dbo.[Framework_Metafield_Steps]
 
 
@@ -698,7 +698,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 					,[UserModified]
 					,[DateModified]
 					,[VersionNum],
-					@VersionNum
+					@CurrentIdentifier
 				FROM dbo.Framework_Metafield        
 
  
@@ -724,7 +724,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   @VersionNum
+				   @CurrentIdentifier
 		FROM dbo.[Framework_Metafield_Attributes]
 
 		INSERT INTO [dbo].[Framework_Metafield_Lookups_history]
@@ -751,14 +751,14 @@ DECLARE @inputJSON VARCHAR(MAX)=
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   @VersionNum    
+				   @CurrentIdentifier    
 		FROM dbo.Framework_Metafield_Lookups
 
-		UPDATE dbo.Frameworks_List_history SET CurrentIdentifier = @VersionNum
-		UPDATE dbo.Framework_Metafield_Steps_history SET CurrentIdentifier = @VersionNum
-		UPDATE dbo.Framework_Metafield_history SET CurrentIdentifier = @VersionNum
-		UPDATE dbo.Framework_Metafield_Attributes_history SET CurrentIdentifier = @VersionNum
-		UPDATE dbo.Framework_Metafield_Lookups_history SET CurrentIdentifier = @VersionNum 
+		--UPDATE dbo.Frameworks_List_history SET CurrentIdentifier = @VersionNum
+		--UPDATE dbo.Framework_Metafield_Steps_history SET CurrentIdentifier = @VersionNum
+		--UPDATE dbo.Framework_Metafield_history SET CurrentIdentifier = @VersionNum
+		--UPDATE dbo.Framework_Metafield_Attributes_history SET CurrentIdentifier = @VersionNum
+		--UPDATE dbo.Framework_Metafield_Lookups_history SET CurrentIdentifier = @VersionNum 
 
 		SELECT * from dbo.Frameworks_List_history
 		SELECT * from dbo.Framework_Metafield_Steps_history
