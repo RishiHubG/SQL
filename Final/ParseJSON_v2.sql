@@ -29,7 +29,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
         "key": "name",
         "type": "textfield",
         "input": false,
-        "hideOnChildrenHidden": false
+        "hideOnChildrenHidden": false 
     },
     "reference": {
         "label": "Reference",
