@@ -20,7 +20,7 @@ DECLARE @NewTableName VARCHAR(100)='TAB'
 DECLARE @TableInitial VARCHAR(100) = @NewTableName
 DECLARE @TBL TABLE(ID INT IDENTITY(1,1),NewTableName VARCHAR(500),Item VARCHAR(MAX))
 DECLARE @ID INT, @TemplateTableName VARCHAR(100),@ParentTableName VARCHAR(100), @SQL NVARCHAR(MAX)
-DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX),TableType VARCHAR(100))
+DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500),KeyColName VARCHAR(100), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX),TableType VARCHAR(100))
 DECLARE @TBL_List_Constraints TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX))
 DECLARE @ConstraintSQL NVARCHAR(MAX),@HistoryTable VARCHAR(50)= '_history',@HistoryTableCheck VARCHAR(500)
 DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100)
@@ -37,12 +37,12 @@ DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100)
 --									ALTER TABLE [dbo].Framework_Metafield_Attributes DROP CONSTRAINT PK_Framework_Metafield_Attributes_MetaFieldAttributeID;'
 
 
-INSERT INTO @TBL_List(TemplateTableName,ParentTableName,TableType,ConstraintSQL)
-VALUES	('Framework_Metafield_Lookups','Framework_Metafield','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_MetaFieldAttributeID] FOREIGN KEY ( [MetaFieldID] ) REFERENCES [dbo].[<ParentTableName>] ([MetaFieldID]) '),
-		('Framework_Metafield_Attributes','Framework_Metafield','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_MetaFieldAttributeID  PRIMARY KEY(MetaFieldAttributeID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_MetaFieldID] FOREIGN KEY ( [MetaFieldID] ) REFERENCES [dbo].[<ParentTableName>] ([MetaFieldID]); '),		
-		('Framework_Metafield','Framework_Metafield_Steps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_MetaFieldID  PRIMARY KEY(MetaFieldID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
-		('Framework_Metafield_Steps','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)'),
-		('Frameworks_List','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
+INSERT INTO @TBL_List(TemplateTableName,KeyColName,ParentTableName,TableType,ConstraintSQL)
+VALUES	('Framework_Metafield_Lookups','LookupValue','Framework_Metafield','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_MetaFieldAttributeID] FOREIGN KEY ( [MetaFieldID] ) REFERENCES [dbo].[<ParentTableName>] ([MetaFieldID]) '),
+		('Framework_Metafield_Attributes','AttributeKey','Framework_Metafield','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_MetaFieldAttributeID  PRIMARY KEY(MetaFieldAttributeID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_MetaFieldID] FOREIGN KEY ( [MetaFieldID] ) REFERENCES [dbo].[<ParentTableName>] ([MetaFieldID]); '),		
+		('Framework_Metafield','StepItemKey','Framework_Metafield_Steps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_MetaFieldID  PRIMARY KEY(MetaFieldID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
+		('Framework_Metafield_Steps','','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)'),
+		('Frameworks_List','','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
 
 	INSERT INTO @TBL_List_Constraints(TemplateTableName)
 		SELECT TemplateTableName FROM @TBL_List	
@@ -54,7 +54,7 @@ DROP TABLE IF EXISTS #TBL_ConstraintsList
 SELECT * INTO #TBL_ConstraintsList FROM @TBL_List
 
 DROP TABLE IF EXISTS #TBL_OperationTypeList
-SELECT IDENTITY(INT,1,1) AS ID,TableType INTO #TBL_OperationTypeList FROM @TBL_List WHERE TableType <> ''
+SELECT IDENTITY(INT,1,1) AS ID,TemplateTableName,KeyColName,TableType INTO #TBL_OperationTypeList FROM @TBL_List WHERE TableType <> ''
 
  DECLARE @cols NVARCHAR(MAX) = N''
 --SELECT * FROM @TBL_List

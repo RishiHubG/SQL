@@ -12,9 +12,9 @@ BEGIN
 	BEGIN
 	
 	DROP TABLE IF EXISTS #TMP_OperationType
-	CREATE TABLE #TMP_OperationType(ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50))
+	CREATE TABLE #TMP_OperationType(HistoryTableName VARCHAR(100),KeyColName VARCHAR(100),ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50))
 
-	DECLARE @ID INT,@TemplateTableName VARCHAR(100),@TableType VARCHAR(100)
+	DECLARE @ID INT,@TemplateTableName VARCHAR(100),@TableType VARCHAR(100),@KeyColName VARCHAR(100)
 	DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query VARCHAR(MAX)
 
 	SET @TableInitial = CONCAT('dbo.',@TableInitial)
@@ -24,7 +24,9 @@ BEGIN
 		
 		SELECT @ID = MIN(ID) FROM #TBL_OperationTypeList
 
-		SELECT @TableType = TableType
+		SELECT @TemplateTableName = TemplateTableName,
+			   @KeyColName = KeyColName,
+			   @TableType = TableType
 		FROM #TBL_OperationTypeList 
 		WHERE ID = @ID		 
 
@@ -69,8 +71,10 @@ BEGIN
 			INSERT INTO #TMP_Items(KeyName,KeyValue,VersionNum)	
 				EXEC (@Query)
 
-		INSERT INTO #TMP_OperationType(ModuleName,KeyName,OldValue,NewValue,OperationType)
-			SELECT @TableType AS ModuleName,
+		INSERT INTO #TMP_OperationType(HistoryTableName,KeyColName,ModuleName,KeyName,OldValue,NewValue,OperationType)
+			SELECT CONCAT(@TableInitial,'_',@TemplateTableName),
+				   @KeyColName,
+				   @TableType AS ModuleName,
 				   KeyName,
 				   MAX(CASE WHEN VersionNum = @PrevVersionNum THEN KeyValue END) AS OldValue,
 				   MAX(CASE WHEN VersionNum = @VersionNum THEN KeyValue END) AS NewValue,
