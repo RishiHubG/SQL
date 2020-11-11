@@ -1,5 +1,6 @@
 --https://www.red-gate.com/simple-talk/blogs/consuming-hierarchical-json-documents-sql-server-using-openjson/
---CreateTables_v1.sql and ParseJSON_v2.sql
+--TO DO: VERSION WITH HISTORY TABLES BEING POPULATED WITH OLD RECORD ON EACH DML ACTIVITY
+--CreateTables_v2.sql and ParseJSON_v2.1.sql
 USE junk
 GO
 
@@ -21,7 +22,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 '{
     "name": {
         "label": "Name",
-        "tableView": true,
+        "tableView": false,
         "validate": {
             "required": true,
             "minLength": 1,
@@ -668,54 +669,99 @@ DECLARE @inputJSON VARCHAR(MAX)=
 
 		--IF @CurrentIdentifier IS NULL
 		--	SET @CurrentIdentifier = 1
+		PRINT @VersionNum
+		IF @VersionNum > 1
+		BEGIN
 
-		DECLARE @CurrentIdentifier TINYINT = 1
-		
-		INSERT INTO [dbo].[Frameworks_List_history]
-				   (ID,
-					[JSONFile]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   CurrentIdentifier)
-		SELECT     ID,
-				   [JSONFile]
-				  ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   @CurrentIdentifier
-		FROM [dbo].[Frameworks_List]
+				DECLARE @CurrentIdentifier TINYINT = 1
+				DECLARE @NewTableName VARCHAR(100)='TAB'
+				DECLARE @PrevVersionNum INT = @VersionNum - 1
+				SET @SQL = NULL
 
-		INSERT INTO [dbo].[Framework_Metafield_Steps_history]
-				   (StepID,
-					[StepName]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   CurrentIdentifier)
-		SELECT		StepID,
-					[StepName]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   @CurrentIdentifier
-		FROM dbo.[Framework_Metafield_Steps]
+				SET @SQL = CONCAT('INSERT INTO [dbo].[Frameworks_List_history]
+						   (ID,
+							[JSONFile]
+						   ,[UserCreated]
+						   ,[DateCreated]
+						   ,[UserModified]
+						   ,[DateModified]
+						   ,[VersionNum],
+						   CurrentIdentifier)
+				SELECT     ID,
+						   [JSONFile]
+						  ,[UserCreated]
+						   ,[DateCreated]
+						   ,[UserModified]
+						   ,[DateModified]
+						   ,[VersionNum],',
+						   @CurrentIdentifier,'
+				FROM [dbo].[',@NewTableName,'_Frameworks_List]',
+				' WHERE VersionNum =', @PrevVersionNum
+								)
+				PRINT @SQL
+				EXEC (@SQL)
+
+				SET @SQL = CONCAT('INSERT INTO [dbo].[Framework_Metafield_Steps_history]
+						   (StepID,
+							[StepName]
+						   ,[UserCreated]
+						   ,[DateCreated]
+						   ,[UserModified]
+						   ,[DateModified]
+						   ,[VersionNum],
+						   CurrentIdentifier)
+				SELECT		StepID,
+							[StepName]
+						   ,[UserCreated]
+						   ,[DateCreated]
+						   ,[UserModified]
+						   ,[DateModified]
+						   ,[VersionNum],',
+						   @CurrentIdentifier,'
+				FROM [dbo].[',@NewTableName,'_Framework_Metafield_Steps]',
+				' WHERE VersionNum =', @PrevVersionNum
+								)
+
+				EXEC (@SQL)
 
 
-				INSERT INTO [dbo].[Framework_Metafield_history]
-						   (MetaFieldID,
-							[StepID]
-						   ,[StepItemName]
-						   ,[StepItemType]
-						   ,[StepItemKey]
+					SET @SQL = CONCAT('INSERT INTO [dbo].[Framework_Metafield_history]
+								   (MetaFieldID,
+									[StepID]
+								   ,[StepItemName]
+								   ,[StepItemType]
+								   ,[StepItemKey]
+								   ,[OrderBy]
+								   ,[UserCreated]
+								   ,[DateCreated]
+								   ,[UserModified]
+								   ,[DateModified]
+								   ,[VersionNum],
+								   CurrentIdentifier)
+						SELECT MetaFieldID,
+							  [StepID]
+							,[StepItemName]
+							,[StepItemType]
+							,[StepItemKey]
+							,[OrderBy]
+							,[UserCreated]
+							,[DateCreated]
+							,[UserModified]
+							,[DateModified]
+							,[VersionNum],',
+						   @CurrentIdentifier,'
+				FROM [dbo].[',@NewTableName,'_Framework_Metafield]',
+				' WHERE VersionNum =', @PrevVersionNum
+								)
+
+				EXEC (@SQL)        
+
+ 
+				SET @SQL = CONCAT('INSERT INTO [dbo].[Framework_Metafield_Attributes_history]
+						   (MetaFieldAttributeID,
+							[MetaFieldID]
+						   ,[AttributeKey]
+						   ,[AttributeValue]
 						   ,[OrderBy]
 						   ,[UserCreated]
 						   ,[DateCreated]
@@ -723,72 +769,55 @@ DECLARE @inputJSON VARCHAR(MAX)=
 						   ,[DateModified]
 						   ,[VersionNum],
 						   CurrentIdentifier)
-				SELECT MetaFieldID,
-					  [StepID]
-					,[StepItemName]
-					,[StepItemType]
-					,[StepItemKey]
-					,[OrderBy]
-					,[UserCreated]
-					,[DateCreated]
-					,[UserModified]
-					,[DateModified]
-					,[VersionNum],
-					@CurrentIdentifier
-				FROM dbo.Framework_Metafield        
+				SELECT MetaFieldAttributeID,
+							[MetaFieldID]
+						   ,[AttributeKey]
+						   ,[AttributeValue]
+						   ,[OrderBy]
+						   ,[UserCreated]
+						   ,[DateCreated]
+						   ,[UserModified]
+						   ,[DateModified]
+						   ,[VersionNum],',
+						   @CurrentIdentifier,'
+				FROM [dbo].[',@NewTableName,'_Framework_Metafield_Attributes]',
+				' WHERE VersionNum =', @PrevVersionNum
+								)
 
- 
-		INSERT INTO [dbo].[Framework_Metafield_Attributes_history]
-				   (MetaFieldAttributeID,
-				    [MetaFieldID]
-				   ,[AttributeKey]
-				   ,[AttributeValue]
-				   ,[OrderBy]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   CurrentIdentifier)
-		SELECT MetaFieldAttributeID,
-					[MetaFieldID]
-				   ,[AttributeKey]
-				   ,[AttributeValue]
-				   ,[OrderBy]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   @CurrentIdentifier
-		FROM dbo.[Framework_Metafield_Attributes]
+				EXEC (@SQL)        
 
-		INSERT INTO [dbo].[Framework_Metafield_Lookups_history]
-				   (ID,
-					[MetaFieldID]
-				   ,[LookupName]
-				   ,[LookupValue]
-				   ,[LookupType]
-				   ,[OrderBy]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   CurrentIdentifier)
-		SELECT ID,
-					[MetaFieldID]
-				   ,[LookupName]
-				   ,[LookupValue]
-				   ,[LookupType]
-				   ,[OrderBy]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   @CurrentIdentifier    
-		FROM dbo.Framework_Metafield_Lookups
+				SET @SQL = CONCAT('INSERT INTO [dbo].[Framework_Metafield_Lookups_history]
+						   (ID,
+							[MetaFieldID]
+						   ,[LookupName]
+						   ,[LookupValue]
+						   ,[LookupType]
+						   ,[OrderBy]
+						   ,[UserCreated]
+						   ,[DateCreated]
+						   ,[UserModified]
+						   ,[DateModified]
+						   ,[VersionNum],
+						   CurrentIdentifier)
+				SELECT ID,
+							[MetaFieldID]
+						   ,[LookupName]
+						   ,[LookupValue]
+						   ,[LookupType]
+						   ,[OrderBy]
+						   ,[UserCreated]
+						   ,[DateCreated]
+						   ,[UserModified]
+						   ,[DateModified]
+						   ,[VersionNum],',
+						   @CurrentIdentifier,'
+				FROM [dbo].[',@NewTableName,'_Framework_Metafield_Lookups]',
+				' WHERE VersionNum =', @PrevVersionNum
+								)
+
+				EXEC (@SQL)        
+
+		END
 
 		--UPDATE dbo.Frameworks_List_history SET CurrentIdentifier = @VersionNum
 		--UPDATE dbo.Framework_Metafield_Steps_history SET CurrentIdentifier = @VersionNum

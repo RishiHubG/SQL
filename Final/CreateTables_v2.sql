@@ -1,4 +1,5 @@
---CreateTables_v1.sql and ParseJSON_v2.sql
+--VERSION WITH HISTORY TABLES BEING POPULATED WITH OLD RECORD ON EACH DML ACTIVITY
+--CreateTables_v2.sql and ParseJSON_v2.1.sql
 USE JUNK
 GO
  
@@ -29,9 +30,11 @@ DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100)
 
 	--GET THE CURRENT VERSION NO.: THIS WILL ACTUALLY BE PASSED FROM THE PREVIOUS SCRIPT/CODE:ParseJSON_v2.sql
 	DECLARE @VersionNum INT = (SELECT MAX(VersionNum) FROM dbo.Frameworks_List_history)
- 
+	
+	IF @VersionNum IS NULL
+		SET @VersionNum = 1
 
---DECLARE @DropConstraints_SQL VARCHAR(MAX) = 'ALTER TABLE [dbo].[Framework_Metafield] DROP CONSTRAINT [FK_Framework_Metafield_StepID];
+ --DECLARE @DropConstraints_SQL VARCHAR(MAX) = 'ALTER TABLE [dbo].[Framework_Metafield] DROP CONSTRAINT [FK_Framework_Metafield_StepID];
 --									ALTER TABLE [dbo].[Framework_Metafield_Attributes] DROP CONSTRAINT [FK_Framework_Metafield_Attributes_MetaFieldID];
 --									ALTER TABLE [dbo].[Framework_Metafield_Lookups] DROP CONSTRAINT [FK_Framework_Metafield_Lookups_MetaFieldAttributeID];
 --									ALTER TABLE [dbo].Framework_Metafield_Steps DROP CONSTRAINT PK_Framework_Metafield_StepID;
