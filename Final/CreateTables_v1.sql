@@ -74,7 +74,7 @@ BEGIN
 
 		 --GENERATE COLUMNS LIST FOR TEMPLATE TABLE
 		 -----------------------------------------------------------------------------------------------------------------------
-		SELECT @cols += N', [' + name + '] ' + system_type_name + case is_nullable when 1 then ' NULL' else ' NOT NULL' end
+		 SELECT @cols += N', [' + [NAME] + '] ' + system_type_name + case is_nullable WHEN 1 THEN ' NULL' ELSE ' NOT NULL' END
 		 FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.'+ @TemplateTableName , NULL, 1);
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
