@@ -15,7 +15,7 @@ BEGIN
 	CREATE TABLE #TMP_OperationType(HistoryTableName VARCHAR(100),KeyColName VARCHAR(100),ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50))
 
 	DECLARE @ID INT,@TemplateTableName VARCHAR(100),@TableType VARCHAR(100),@KeyColName VARCHAR(100)
-	DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query VARCHAR(MAX)
+	DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query VARCHAR(MAX), @HistTableSuffix VARCHAR(50)='_history'
 
 	SET @TableInitial = CONCAT('dbo.',@TableInitial)
 
@@ -72,7 +72,7 @@ BEGIN
 				EXEC (@Query)
 
 		INSERT INTO #TMP_OperationType(HistoryTableName,KeyColName,ModuleName,KeyName,OldValue,NewValue,OperationType)
-			SELECT CONCAT(@TableInitial,'_',@TemplateTableName),
+			SELECT CONCAT(@TableInitial,'_',@TemplateTableName,@HistTableSuffix),
 				   @KeyColName,
 				   @TableType AS ModuleName,
 				   KeyName,
@@ -101,12 +101,22 @@ BEGIN
 			  AND NewValue IS NOT NULL
 			  AND OldValue IS NULL
 		
-		DELETE FROM #TBL_OperationTypeList WHERE ID = @ID
+		DELETE FROM #TBL_OperationTypeList WHERE ID = @ID				
 		SET @Query = NULL
 
 	END		--END OF -> WHILE LOOP
 
 	SELECT * FROM #TMP_OperationType
+
+	--UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
+	SET @Query = STUFF(
+						(SELECT CONCAT('; ', 'UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''';', CHAR(10))
+						FROM #TMP_OperationType
+						WHERE OperationType IS NOT NULL 
+						FOR XML PATH('')
+						),1,1,'')
+	PRINT @Query
+	EXEC (@Query)
 
 	END	--IF @VersionNum > 1
 

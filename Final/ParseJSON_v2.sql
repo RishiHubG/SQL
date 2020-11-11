@@ -20,7 +20,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
 '{
     "name": {
         "label": "Name",
-        "tableView": true,
+        "tableView": false,
         "validate": {
             "required": true,
             "minLength": 1,
@@ -29,7 +29,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
         "key": "name",
         "type": "textfield",
         "input": false,
-        "hideOnChildrenHidden": false 
+        "hideOnChildrenHidden": false
     },
     "reference": {
         "label": "Reference",
