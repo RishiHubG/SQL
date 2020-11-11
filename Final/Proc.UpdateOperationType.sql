@@ -115,8 +115,10 @@ BEGIN
 						WHERE OperationType IS NOT NULL 
 						FOR XML PATH('')
 						),1,1,'')
+	
 	PRINT @Query
-	EXEC (@Query)
+	IF @Query IS NOT NULL
+		EXEC (@Query)
 
 	END	--IF @VersionNum > 1
 
