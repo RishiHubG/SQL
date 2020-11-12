@@ -18,7 +18,7 @@ Add Parent to json
 5. Pending: will not be available in json
 Common stepitems: USERCREATED,DATECREATED etc. needs to have a Parent in json to identify the common elements
 
-6. Pending: will not be available in json
+6. done: will not be available in json
 Submit - needs to have a Parent in json to exclude such elements
 
 7. Pending:
@@ -28,13 +28,13 @@ Create history tables and triggers: dynamic triggers based on dynamic tables??
 Insert/Update/Delete logic to be applied: will there be only one Insert trigger as all operations(including update/delete) will have an insert with a new version no.???
 Live table will have only one version
 
-10.Pending:
+10.done:
 history will keep having inserts
 
 9. done:
 Version num. is linked to a key of the StepItem under a Step? Will increment each time the same key of the StepItem under a Step is altered??
 
-10.Pending: schema only
+10.done: schema only
 create _data table
 
 Key name under a step can't change: done
@@ -43,13 +43,27 @@ keys moved to a different step: done
 11. Pending:
 on change of step version no. remains intact
 
-12. Pending:
+12. done:
 Frameworks_List and history table
 
-13. Pending:
+13. done:
 _history tables with CurrentIdentifier,HistoryID,OperationType (I/U/D),UserActionID
 
 14. Pending:
 Recreate constraints in framework tables
+
+15. Pending:
+Delete logic in history
+
+16. Only one fileID/step/stepItem with version# being updated but multiple inserts in attributes/lookups
+Steps/StepItems
+
+16. done though have not been able to unit test
+Version in Steps: Insert/Delete
+
+17. doneL check with nitin if FileID needs to be added to all the child tables?
+TAB_Frameworks_List_history: common table;add new col. for storing json
+Populate Id in child tables
+
 
 

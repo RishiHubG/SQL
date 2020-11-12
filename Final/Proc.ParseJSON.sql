@@ -2,6 +2,14 @@
 --CreateTables_v1.sql and ParseJSON_v2.sql
 USE junk
 GO
+/*
+Steps: ASSUMPTION -> STEPS VERSIONING CAN ONLNY BE LIMITED TO INSERT OR DELETE (i.e. A STEP(A TAB) CAN BE ADDED OR REMOVED ONLY)
+*/
+CREATE OR ALTER PROCEDURE dbo.ParseJSONData
+@inputJSON VARCHAR(MAX) = NULL
+AS
+BEGIN
+	SET NOCOUNT ON;
 
 TRUNCATE TABLE dbo.Framework_Lookups_history
 TRUNCATE TABLE dbo.Framework_Attributes_history
@@ -16,12 +24,12 @@ DELETE FROM  dbo.Framework_Steps
 DELETE FROM  dbo.Frameworks_List
  
 DROP TABLE IF EXISTS #TMP_ALLSTEPS
-
-DECLARE @inputJSON VARCHAR(MAX)=
+/*
+SET @inputJSON =
 '{
     "name": {
         "label": "Name",
-        "tableView": true,
+        "tableView": false,
         "validate": {
             "required": true,
             "minLength": 1,
@@ -30,7 +38,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
         "key": "name",
         "type": "textfield",
         "input": false,
-        "hideOnChildrenHidden": false
+        "hideOnChildrenHidden": false,
+		"test":1
     },
     "reference": {
         "label": "Reference",
@@ -296,7 +305,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
         "tableView": false
     }
 }'
-
+*/
  SELECT *
 		INTO #TMP_ALLSTEPS
  FROM dbo.HierarchyFromJSON(@inputJSON)
@@ -320,7 +329,7 @@ DECLARE @inputJSON VARCHAR(MAX)=
  --SELECT * FROM #TMP_Objects
 	 	DECLARE @ID INT,		
 			@StepID INT,
-			@StepName VARCHAR(500) ='ABC',
+			@StepName VARCHAR(500) ='XYZ',
 			@StepItemType VARCHAR(500),		 
 			@StepItemName VARCHAR(500),
 			@LookupValues VARCHAR(1000),
@@ -379,12 +388,12 @@ DECLARE @inputJSON VARCHAR(MAX)=
 	--===========================================================================================================================
 
 			
-	DECLARE @TableName SYSNAME = CONCAT(@JSONFileKey,'_Frameworks_List')
+	DECLARE @TableName SYSNAME = CONCAT(@JSONFileKey,'_Frameworks_List_History')
 	SET @SQL = ''
 	
 	--GET THE FILEID & VERSION NO.: CHECK FOR THE EXISTENCE OF THE JSONKEY		
 	SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
-	SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @FileID = FileID, @VersionNum = VersionNum + 1 FROM ',@TableName,' WHERE JSONFileKey = ''', @JSONFileKey,''' ORDER BY FileID DESC');	
+	SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @FileID = FileID, @VersionNum = VersionNum + 1 FROM ',@TableName,' WHERE JSONFileKey = ''', @JSONFileKey,''' ORDER BY HistoryID DESC');	
 	PRINT @SQL  
 	EXEC sp_executesql @SQL, N'@FileID INT OUTPUT, @VersionNum INT OUTPUT',@FileID OUTPUT, @VersionNum OUTPUT;
 	
@@ -415,7 +424,9 @@ DECLARE @inputJSON VARCHAR(MAX)=
 	END	
 	ELSE
 		UPDATE dbo.Frameworks_List
-			SET VersionNum = @VersionNum
+			SET VersionNum = @VersionNum,
+				UserModified = 1,
+				DateModified = GETDATE()
 		WHERE FileID = @FileID --AND JSONFileKey = @JSONFileKey
  --==================================================================================================================================
 
@@ -469,11 +480,11 @@ DECLARE @inputJSON VARCHAR(MAX)=
 			
 	
 		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================
-		SET @TableName = CONCAT(@JSONFileKey,'_Framework_Steps')
+		SET @TableName = CONCAT(@JSONFileKey,'_Framework_Steps_History')
 		SET @SQL = ''
 
 		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
-		SET @SQL = CONCAT(@SQL,' SELECT @StepID = StepID FROM ',@TableName,' WHERE FileID = ', @FileID,' AND StepName = ''', @StepName,'''');	
+		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@TableName,' WHERE FileID = ', @FileID,' AND StepName = ''', @StepName,''' ORDER BY HistoryID DESC');	
 		PRINT @SQL  
 		EXEC sp_executesql @SQL, N'@StepID INT OUTPUT',@StepID OUTPUT;
 		
@@ -486,7 +497,9 @@ DECLARE @inputJSON VARCHAR(MAX)=
 		END
 		ELSE
 			UPDATE dbo.Framework_Steps
-				SET VersionNum = @VersionNum
+				SET VersionNum = @VersionNum,
+					UserModified = 1,
+					DateModified = GETDATE()
 			WHERE StepID = @StepID
 		--===========================================================================================================================================
 						
@@ -494,18 +507,19 @@ DECLARE @inputJSON VARCHAR(MAX)=
 		BEGIN
 				
 				--CHECK FOR THE EXISTENCE OF THE STEPITEM======================================================================================================
-				SET @TableName = CONCAT(@JSONFileKey,'_Framework_StepItems')
+				SET @TableName = CONCAT(@JSONFileKey,'_Framework_StepItems_History')
 				SET @SQL = ''
 
 				SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
-				SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = StepItemID FROM ',@TableName,' WHERE StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,'''');	
+				SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@TableName,' WHERE StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY HistoryID DESC');	
 				PRINT @SQL  
 				EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT',@StepItemID OUTPUT;
 				
 				IF @StepItemID IS NULL
 				BEGIN
-					INSERT INTO dbo.Framework_StepItems (StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
-						SELECT  @StepID,								
+					INSERT INTO dbo.Framework_StepItems (FileID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
+						SELECT  @FileID,
+								@StepID,								
 								@StepItemName,
 								@StepItemType,
 								@StepItemKey,
@@ -521,7 +535,9 @@ DECLARE @inputJSON VARCHAR(MAX)=
 						WHERE StepItemKey = @StepItemKey
 				ELSE
 					UPDATE dbo.Framework_StepItems
-						SET VersionNum = @VersionNum
+						SET VersionNum = @VersionNum,
+							UserModified = 1,
+							DateModified = GETDATE()
 					WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
 			
 
@@ -550,8 +566,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 							DateModified = GETDATE(),
 							UserModified = '1'								
 				WHEN NOT MATCHED BY TARGET 
-					THEN INSERT (StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)
-							VALUES (TAB.StepItemID,TAB.StringValue,TAB.KeyName,TAB.SequenceNo,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
+					THEN INSERT (FileID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)
+							VALUES (@FileID,TAB.StepItemID,TAB.StringValue,TAB.KeyName,TAB.SequenceNo,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
 				WHEN NOT MATCHED BY SOURCE AND FMA.StepItemID=@StepItemID
 					THEN DELETE;
 						
@@ -587,8 +603,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 									DateModified = GETDATE(),
 									UserModified = '1'								
 						WHEN NOT MATCHED BY TARGET 
-							THEN INSERT (StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-									VALUES (TAB.StepItemID,TAB.LookupValues,TAB.LookupName,TAB.OrderBy,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
+							THEN INSERT (FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+									VALUES (@FileID,TAB.StepItemID,TAB.LookupValues,TAB.LookupName,TAB.OrderBy,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
 						WHEN NOT MATCHED BY SOURCE AND FML.StepItemID=@StepItemID
 							THEN DELETE;					
 
@@ -638,8 +654,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 										DateModified = GETDATE(),
 										UserModified = '1'								
 							WHEN NOT MATCHED BY TARGET 
-								THEN INSERT (StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-										VALUES (TAB.StepItemID,TAB.LookupValue,TAB.LookupName,TAB.Parent_ID,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
+								THEN INSERT (FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+										VALUES (@FileID,TAB.StepItemID,TAB.LookupValue,TAB.LookupName,TAB.Parent_ID,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
 							WHEN NOT MATCHED BY SOURCE AND FML.StepItemID=@StepItemID
 								THEN DELETE;
 						
@@ -662,8 +678,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 									DateModified = GETDATE(),
 									UserModified = '1'								
 						WHEN NOT MATCHED BY TARGET 
-							THEN INSERT (StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-									VALUES (TAB.StepItemID,TAB.LookupValue,TAB.KeyName,TAB.SequenceNo,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
+							THEN INSERT (FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+									VALUES (@FileID,TAB.StepItemID,TAB.LookupValue,TAB.KeyName,TAB.SequenceNo,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
 						WHEN NOT MATCHED BY SOURCE AND FML.StepItemID=@StepItemID
 							THEN DELETE;
 					
@@ -681,11 +697,11 @@ DECLARE @inputJSON VARCHAR(MAX)=
 
  END
 
-		SELECT * from dbo.Frameworks_List
-		SELECT * from dbo.Framework_Steps
-		SELECT * from dbo.Framework_StepItems
-		SELECT * from dbo.Framework_Attributes
-		SELECT * from dbo.Framework_Lookups
+		--SELECT * from dbo.Frameworks_List
+		--SELECT * from dbo.Framework_Steps
+		--SELECT * from dbo.Framework_StepItems
+		--SELECT * from dbo.Framework_Attributes
+		--SELECT * from dbo.Framework_Lookups
 
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
 		--DECLARE @CurrentIdentifier INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_List_history WHERE JSONFileKey = @JSONFileKey)
@@ -739,7 +755,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 
 
 				INSERT INTO [dbo].[Framework_StepItems_history]
-						   (StepItemID,
+						   (FileID,
+							StepItemID,
 							[StepID]
 						   ,[StepItemName]
 						   ,[StepItemType]
@@ -751,7 +768,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 						   ,[DateModified]
 						   ,[VersionNum],
 						   CurrentIdentifier)
-				SELECT StepItemID,
+				SELECT @FileID,
+					   StepItemID,
 					  [StepID]
 					,[StepItemName]
 					,[StepItemType]
@@ -767,7 +785,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 
  
 		INSERT INTO [dbo].[Framework_Attributes_history]
-				   (AttributeID,
+				   (FileID,
+					AttributeID,
 				    [StepItemID]
 				   ,[AttributeKey]
 				   ,[AttributeValue]
@@ -778,7 +797,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 				   ,[DateModified]
 				   ,[VersionNum],
 				   CurrentIdentifier)
-		SELECT		AttributeID,
+		SELECT		@FileID,
+				    AttributeID,
 					[StepItemID]
 				   ,[AttributeKey]
 				   ,[AttributeValue]
@@ -792,7 +812,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 		FROM dbo.[Framework_Attributes]
 
 		INSERT INTO [dbo].[Framework_Lookups_history]
-				   (ID,
+				   (FileID,
+					ID,
 					[StepItemID]
 				   ,[LookupName]
 				   ,[LookupValue]
@@ -804,7 +825,8 @@ DECLARE @inputJSON VARCHAR(MAX)=
 				   ,[DateModified]
 				   ,[VersionNum],
 				   CurrentIdentifier)
-		SELECT ID,
+		SELECT		@FileID,
+					ID,
 					[StepItemID]
 				   ,[LookupName]
 				   ,[LookupValue]
@@ -824,9 +846,15 @@ DECLARE @inputJSON VARCHAR(MAX)=
 		--UPDATE dbo.Framework_Metafield_Attributes_history SET CurrentIdentifier = @VersionNum
 		--UPDATE dbo.Framework_Metafield_Lookups_history SET CurrentIdentifier = @VersionNum 
 
-		SELECT * from dbo.Frameworks_List_history
-		SELECT * from dbo.Framework_Steps_history
-		SELECT * from dbo.Framework_StepItems_history
-		SELECT * from dbo.Framework_Attributes_history
-		SELECT * from dbo.Framework_Lookups_history
+		--SELECT * from dbo.Frameworks_List_history
+		--SELECT * from dbo.Framework_Steps_history
+		--SELECT * from dbo.Framework_StepItems_history
+		--SELECT * from dbo.Framework_Attributes_history
+		--SELECT * from dbo.Framework_Lookups_history
 	--**********************************************************************************************************************************	
+		
+		PRINT 'ParseJSONData Completed...'
+			 
+		EXEC dbo.CreateSchemaTables @VersionNum = @VersionNum
+
+END

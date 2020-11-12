@@ -39,8 +39,8 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepItemKey AS KeyName,Curr.StepItemName AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_Framework_Metafield_history Curr
-														 INNER JOIN ',@TableInitial,'_Framework_Metafield_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
+													FROM ',@TableInitial,'_Framework_StepItems_history Curr
+														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')		
 													)TAB'
 												)		
@@ -49,9 +49,9 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.AttributeKey AS KeyName,Curr.AttributeValue AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_Framework_Metafield_Attributes_history Curr	
-														 INNER JOIN ',@TableInitial,'_Framework_Metafield_history Curr_Met ON Curr_Met.MetaFieldID = Curr.MetaFieldID	
-														 INNER JOIN ',@TableInitial,'_Framework_Metafield_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
+													FROM ',@TableInitial,'_Framework_Attributes_history Curr	
+														 INNER JOIN ',@TableInitial,'_Framework_StepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
+														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,') 
 													)TAB' 
 												)
@@ -60,9 +60,9 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.LookupValue AS KeyName,Curr.LookupName AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_Framework_Metafield_Lookups_history Curr	
-														 INNER JOIN ',@TableInitial,'_Framework_Metafield_history Curr_Met ON Curr_Met.MetaFieldID = Curr.MetaFieldID	
-														 INNER JOIN ',@TableInitial,'_Framework_Metafield_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
+													FROM ',@TableInitial,'_Framework_Lookups_history Curr	
+														 INNER JOIN ',@TableInitial,'_Framework_StepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
+														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,') 
 													)TAB' 
 											  )
@@ -83,7 +83,10 @@ BEGIN
 							FROM #TMP_Items
 							GROUP BY KeyName
 
-			
+						SELECT * FROM #TMP_Items
+						--SELECT * FROM #TMP_OperationType
+						--RETURN
+
 						UPDATE #TMP_OperationType
 							SET OperationType = 'UPDATE'
 						WHERE ModuleName = @TableType
@@ -92,16 +95,16 @@ BEGIN
 
 						UPDATE #TMP_OperationType
 							SET OperationType = 'DELETE'
-						WHERE ModuleName = @TableType
-							  AND NewValue IS NULL
-							  AND OldValue IS NOT NULL
+						WHERE ModuleName = @TableType	
+							  AND NewValue IS NULL						  
+							  AND OldValue IS NOT NULL							  
 
 						UPDATE #TMP_OperationType
 							SET OperationType = 'INSERT'
 						WHERE ModuleName = @TableType
 							  AND NewValue IS NOT NULL
 							  AND OldValue IS NULL
-		
+						
 						DELETE FROM #TBL_OperationTypeList WHERE ID = @ID				
 						SET @Query = NULL
 

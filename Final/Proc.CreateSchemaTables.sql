@@ -2,6 +2,12 @@
 USE JUNK
 GO
  
+ CREATE OR ALTER PROCEDURE dbo.CreateSchemaTables
+@VersionNum INT
+AS
+BEGIN
+	SET NOCOUNT ON;
+	PRINT 'STARTING CreateSchemaTables...'
 
 --DROP TABLE IF EXISTS TAB_Framework_Lookups
 --drop table IF EXISTS TAB_Framework_Attributes
@@ -25,12 +31,12 @@ DECLARE @TBL TABLE(ID INT IDENTITY(1,1),NewTableName VARCHAR(500),Item VARCHAR(M
 DECLARE @ID INT, @TemplateTableName VARCHAR(100),@ParentTableName VARCHAR(100), @SQL NVARCHAR(MAX)
 DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500),KeyColName VARCHAR(100), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX),TableType VARCHAR(100))
 DECLARE @TBL_List_Constraints TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX))
-DECLARE @ConstraintSQL NVARCHAR(MAX),@HistoryTable VARCHAR(50)= '_history',@HistoryTableCheck VARCHAR(500)
+DECLARE @ConstraintSQL NVARCHAR(MAX),@HistoryTable VARCHAR(50)= '_history',@TableCheck VARCHAR(500)
 DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100)
 
 
 	--GET THE CURRENT VERSION NO.: THIS WILL ACTUALLY BE PASSED FROM THE PREVIOUS SCRIPT/CODE:ParseJSON_v2.sql
-	DECLARE @VersionNum INT = (SELECT MAX(VersionNum) FROM dbo.Frameworks_List_history)
+	--DECLARE @VersionNum INT = (SELECT MAX(VersionNum) FROM dbo.Frameworks_List_history)
  
 
 --DECLARE @DropConstraints_SQL VARCHAR(MAX) = 'ALTER TABLE [dbo].[Framework_StepItems] DROP CONSTRAINT [FK_Framework_StepItems_StepID];
@@ -83,9 +89,11 @@ BEGIN
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 
-		SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName)
-		SET @SQL = CONCAT(@SQL, N'; CREATE TABLE ', @NewTableName , '(', @cols, ') ', CHAR(10), CHAR(10))
-			
+		--FULL REFRESH IN MAIN TABLES;STORES ONLY LATEST VERSION/DATA
+		SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName, CHAR(10))
+		SET @SQL = CONCAT(@SQL, N'; CREATE TABLE dbo.[', @NewTableName , '](', @cols, ') ', CHAR(10), CHAR(10))
+		--SET @TableCheck = CONCAT('IF NOT EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME=''',@NewTableName ,''')')
+		--SET @SQL = CONCAT(@TableCheck,CHAR(10),@SQL,';', CHAR(10), CHAR(10))	
 		PRINT @SQL
 		--CREATE THE ACTUAL TABLE BASED ON THE TEMPLATE TABLE SCHEMA
 		EXEC sp_executesql @SQL 
@@ -102,14 +110,15 @@ BEGIN
 		SET @cols = STUFF(@cols, 1, 1, N'');
 
 		--SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName)
-		SET @SQL = CONCAT(N' CREATE TABLE ', @NewTableName ,@HistoryTable, '(', @cols, ') ')		
-		SET @HistoryTableCheck = CONCAT('IF NOT EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME=''',@NewTableName ,@HistoryTable,''')')
-		SET @SQL = CONCAT(@HistoryTableCheck,CHAR(10),@SQL,';', CHAR(10), CHAR(10))		
+		SET @SQL = CONCAT(N' CREATE TABLE dbo.[', @NewTableName ,@HistoryTable, '](', @cols, ') ')		
+		SET @TableCheck = CONCAT('IF NOT EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME=''',@NewTableName ,@HistoryTable,''')')
+		SET @SQL = CONCAT(@TableCheck,CHAR(10),@SQL,';', CHAR(10), CHAR(10))		
 			
 		PRINT @SQL
+		
 		--CREATE THE ACTUAL HISTORY TABLE BASED ON THE TEMPLATE TABLE SCHEMA
 		EXEC sp_executesql @SQL 
-
+		
 		SELECT @SQL = '', @cols = ''
 
 		--INSERT DATA INTO HISTORY TABLE		
@@ -120,7 +129,7 @@ BEGIN
 		SET @cols = STUFF(@cols, 1, 1, N'');
 
 		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,@HistoryTable,'(', @cols, ') ', CHAR(10))		
-		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,@HistoryTable)
+		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,@HistoryTable,';', CHAR(10))
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
 
@@ -188,7 +197,7 @@ END
 		 DROP TABLE IF EXISTS #TBL_List
 		 SELECT * INTO #TBL_List FROM #TBL_ConstraintsList
 
-		 SELECT * FROM #TBL_List
+		-- SELECT * FROM #TBL_List
 		 --RETURN
 
  /*
@@ -231,14 +240,16 @@ END
 		SELECT * FROM TAB_Framework_Lookups
 		
 
-		SELECT * FROM Framework_Lookups
-		SELECT * FROM Framework_Attributes
-		SELECT * FROM  Framework_StepItems
-		SELECT * FROM  Framework_Steps
+		--SELECT * FROM Framework_Lookups
+		--SELECT * FROM Framework_Attributes
+		--SELECT * FROM  Framework_StepItems
+		--SELECT * FROM  Framework_Steps
 
 		SELECT * from TAB_Frameworks_List_history
 		SELECT * FROM  TAB_Framework_Steps_history
 		SELECT * FROM  TAB_Framework_StepItems_history
 		SELECT * FROM TAB_Framework_Attributes_history		
 		SELECT * FROM TAB_Framework_Lookups_history
-		
+
+		PRINT 'CreateSchemaTables Completed...'
+END		
