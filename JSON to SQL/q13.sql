@@ -34,7 +34,7 @@ drop table IF EXISTS TAB_Framework_steps_history
 '{
     "name": {
         "label": "Name",
-        "tableView": true,
+        "tableView": false,
         "validate": {
             "required": true,
             "minLength": 1,

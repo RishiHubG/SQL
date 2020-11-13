@@ -413,26 +413,28 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 		DECLARE @PeriodIdentifierID TINYINT = 1
 		
+		UPDATE [dbo].[Frameworks_List_history]
+			SET PeriodIdentifierID = 0,
+				UserModified = 1,
+				DateModified = GETUTCDATE()
+		WHERE FrameworkID = @FrameworkID
+			  AND VersionNum < @VersionNum
+
 		INSERT INTO [dbo].[Frameworks_List_history]
 				   (FrameworkID,
 					Name,
 					FrameworkFile
 				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
+				   ,[DateCreated]				   
 				   ,[VersionNum],
 				   PeriodIdentifierID)
-		SELECT     FrameworkID,
-				   Name,
-				   FrameworkFile
-				  ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   @PeriodIdentifierID
-		FROM [dbo].[Frameworks_List]
+		SELECT  @FrameworkID,
+				@Name,	
+				@inputJSON,		
+				@UserCreated,
+				GETUTCDATE(),
+				@VersionNum,
+				@PeriodIdentifierID
 
 		INSERT INTO [dbo].[Framework_Steps_history]
 				   (StepID,

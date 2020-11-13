@@ -162,7 +162,7 @@ BEGIN
 		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SET PeriodIdentifierID = 0', CHAR(10))
 		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, ' AND VersionNum < ',@VersionNum, CHAR(10))
-		SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%Attributes%'' OR ''',@NewTableName,''' LIKE ''%Lookups%'' ', CHAR(10))
+		--SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%Attributes%'' OR ''',@NewTableName,''' LIKE ''%Lookups%'' ', CHAR(10))
 		PRINT @SQL
 		EXEC sp_executesql @SQL
 
