@@ -43,7 +43,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (2,6)-- (2,6),7
+	   AND Element_ID IN (2)-- (2,6),7
 	    
  
  --SELECT * FROM #TMP_Objects
@@ -58,9 +58,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@UserCreated INT = 1,
 			@VersionNum INT,
 			@StepItemKey VARCHAR(100),
-			@JSONFileKey VARCHAR(100) = 'TAB',
+			@Name VARCHAR(100) = 'TAB',
 			@SQL NVARCHAR(MAX),
-			@FileID INT
+			@FrameworkID INT
 	 	
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
 	 DROP TABLE IF EXISTS TAB_DATA -- REMOVE THIS LATER, NOT REQUIRED
@@ -102,7 +102,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	PRINT @DataCols	
 
 	SET @DataCols = CONCAT(@SQL_ID,@DataCols,CHAR(10),',',@StaticCols)
-	SET @SQL = CONCAT(N' CREATE TABLE dbo.', @JSONFileKey ,'_data',CHAR(10), '(', @DataCols, ') ',CHAR(10))
+	SET @SQL = CONCAT(N' CREATE TABLE dbo.', @Name ,'_data',CHAR(10), '(', @DataCols, ') ',CHAR(10))
 	PRINT @SQL
 	
 	EXEC sp_executesql @SQL	
@@ -112,43 +112,43 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	DECLARE @HistTableName SYSNAME = 'Frameworks_List_History'
 	SET @SQL = ''
 	
-	--GET THE FILEID & VERSION NO.: CHECK FOR THE EXISTENCE OF THE JSONKEY		
+	--GET THE FrameworkID & VERSION NO.: CHECK FOR THE EXISTENCE OF THE JSONKEY		
 	SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
-	SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @FileID = FileID, @VersionNum = VersionNum + 1 FROM ',@HistTableName,' WHERE JSONFileKey = ''', @JSONFileKey,''' ORDER BY HistoryID DESC');	
+	SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @FrameworkID = FrameworkID, @VersionNum = VersionNum + 1 FROM ',@HistTableName,' WHERE Name = ''', @Name,''' ORDER BY HistoryID DESC');	
 	PRINT @SQL  
-	EXEC sp_executesql @SQL, N'@FileID INT OUTPUT, @VersionNum INT OUTPUT',@FileID OUTPUT, @VersionNum OUTPUT;
+	EXEC sp_executesql @SQL, N'@FrameworkID INT OUTPUT, @VersionNum INT OUTPUT',@FrameworkID OUTPUT, @VersionNum OUTPUT;
 	
-	--SELECT @VersionNum= MAX(VersionNum) + 1 FROM dbo.Frameworks_List_history WHERE JSONFile = @JSONFileKey
+	--SELECT @VersionNum= MAX(VersionNum) + 1 FROM dbo.Frameworks_List_history WHERE JSONFile = @Name
 	
 	--SELECT @VersionNum
 	--RETURN
 
 	--SELECT TOP 1 @VersionNum = VersionNum + 1
 	--FROM dbo.Frameworks_List
-	--WHERE JSONFileKey = @JSONFileKey		  
+	--WHERE Name = @Name		  
 	--ORDER BY VersionNum DESC
 	
 	IF @VersionNum IS NULL
 		SET @VersionNum = 1
 
 	--INSERT NEW JSONKEY IF IT DOES NOT EXIST=====================================================================================		
-	IF @FileID IS NULL
+	IF @FrameworkID IS NULL
 	BEGIN
-		INSERT INTO dbo.Frameworks_List (JSONFileKey,JSONFileText,UserCreated,DateCreated,VersionNum)
-			SELECT  @JSONFileKey,	
+		INSERT INTO dbo.Frameworks_List (Name,FrameworkFile,UserCreated,DateCreated,VersionNum)
+			SELECT  @Name,	
 					@inputJSON,		
 					@UserCreated,
-					GETDATE(),
+					GETUTCDATE(),
 					@VersionNum
 
-		SET @FileID = SCOPE_IDENTITY()	
+		SET @FrameworkID = SCOPE_IDENTITY()	
 	END	
 	ELSE ---RECORDS ALREADY AVAILABLE FOR PREVIOUS VERSIONS		
 		UPDATE dbo.Frameworks_List
 			SET VersionNum = @VersionNum,
 				UserModified = 1,
-				DateModified = GETDATE()
-		WHERE FileID = @FileID --AND JSONFileKey = @JSONFileKey
+				DateModified = GETUTCDATE()
+		WHERE FrameworkID = @FrameworkID --AND Name = @Name
  --==================================================================================================================================
 
 --PROCESS THE STEP ITEMS ONE BY ONE
@@ -204,18 +204,18 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			
 	
 		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================
-		SET @HistTableName = CONCAT(@JSONFileKey,'_Framework_Steps_History')
+		SET @HistTableName = CONCAT(@Name,'_Framework_Steps_History')
 		SET @SQL = ''
 
 		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
-		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@HistTableName,' WHERE FileID = ', @FileID,' AND StepName = ''', @StepName,''' ORDER BY HistoryID DESC');	
+		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@HistTableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,''' ORDER BY HistoryID DESC');	
 		PRINT @SQL  
 		EXEC sp_executesql @SQL, N'@StepID INT OUTPUT',@StepID OUTPUT;
 		
 		IF @StepID IS NULL
 		BEGIN
-			INSERT INTO dbo.Framework_Steps (FileID,StepName,DateCreated,UserCreated,VersionNum)
-				SELECT @FileID,@StepName,GETDATE(),@UserCreated,@VersionNum	
+			INSERT INTO dbo.Framework_Steps (FrameworkID,StepName,DateCreated,UserCreated,VersionNum)
+				SELECT @FrameworkID,@StepName,GETUTCDATE(),@UserCreated,@VersionNum	
 			
 			SET @StepID = SCOPE_IDENTITY()
 		END
@@ -223,7 +223,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			UPDATE dbo.Framework_Steps
 				SET VersionNum = @VersionNum,
 					UserModified = 1,
-					DateModified = GETDATE()
+					DateModified = GETUTCDATE()
 			WHERE StepID = @StepID
 		--===========================================================================================================================================
 						
@@ -231,7 +231,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		BEGIN
 				
 				--CHECK FOR THE EXISTENCE OF THE STEPITEM======================================================================================================
-				SET @HistTableName = CONCAT(@JSONFileKey,'_Framework_StepItems_History')
+				SET @HistTableName = CONCAT(@Name,'_Framework_StepItems_History')
 				SET @SQL = ''
 
 				SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
@@ -241,14 +241,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				
 				IF @StepItemID IS NULL
 				BEGIN
-					INSERT INTO dbo.Framework_StepItems (FileID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
-						SELECT  @FileID,
+					INSERT INTO dbo.Framework_StepItems (FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
+						SELECT  @FrameworkID,
 								@StepID,								
 								@StepItemName,
 								@StepItemType,
 								@StepItemKey,
 								(SELECT SequenceNo FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
-								GETDATE(),@UserCreated,@VersionNum	
+								GETUTCDATE(),@UserCreated,@VersionNum	
 
 					SET @StepItemID = SCOPE_IDENTITY()
 				END
@@ -261,7 +261,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					UPDATE dbo.Framework_StepItems
 						SET VersionNum = @VersionNum,
 							UserModified = 1,
-							DateModified = GETDATE()
+							DateModified = GETUTCDATE()
 					WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
 			
 
@@ -276,8 +276,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				--RETURN				
 
 					--GET THE STEPITEM ATTRIBUTES					 				
-					INSERT INTO dbo.Framework_Attributes(FileID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)							
-						SELECT @FileID,@StepItemID,StringValue,KeyName,SequenceNo,GETDATE(),@UserCreated ,@VersionNum
+					INSERT INTO dbo.Framework_Attributes(FrameworkID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)							
+						SELECT @FrameworkID,@StepItemID,StringValue,KeyName,SequenceNo,GETUTCDATE(),@UserCreated ,@VersionNum
 							FROM #TMP T
 							WHERE (Parent_ID = @ID
 								 OR
@@ -312,12 +312,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 						--IF NOT EXISTS (SELECT 1 
 						--				FROM dbo.Framework_Lookups FMA
-						--				WHERE FileID = @FileID
+						--				WHERE FrameworkID = @FrameworkID
 						--					  AND StepItemID=@StepItemID 
 						--					  AND LookupName=@StepItemName
 						--			)
-						 INSERT INTO dbo.Framework_Lookups(FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-									VALUES (@FileID,@StepItemID,@LookupValues,@StepItemName,1,GETDATE(),@UserCreated,@VersionNum)
+						 INSERT INTO dbo.Framework_Lookups(FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+									VALUES (@FrameworkID,@StepItemID,@LookupValues,@StepItemName,1,GETUTCDATE(),@UserCreated,@VersionNum)
 						
 				END
 				ELSE		
@@ -345,20 +345,20 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 							 --SELECT * FROM #TMP_Lookups	
 							
-						 INSERT INTO dbo.Framework_Lookups(FileID,StepItemID,LookupValue,LookupName,LookupType,OrderBy,DateCreated,UserCreated,VersionNum)
-									SELECT @FileID,
+						 INSERT INTO dbo.Framework_Lookups(FrameworkID,StepItemID,LookupValue,LookupName,LookupType,OrderBy,DateCreated,UserCreated,VersionNum)
+									SELECT @FrameworkID,
 										   @StepItemID,
 										   LookupValue,
 										   LookupName,
 										   LookupType,	 		  
 											Parent_ID,
-											GETDATE(),
+											GETUTCDATE(),
 											@UserCreated,
 											@VersionNum	
 									FROM #TMP_Lookups T
 									--WHERE NOT EXISTS (SELECT 1 
 									--					FROM dbo.Framework_Lookups FMA
-									--					WHERE FileID = @FileID
+									--					WHERE FrameworkID = @FrameworkID
 									--						  AND StepItemID= @StepItemID 
 									--						  AND LookupName= T.LookupName
 									--				)
@@ -366,13 +366,13 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 				END
 				ELSE
-								INSERT INTO dbo.Framework_Lookups(FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-									SELECT @FileID,
+								INSERT INTO dbo.Framework_Lookups(FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+									SELECT @FrameworkID,
 										   @StepItemID,
 										   StringValue,
 										   KeyName,
 										   SequenceNo,
-										   GETDATE(),
+										   GETUTCDATE(),
 										   @UserCreated,
 										   @VersionNum
 									FROM #TMP T
@@ -380,7 +380,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										AND KeyName ='value'
 									--AND NOT EXISTS (SELECT 1 
 									--					FROM dbo.Framework_Lookups FMA
-									--					WHERE FileID = @FileID
+									--					WHERE FrameworkID = @FrameworkID
 									--						  AND StepItemID= @StepItemID 
 									--						  AND LookupName= T.KeyName
 									--				)
@@ -406,58 +406,58 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		--SELECT * from dbo.Framework_Lookups
 
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
-		--DECLARE @CurrentIdentifier INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_List_history WHERE JSONFileKey = @JSONFileKey)
+		--DECLARE @PeriodIdentifierID INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_List_history WHERE Name = @Name)
 
-		--IF @CurrentIdentifier IS NULL
-		--	SET @CurrentIdentifier = 1
+		--IF @PeriodIdentifierID IS NULL
+		--	SET @PeriodIdentifierID = 1
 
-		DECLARE @CurrentIdentifier TINYINT = 1
+		DECLARE @PeriodIdentifierID TINYINT = 1
 		
 		INSERT INTO [dbo].[Frameworks_List_history]
-				   (FileID,
-					JSONFileKey,
-					JSONFileText
+				   (FrameworkID,
+					Name,
+					FrameworkFile
 				   ,[UserCreated]
 				   ,[DateCreated]
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   CurrentIdentifier)
-		SELECT     FileID,
-				   JSONFileKey,
-				   JSONFileText
+				   PeriodIdentifierID)
+		SELECT     FrameworkID,
+				   Name,
+				   FrameworkFile
 				  ,[UserCreated]
 				   ,[DateCreated]
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   @CurrentIdentifier
+				   @PeriodIdentifierID
 		FROM [dbo].[Frameworks_List]
 
 		INSERT INTO [dbo].[Framework_Steps_history]
 				   (StepID,
-					FileID,
+					FrameworkID,
 					[StepName]
 				   ,[UserCreated]
 				   ,[DateCreated]
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   CurrentIdentifier)
+				   PeriodIdentifierID)
 		SELECT		StepID,
-					@FileID,
+					@FrameworkID,
 					[StepName]
 				   ,[UserCreated]
 				   ,[DateCreated]
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   @CurrentIdentifier
+				   @PeriodIdentifierID
 		FROM dbo.[Framework_Steps]
 
 
 				INSERT INTO [dbo].[Framework_StepItems_history]
-						   (FileID,
+						   (FrameworkID,
 							StepItemID,
 							[StepID]
 						   ,[StepItemName]
@@ -469,8 +469,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						   ,[UserModified]
 						   ,[DateModified]
 						   ,[VersionNum],
-						   CurrentIdentifier)
-				SELECT @FileID,
+						   PeriodIdentifierID)
+				SELECT @FrameworkID,
 					   StepItemID,
 					  [StepID]
 					,[StepItemName]
@@ -482,12 +482,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					,[UserModified]
 					,[DateModified]
 					,[VersionNum],
-					@CurrentIdentifier
+					@PeriodIdentifierID
 				FROM dbo.Framework_StepItems        
 
  
 		INSERT INTO [dbo].[Framework_Attributes_history]
-				   (FileID,
+				   (FrameworkID,
 					AttributeID,
 				    [StepItemID]
 				   ,[AttributeKey]
@@ -498,8 +498,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   CurrentIdentifier)
-		SELECT		@FileID,
+				   PeriodIdentifierID)
+		SELECT		@FrameworkID,
 				    AttributeID,
 					[StepItemID]
 				   ,[AttributeKey]
@@ -510,11 +510,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   @CurrentIdentifier
+				   @PeriodIdentifierID
 		FROM dbo.[Framework_Attributes]
 
 		INSERT INTO [dbo].[Framework_Lookups_history]
-				   (FileID,
+				   (FrameworkID,
 					ID,
 					[StepItemID]
 				   ,[LookupName]
@@ -526,8 +526,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   CurrentIdentifier)
-		SELECT		@FileID,
+				   PeriodIdentifierID)
+		SELECT		@FrameworkID,
 					ID,
 					[StepItemID]
 				   ,[LookupName]
@@ -539,19 +539,19 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   @CurrentIdentifier    
+				   @PeriodIdentifierID    
 		FROM dbo.Framework_Lookups
 
-		--UPDATE dbo.Frameworks_List_history SET CurrentIdentifier = @VersionNum
-		--UPDATE dbo.Framework_Metafield_Steps_history SET CurrentIdentifier = @VersionNum
-		--UPDATE dbo.Framework_Metafield_history SET CurrentIdentifier = @VersionNum
-		--UPDATE dbo.Framework_Metafield_Attributes_history SET CurrentIdentifier = @VersionNum
-		--UPDATE dbo.Framework_Metafield_Lookups_history SET CurrentIdentifier = @VersionNum
+		--UPDATE dbo.Frameworks_List_history SET PeriodIdentifierID = @VersionNum
+		--UPDATE dbo.Framework_Metafield_Steps_history SET PeriodIdentifierID = @VersionNum
+		--UPDATE dbo.Framework_Metafield_history SET PeriodIdentifierID = @VersionNum
+		--UPDATE dbo.Framework_Metafield_Attributes_history SET PeriodIdentifierID = @VersionNum
+		--UPDATE dbo.Framework_Metafield_Lookups_history SET PeriodIdentifierID = @VersionNum
 		
 	--**********************************************************************************************************************************	
 		
 		PRINT 'ParseJSONData Completed...'
 			 
-		EXEC dbo.CreateSchemaTables @FileID = @FileID, @VersionNum = @VersionNum
+		EXEC dbo.CreateSchemaTables @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
 
 END

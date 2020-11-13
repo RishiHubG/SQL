@@ -65,5 +65,16 @@ Version in Steps: Insert/Delete
 TAB_Frameworks_List_history: common table;add new col. for storing json
 Populate Id in child tables
 
+11.
+Rename CurrentIdentifier-> PeriodIdentifierID
+Rename FileID-> FrameworkID
+Rename JSONKey -> Name
+Rename JSONText -> FrameworkFile
+Add New col -> Namespace
+GETUTCDATE() instead of GETDATE()
 
+
+12.
+Add the 8 static columns after HistoryID
+Add the 5 static columns after ID
 

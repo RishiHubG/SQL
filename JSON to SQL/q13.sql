@@ -321,7 +321,7 @@ drop table IF EXISTS TAB_Framework_steps_history
     }
 }'
 
-
+/*
 		SELECT * from dbo.Frameworks_List
 		SELECT * from dbo.Frameworks_List_history
 		SELECT * from dbo.Framework_Steps_history
@@ -346,3 +346,5 @@ drop table IF EXISTS TAB_Framework_steps_history
 		SELECT * FROM  TAB_Framework_StepItems_history
 		SELECT * FROM TAB_Framework_Attributes_history		
 		SELECT * FROM TAB_Framework_Lookups_history
+
+*/

@@ -3,7 +3,7 @@ USE JUNK
 GO
  
  CREATE OR ALTER PROCEDURE dbo.CreateSchemaTables
-@FileID INT,
+@FrameworkID INT,
 @VersionNum INT
 AS
 BEGIN
@@ -53,7 +53,7 @@ VALUES	('Framework_Lookups','LookupValue','Framework_StepItems','Lookups','ALTER
 		('Framework_Attributes','AttributeKey','Framework_StepItems','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]); '),		
 		('Framework_StepItems','StepItemKey','Framework_Steps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
 		('Framework_Steps','StepName','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)')
-		--,('Frameworks_List','JSONFileKey','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
+		--,('Frameworks_List','Name','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
 
 	INSERT INTO @TBL_List_Constraints(TemplateTableName)
 		SELECT TemplateTableName FROM @TBL_List	
@@ -110,14 +110,14 @@ BEGIN
 		
 		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,'(', @cols, ') ', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE FileID=',@FileID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
 
 		--UPDATE VERSION NUMBER		
 		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE FileID = ',@FileID, CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, CHAR(10))
 		PRINT @SQL
 		EXEC sp_executesql @SQL
 		---------------------------------------------------------------------------------------------------------------------------
@@ -160,8 +160,8 @@ BEGIN
 
 		--UPDATE CURRENT IDENTIFIER IN HISTORY TABLE FOR OLDER VERSIONS( THIS APPLIES TO ATTRIBUTES/LOOKUPS ONLY AS WE DO NOT MAINTAIN DIFFERENT VERSION RECORDS FOR LIST/STEPS/STEPITEMS TABLES)
 		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
-		SET @SQL = CONCAT(@SQL, 'SET CurrentIdentifier = 0', CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE FileID = ',@FileID, ' AND VersionNum < ',@VersionNum, CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'SET PeriodIdentifierID = 0', CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, ' AND VersionNum < ',@VersionNum, CHAR(10))
 		SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%Attributes%'' OR ''',@NewTableName,''' LIKE ''%Lookups%'' ', CHAR(10))
 		PRINT @SQL
 		EXEC sp_executesql @SQL
@@ -171,7 +171,7 @@ BEGIN
 		--UPDATE VERSION NUMBER (THIS APPLIES ONLY TO LIST/STEPS/STEPITEMS TABLES)			
 		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE FileID = ',@FileID, CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, CHAR(10))
 		SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%List%'' OR ''',@NewTableName,''' LIKE ''%Steps%'' OR ''',@NewTableName,''' LIKE ''%StepItems%'' ', CHAR(10))
 		PRINT @SQL
 		EXEC sp_executesql @SQL		
