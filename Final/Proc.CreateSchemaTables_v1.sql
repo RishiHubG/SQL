@@ -230,23 +230,5 @@ BEGIN
 END		
 */
 		
-		SELECT * from TAB_Frameworks_List
-		SELECT * FROM  TAB_Framework_Steps
-		SELECT * FROM  TAB_Framework_StepItems
-		SELECT * FROM TAB_Framework_Attributes		
-		SELECT * FROM TAB_Framework_Lookups
-		
-
-		--SELECT * FROM Framework_Lookups
-		--SELECT * FROM Framework_Attributes
-		--SELECT * FROM  Framework_StepItems
-		--SELECT * FROM  Framework_Steps
-
-		SELECT * from TAB_Frameworks_List_history
-		SELECT * FROM  TAB_Framework_Steps_history
-		SELECT * FROM  TAB_Framework_StepItems_history
-		SELECT * FROM TAB_Framework_Attributes_history		
-		SELECT * FROM TAB_Framework_Lookups_history
-
 		PRINT 'CreateSchemaTables Completed...'
 END		

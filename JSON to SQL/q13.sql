@@ -37,7 +37,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "key": "name",
         "type": "textfield",
         "input": false,
-        "hideOnChildrenHidden": false 
+        "hideOnChildrenHidden": false,
+		"parent": "General"
     },
     "reference": {
         "label": "Reference",
@@ -46,7 +47,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "key": "reference",
         "type": "textfield",
         "input": true,
-        "hideOnChildrenHidden": false
+        "hideOnChildrenHidden": false,
+		"parent": "General"
     },
     "reference1": {
         "label": "Reference",
@@ -59,7 +61,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "key": "reference1",
         "type": "textfield",
         "input": true,
-        "hideOnChildrenHidden": false
+        "hideOnChildrenHidden": false,
+		"parent": "General"
     },
     "riskDescription": {
         "label": "Risk Description",
@@ -67,7 +70,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "inputFormat": "html",
         "key": "riskDescription",
         "type": "textfield",
-        "input": true
+        "input": true,
+		"parent": "Details"
     },
     "riskCategory1": {
         "label": "Applicable Factor",
@@ -100,7 +104,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "type": "selectboxes",
         "input": true,
         "inputType": "checkbox",
-        "hideOnChildrenHidden": false
+        "hideOnChildrenHidden": false,
+		"parent": "Details"
     },
     "riskCategory2": {
         "label": "Risk Category 1",
@@ -129,7 +134,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
             "filter": {}
         },
         "input": true,
-        "hideOnChildrenHidden": false
+        "hideOnChildrenHidden": false,
+		"parent": "Details"
     },
     "riskCategory3": {
         "label": "Risk Category 2",
@@ -158,7 +164,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
             "filter": {}
         },
         "input": true,
-        "hideOnChildrenHidden": false
+        "hideOnChildrenHidden": false,
+		"parent": "Details"
     },
     "likelyhood": {
         "label": "Likelyhood",
@@ -175,7 +182,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         },
         "key": "likelyhood",
         "type": "number",
-        "input": true
+        "input": true,
+		"parent": "Ratings"
     },
     "financialImpact": {
         "label": "Financial Impact",
@@ -188,7 +196,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "key": "financialImpact",
         "type": "number",
         "input": true,
-        "decimalLimit": 2
+        "decimalLimit": 2,
+		"parent": "Ratings"
     },
     "inherentRating": {
         "label": "Inherent Rating",
@@ -196,7 +205,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "calculateValue": "value = data.likelyhood/100 + data.FinancialImpact;",
         "key": "inherentRating",
         "type": "textfield",
-        "input": true
+        "input": true,
+		"parent": "Ratings"
     },
     "overallComment": {
         "label": "Overall Comment",
@@ -204,7 +214,8 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "tableView": true,
         "key": "overallComment",
         "type": "textarea",
-        "input": true
+        "input": true,
+		"parent": "Ratings"
     },
     "dateCreated": {
         "label": "Date Created",
@@ -303,4 +314,26 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "tableView": false
     }
 }'
+		SELECT * from dbo.Frameworks_List_history
+		SELECT * from dbo.Framework_Steps_history
+		SELECT * from dbo.Framework_StepItems_history
+		SELECT * from dbo.Framework_Attributes_history
+		SELECT * from dbo.Framework_Lookups_history
 
+		SELECT * from TAB_Frameworks_List
+		SELECT * FROM  TAB_Framework_Steps
+		SELECT * FROM  TAB_Framework_StepItems
+		SELECT * FROM TAB_Framework_Attributes		
+		SELECT * FROM TAB_Framework_Lookups
+		
+
+		--SELECT * FROM Framework_Lookups
+		--SELECT * FROM Framework_Attributes
+		--SELECT * FROM  Framework_StepItems
+		--SELECT * FROM  Framework_Steps
+
+		SELECT * from TAB_Frameworks_List_history
+		SELECT * FROM  TAB_Framework_Steps_history
+		SELECT * FROM  TAB_Framework_StepItems_history
+		SELECT * FROM TAB_Framework_Attributes_history		
+		SELECT * FROM TAB_Framework_Lookups_history
