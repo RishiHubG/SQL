@@ -4,7 +4,7 @@ GO
 
 DROP TABLE  IF EXISTS dbo.Framework_Lookups,Framework_Attributes,Framework_StepItems,Framework_Steps,Frameworks_List
 
-
+--Frameworks_List: COMMON TABLE ACROSS ALL FRAMEWORKS
 DROP TABLE  IF EXISTS dbo.Frameworks_List
 CREATE TABLE dbo.Frameworks_List
 	(

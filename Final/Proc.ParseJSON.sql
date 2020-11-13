@@ -11,17 +11,17 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+--EMPTY THE TEMPLATE TABLES----------------------
 TRUNCATE TABLE dbo.Framework_Lookups_history
 TRUNCATE TABLE dbo.Framework_Attributes_history
 TRUNCATE TABLE dbo.Framework_StepItems_history
 TRUNCATE TABLE dbo.Framework_Steps_history
-TRUNCATE TABLE dbo.Frameworks_List_history
 
-DELETE FROM dbo.Framework_Lookups
-DELETE FROM  dbo.Framework_Attributes
-DELETE FROM  dbo.Framework_StepItems
-DELETE FROM  dbo.Framework_Steps
-DELETE FROM  dbo.Frameworks_List
+TRUNCATE TABLE dbo.Framework_Lookups
+TRUNCATE TABLE dbo.Framework_Attributes
+TRUNCATE TABLE dbo.Framework_StepItems
+TRUNCATE TABLE dbo.Framework_Steps
+------------------------------------------------
  
 DROP TABLE IF EXISTS #TMP_ALLSTEPS 
 
@@ -109,7 +109,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	--===========================================================================================================================
 
 			
-	DECLARE @HistTableName SYSNAME = CONCAT(@JSONFileKey,'_Frameworks_List_History')
+	DECLARE @HistTableName SYSNAME = 'Frameworks_List_History'
 	SET @SQL = ''
 	
 	--GET THE FILEID & VERSION NO.: CHECK FOR THE EXISTENCE OF THE JSONKEY		
@@ -159,7 +159,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		DROP TABLE IF EXISTS #TMP_Lookups
 
 		SELECT @ID = MIN(Element_ID) FROM #TMP_Objects
-		 
+		
 		--GET ALL THE CHILD ELEMENTS FOR A PARENT
 		;WITH CTE
 		AS
@@ -275,7 +275,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				--SELECT * FROM #TMP 
 				--RETURN				
 
-				--GET THE STEPITEM ATTRIBUTES					 				
+					--GET THE STEPITEM ATTRIBUTES					 				
 					INSERT INTO dbo.Framework_Attributes(FileID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)							
 						SELECT @FileID,@StepItemID,StringValue,KeyName,SequenceNo,GETDATE(),@UserCreated ,@VersionNum
 							FROM #TMP T
@@ -283,19 +283,19 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								 OR
 								 ParentName = 'validate'	
 								 )
-						AND NOT EXISTS (SELECT 1 
-										FROM dbo.Framework_Attributes FMA
-										WHERE FMA.StepItemID=@StepItemID 
-												AND FMA.AttributeKey=T.KeyName
-										)
+						--AND NOT EXISTS (SELECT 1 
+						--				FROM dbo.Framework_Attributes FMA
+						--				WHERE FMA.StepItemID=@StepItemID 
+						--						AND FMA.AttributeKey=T.KeyName
+						--				)
 					 
-				UPDATE FMA
-					SET VersionNum = @VersionNum
-				FROM dbo.Framework_Attributes FMA
-					 INNER JOIN #TMP TAB ON FMA.StepItemID=@StepItemID AND FMA.AttributeKey=TAB.KeyName
-				WHERE TAB.Parent_ID = @ID
-					  OR
-					 TAB.ParentName = 'validate'				
+				--UPDATE FMA
+				--	SET VersionNum = @VersionNum
+				--FROM dbo.Framework_Attributes FMA
+				--	 INNER JOIN #TMP TAB ON FMA.StepItemID=@StepItemID AND FMA.AttributeKey=TAB.KeyName
+				--WHERE TAB.Parent_ID = @ID
+				--	  OR
+				--	 TAB.ParentName = 'validate'				
 
 				--GET THE LOOKUPS ATTRIBUTES
 				IF @StepItemType = 'selectboxes'
@@ -310,12 +310,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										),1,1,'')
 						--SELECT @LookupValues
 
-						IF NOT EXISTS (SELECT 1 
-										FROM dbo.Framework_Lookups FMA
-										WHERE FileID = @FileID
-											  AND StepItemID=@StepItemID 
-											  AND LookupName=@StepItemName
-									)
+						--IF NOT EXISTS (SELECT 1 
+						--				FROM dbo.Framework_Lookups FMA
+						--				WHERE FileID = @FileID
+						--					  AND StepItemID=@StepItemID 
+						--					  AND LookupName=@StepItemName
+						--			)
 						 INSERT INTO dbo.Framework_Lookups(FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
 									VALUES (@FileID,@StepItemID,@LookupValues,@StepItemName,1,GETDATE(),@UserCreated,@VersionNum)
 						
@@ -356,12 +356,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 											@UserCreated,
 											@VersionNum	
 									FROM #TMP_Lookups T
-									WHERE NOT EXISTS (SELECT 1 
-														FROM dbo.Framework_Lookups FMA
-														WHERE FileID = @FileID
-															  AND StepItemID= @StepItemID 
-															  AND LookupName= T.LookupName
-													)
+									--WHERE NOT EXISTS (SELECT 1 
+									--					FROM dbo.Framework_Lookups FMA
+									--					WHERE FileID = @FileID
+									--						  AND StepItemID= @StepItemID 
+									--						  AND LookupName= T.LookupName
+									--				)
 
 
 				END
@@ -378,12 +378,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 									FROM #TMP T
 									WHERE Parent_ID <> @ID
 										AND KeyName ='value'
-									AND NOT EXISTS (SELECT 1 
-														FROM dbo.Framework_Lookups FMA
-														WHERE FileID = @FileID
-															  AND StepItemID= @StepItemID 
-															  AND LookupName= T.KeyName
-													)
+									--AND NOT EXISTS (SELECT 1 
+									--					FROM dbo.Framework_Lookups FMA
+									--					WHERE FileID = @FileID
+									--						  AND StepItemID= @StepItemID 
+									--						  AND LookupName= T.KeyName
+									--				)
 
 					UPDATE dbo.Framework_Metafield_Lookups SET VersionNum = @VersionNum
 		
@@ -395,7 +395,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		DROP TABLE IF EXISTS #TMP
 		DROP TABLE IF EXISTS #TMP_Lookups
 
-		SET @StepItemID = NULL
+		SELECT @StepID = NULL, @StepItemID = NULL
 
  END
 

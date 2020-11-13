@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS TAB_Framework_Lookups_history
 drop table IF EXISTS TAB_Framework_Attributes_history
 drop table IF EXISTS TAB_Framework_StepItems_history
 drop table IF EXISTS TAB_Framework_steps_history
-DROP TABLE IF EXISTS TAB_Frameworks_List_history
+--DROP TABLE IF EXISTS TAB_Frameworks_List_history
 */
 
 DECLARE @NewTableName VARCHAR(100)='TAB'
@@ -52,8 +52,8 @@ INSERT INTO @TBL_List(TemplateTableName,KeyColName,ParentTableName,TableType,Con
 VALUES	('Framework_Lookups','LookupValue','Framework_StepItems','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemsID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]) '),
 		('Framework_Attributes','AttributeKey','Framework_StepItems','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]); '),		
 		('Framework_StepItems','StepItemKey','Framework_Steps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
-		('Framework_Steps','StepName','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)'),
-		('Frameworks_List','JSONFileKey','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
+		('Framework_Steps','StepName','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)')
+		--,('Frameworks_List','JSONFileKey','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
 
 	INSERT INTO @TBL_List_Constraints(TemplateTableName)
 		SELECT TemplateTableName FROM @TBL_List	

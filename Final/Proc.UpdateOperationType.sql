@@ -13,7 +13,7 @@ BEGIN
 		BEGIN
 	
 				DROP TABLE IF EXISTS #TMP_OperationType
-				CREATE TABLE #TMP_OperationType(HistoryTableName VARCHAR(100),KeyColName VARCHAR(100),ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50))
+				CREATE TABLE #TMP_OperationType(HistoryTableName VARCHAR(100),CommonID INT,KeyColName VARCHAR(100),ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50))
 
 				DECLARE @ID INT,@TemplateTableName VARCHAR(100),@TableType VARCHAR(100),@KeyColName VARCHAR(100)
 				DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query VARCHAR(MAX), @HistTableSuffix VARCHAR(50)='_history'
@@ -32,23 +32,23 @@ BEGIN
 						WHERE ID = @ID		 
 
 						DROP TABLE IF EXISTS #TMP_Items
-						CREATE TABLE #TMP_Items(KeyName VARCHAR(100),KeyValue VARCHAR(1000),VersionNum INT)
+						CREATE TABLE #TMP_Items(CommonID INT,KeyName VARCHAR(100),KeyValue VARCHAR(1000),VersionNum INT)
 		
 						IF @TableType = 'StepItems'		
-							SET @Query = CONCAT('SELECT KeyName,KeyValue,VersionNum			
+							SET @Query = CONCAT('SELECT CommonID,KeyName,KeyValue,VersionNum			
 													FROM
 													(
-													SELECT DISTINCT Curr.StepItemKey AS KeyName,Curr.StepItemName AS KeyValue,Curr.VersionNum
+													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.StepItemKey AS KeyName,Curr.StepItemName AS KeyValue,Curr.VersionNum
 													FROM ',@TableInitial,'_Framework_StepItems_history Curr
 														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')		
 													)TAB'
 												)		
 						ELSE IF @TableType = 'Attributes'
-							SET @Query = CONCAT('	SELECT KeyName,KeyValue,VersionNum			
+							SET @Query = CONCAT('	SELECT CommonID,KeyName,KeyValue,VersionNum			
 													FROM
 													(
-													SELECT DISTINCT Curr.AttributeKey AS KeyName,Curr.AttributeValue AS KeyValue,Curr.VersionNum
+													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.AttributeKey AS KeyName,Curr.AttributeValue AS KeyValue,Curr.VersionNum
 													FROM ',@TableInitial,'_Framework_Attributes_history Curr	
 														 INNER JOIN ',@TableInitial,'_Framework_StepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
 														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
@@ -56,10 +56,10 @@ BEGIN
 													)TAB' 
 												)
 							ELSE IF @TableType = 'Lookups'
-							SET @Query = CONCAT('SELECT KeyName,KeyValue,VersionNum			
+							SET @Query = CONCAT('SELECT CommonID,KeyName,KeyValue,VersionNum			
 													FROM
 													(
-													SELECT DISTINCT Curr.LookupValue AS KeyName,Curr.LookupName AS KeyValue,Curr.VersionNum
+													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.LookupValue AS KeyName,Curr.LookupName AS KeyValue,Curr.VersionNum
 													FROM ',@TableInitial,'_Framework_Lookups_history Curr	
 														 INNER JOIN ',@TableInitial,'_Framework_StepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
 														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
@@ -69,11 +69,12 @@ BEGIN
 			
 							PRINT @Query
 
-							INSERT INTO #TMP_Items(KeyName,KeyValue,VersionNum)	
+							INSERT INTO #TMP_Items(CommonID,KeyName,KeyValue,VersionNum)	
 								EXEC (@Query)
 
-						INSERT INTO #TMP_OperationType(HistoryTableName,KeyColName,ModuleName,KeyName,OldValue,NewValue,OperationType)
+						INSERT INTO #TMP_OperationType(HistoryTableName,CommonID,KeyColName,ModuleName,KeyName,OldValue,NewValue,OperationType)
 							SELECT CONCAT(@TableInitial,'_',@TemplateTableName,@HistTableSuffix),
+								   CommonID,	
 								   @KeyColName,
 								   @TableType AS ModuleName,
 								   KeyName,
@@ -81,9 +82,9 @@ BEGIN
 								   MAX(CASE WHEN VersionNum = @VersionNum THEN KeyValue END) AS NewValue,
 								   CAST(NULL AS VARCHAR(50)) AS OperationType
 							FROM #TMP_Items
-							GROUP BY KeyName
+							GROUP BY CommonID, KeyName
 
-						SELECT * FROM #TMP_Items
+						--SELECT * FROM #TMP_Items
 						--SELECT * FROM #TMP_OperationType
 						--RETURN
 
@@ -110,11 +111,11 @@ BEGIN
 
 					END		--END OF -> WHILE LOOP
 
-					SELECT * FROM #TMP_OperationType
+					--SELECT * FROM #TMP_OperationType
 
 					--UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
 					SET @Query = STUFF(
-										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''';', CHAR(10))
+										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''' AND StepItemID = ', CommonID, ';', CHAR(10))
 										FROM #TMP_OperationType
 										WHERE OperationType IS NOT NULL 
 										FOR XML PATH('')

@@ -2,25 +2,31 @@
 
 	use junk
 	go	 
+
+TRUNCATE TABLE Frameworks_List
+TRUNCATE TABLE Frameworks_List_HISTORY
 	
 DROP TABLE IF EXISTS TAB_Framework_Lookups
 drop table IF EXISTS TAB_Framework_Attributes
 drop table IF EXISTS TAB_Framework_StepItems
 drop table IF EXISTS TAB_Framework_Steps
-DROP TABLE IF EXISTS TAB_Frameworks_List
+--DROP TABLE IF EXISTS TAB_Frameworks_List
 
  
 DROP TABLE IF EXISTS TAB_Framework_Lookups_history
 drop table IF EXISTS TAB_Framework_Attributes_history
 drop table IF EXISTS TAB_Framework_StepItems_history
 drop table IF EXISTS TAB_Framework_steps_history
-DROP TABLE IF EXISTS TAB_Frameworks_List_history
+--DROP TABLE IF EXISTS TAB_Frameworks_List_history
 
 	SELECT * from dbo.TAB_Frameworks_List
 	SELECT * from dbo.TAB_Frameworks_List_history
 
  IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME ='TAB_Frameworks_List_History')
  SELECT   * FROM TAB_Frameworks_List_History WHERE JSONFileKey = 'TAB' ORDER BY HistoryID DESC
+
+  SELECT * FROM TAB_Framework_Steps_History WHERE FileID = 1 AND StepName = 'General' ORDER BY HistoryID DESC
+
 
 */
  EXEC dbo.PARSEJSONdATA 
@@ -76,7 +82,7 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
     "riskCategory1": {
         "label": "Applicable Factor",
         "optionsLabelPosition": "right",
-        "tableView": false,
+        "tableView": true,
         "defaultValue": {
             "": false,
             "strategic": false,
@@ -104,7 +110,7 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "type": "selectboxes",
         "input": true,
         "inputType": "checkbox",
-        "hideOnChildrenHidden": false,
+        "hideOnChildrenHidden": true,
 		"parent": "Details"
     },
     "riskCategory2": {
@@ -314,13 +320,16 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "tableView": false
     }
 }'
+
+
+		SELECT * from dbo.Frameworks_List
 		SELECT * from dbo.Frameworks_List_history
 		SELECT * from dbo.Framework_Steps_history
 		SELECT * from dbo.Framework_StepItems_history
 		SELECT * from dbo.Framework_Attributes_history
 		SELECT * from dbo.Framework_Lookups_history
 
-		SELECT * from TAB_Frameworks_List
+		 
 		SELECT * FROM  TAB_Framework_Steps
 		SELECT * FROM  TAB_Framework_StepItems
 		SELECT * FROM TAB_Framework_Attributes		
@@ -332,7 +341,7 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
 		--SELECT * FROM  Framework_StepItems
 		--SELECT * FROM  Framework_Steps
 
-		SELECT * from TAB_Frameworks_List_history
+		
 		SELECT * FROM  TAB_Framework_Steps_history
 		SELECT * FROM  TAB_Framework_StepItems_history
 		SELECT * FROM TAB_Framework_Attributes_history		
