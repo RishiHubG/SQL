@@ -388,12 +388,12 @@ SET @inputJSON =
 	--===========================================================================================================================
 
 			
-	DECLARE @TableName SYSNAME = CONCAT(@JSONFileKey,'_Frameworks_List_History')
+	DECLARE @HistTableName SYSNAME = CONCAT(@JSONFileKey,'_Frameworks_List_History')
 	SET @SQL = ''
 	
 	--GET THE FILEID & VERSION NO.: CHECK FOR THE EXISTENCE OF THE JSONKEY		
-	SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
-	SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @FileID = FileID, @VersionNum = VersionNum + 1 FROM ',@TableName,' WHERE JSONFileKey = ''', @JSONFileKey,''' ORDER BY HistoryID DESC');	
+	SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
+	SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @FileID = FileID, @VersionNum = VersionNum + 1 FROM ',@HistTableName,' WHERE JSONFileKey = ''', @JSONFileKey,''' ORDER BY HistoryID DESC');	
 	PRINT @SQL  
 	EXEC sp_executesql @SQL, N'@FileID INT OUTPUT, @VersionNum INT OUTPUT',@FileID OUTPUT, @VersionNum OUTPUT;
 	
@@ -422,7 +422,7 @@ SET @inputJSON =
 
 		SET @FileID = SCOPE_IDENTITY()	
 	END	
-	ELSE
+	ELSE ---RECORDS ALREADY AVAILABLE FOR PREVIOUS VERSIONS		
 		UPDATE dbo.Frameworks_List
 			SET VersionNum = @VersionNum,
 				UserModified = 1,
@@ -480,11 +480,11 @@ SET @inputJSON =
 			
 	
 		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================
-		SET @TableName = CONCAT(@JSONFileKey,'_Framework_Steps_History')
+		SET @HistTableName = CONCAT(@JSONFileKey,'_Framework_Steps_History')
 		SET @SQL = ''
 
-		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
-		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@TableName,' WHERE FileID = ', @FileID,' AND StepName = ''', @StepName,''' ORDER BY HistoryID DESC');	
+		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@HistTableName,' WHERE FileID = ', @FileID,' AND StepName = ''', @StepName,''' ORDER BY HistoryID DESC');	
 		PRINT @SQL  
 		EXEC sp_executesql @SQL, N'@StepID INT OUTPUT',@StepID OUTPUT;
 		
@@ -507,11 +507,11 @@ SET @inputJSON =
 		BEGIN
 				
 				--CHECK FOR THE EXISTENCE OF THE STEPITEM======================================================================================================
-				SET @TableName = CONCAT(@JSONFileKey,'_Framework_StepItems_History')
+				SET @HistTableName = CONCAT(@JSONFileKey,'_Framework_StepItems_History')
 				SET @SQL = ''
 
-				SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))
-				SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@TableName,' WHERE StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY HistoryID DESC');	
+				SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
+				SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@HistTableName,' WHERE StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY HistoryID DESC');	
 				PRINT @SQL  
 				EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT',@StepItemID OUTPUT;
 				
@@ -547,30 +547,24 @@ SET @inputJSON =
 				--	WHERE StepItemKey = @StepItemKey
 			
 				DELETE FROM #TMP WHERE KeyName IN ('Label','type','key') AND Parent_ID = @ID	
-
+								
 				--SELECT * FROM #TMP 
 				--RETURN				
 
-				--GET THE STEPITEM ATTRIBUTES	
-				MERGE dbo.Framework_Attributes FMA
-				USING (SELECT @StepItemID AS StepItemID,StringValue,KeyName,SequenceNo,GETDATE() AS DateCreated,@UserCreated AS UserCreated,@VersionNum AS VersionNum	
+				--GET THE STEPITEM ATTRIBUTES					 				
+					INSERT INTO dbo.Framework_Attributes(FileID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)							
+						SELECT @FileID,@StepItemID,StringValue,KeyName,SequenceNo,GETDATE(),@UserCreated ,@VersionNum
 							FROM #TMP T
-							WHERE Parent_ID = @ID
+							WHERE (Parent_ID = @ID
 								 OR
 								 ParentName = 'validate'	
-						)TAB
-				ON FMA.StepItemID=@StepItemID AND FMA.AttributeKey=TAB.KeyName
-				WHEN MATCHED AND AttributeValue <> TAB.StringValue THEN 
-						UPDATE SET 
-							AttributeValue = TAB.StringValue,
-							DateModified = GETDATE(),
-							UserModified = '1'								
-				WHEN NOT MATCHED BY TARGET 
-					THEN INSERT (FileID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)
-							VALUES (@FileID,TAB.StepItemID,TAB.StringValue,TAB.KeyName,TAB.SequenceNo,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
-				WHEN NOT MATCHED BY SOURCE AND FMA.StepItemID=@StepItemID
-					THEN DELETE;
-						
+								 )
+							    AND NOT EXISTS (SELECT 1 
+												FROM dbo.Framework_Attributes FMA
+												WHERE FMA.StepItemID=@StepItemID 
+													  AND FMA.AttributeKey=T.KeyName
+												)
+					 
 				UPDATE FMA
 					SET VersionNum = @VersionNum
 				FROM dbo.Framework_Attributes FMA
@@ -592,22 +586,15 @@ SET @inputJSON =
 										),1,1,'')
 						--SELECT @LookupValues
 
-						MERGE INTO dbo.Framework_Lookups FML
-						USING (SELECT @StepItemID AS StepItemID,@LookupValues AS LookupValues,@StepItemName AS LookupName,1 AS OrderBy, GETDATE() AS DateCreated,@UserCreated AS UserCreated,@VersionNum AS VersionNum	
-							  )TAB
-						ON FML.StepItemID=TAB.StepItemID AND FML.LookupName=TAB.LookupName
-						WHEN MATCHED AND FML.LookupValue <> TAB.LookupValues THEN 
-								UPDATE SET 
-									LookupValue = TAB.LookupValues,
-									VersionNum = TAB.VersionNum,
-									DateModified = GETDATE(),
-									UserModified = '1'								
-						WHEN NOT MATCHED BY TARGET 
-							THEN INSERT (FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-									VALUES (@FileID,TAB.StepItemID,TAB.LookupValues,TAB.LookupName,TAB.OrderBy,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
-						WHEN NOT MATCHED BY SOURCE AND FML.StepItemID=@StepItemID
-							THEN DELETE;					
-
+						IF NOT EXISTS (SELECT 1 
+										FROM dbo.Framework_Lookups FMA
+										WHERE FileID = @FileID
+											  AND StepItemID=@StepItemID 
+											  AND LookupName=@StepItemName
+									)
+						 INSERT INTO dbo.Framework_Lookups(FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+									VALUES (@FileID,@StepItemID,@LookupValues,@StepItemName,1,GETDATE(),@UserCreated,@VersionNum)
+						
 				END
 				ELSE		
 				IF @StepItemType = 'select'
@@ -632,57 +619,48 @@ SET @inputJSON =
 												   END
 												   END
 
-							 --SELECT * FROM #TMP_Lookups					 
-					
-							MERGE INTO dbo.Framework_Lookups FML
-							USING (SELECT @StepItemID AS StepItemID,
-											  LookupName,
-											  LookupValue,
-											  LookupType,	 		  
-											  Parent_ID,
-											  GETDATE() AS DateCreated,
-											  @UserCreated AS UserCreated,
-											  @VersionNum AS VersionNum	
-										FROM #TMP_Lookups
-								  )TAB
-							ON FML.StepItemID=TAB.StepItemID AND FML.LookupName=TAB.LookupName
-							--WHEN MATCHED AND FML.LookupValue <> TAB.LookupValue THEN 
-							WHEN MATCHED THEN
-									UPDATE SET 
-										LookupValue = TAB.LookupValue,
-										VersionNum = TAB.VersionNum,
-										DateModified = GETDATE(),
-										UserModified = '1'								
-							WHEN NOT MATCHED BY TARGET 
-								THEN INSERT (FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-										VALUES (@FileID,TAB.StepItemID,TAB.LookupValue,TAB.LookupName,TAB.Parent_ID,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
-							WHEN NOT MATCHED BY SOURCE AND FML.StepItemID=@StepItemID
-								THEN DELETE;
-						
+							 --SELECT * FROM #TMP_Lookups	
+							
+						 INSERT INTO dbo.Framework_Lookups(FileID,StepItemID,LookupValue,LookupName,LookupType,OrderBy,DateCreated,UserCreated,VersionNum)
+									SELECT @FileID,
+										   @StepItemID,
+										   LookupValue,
+										   LookupName,
+										   LookupType,	 		  
+											Parent_ID,
+											GETDATE(),
+											@UserCreated,
+											@VersionNum	
+									FROM #TMP_Lookups T
+									WHERE NOT EXISTS (SELECT 1 
+														FROM dbo.Framework_Lookups FMA
+														WHERE FileID = @FileID
+															  AND StepItemID= @StepItemID 
+															  AND LookupName= T.LookupName
+													)
+
+
 				END
-				ELSE	
-						MERGE INTO dbo.Framework_Lookups FML
-						USING (	SELECT @StepItemID AS StepItemID,StringValue AS LookupValue,KeyName,SequenceNo,GETDATE() AS DateCreated,
-								  @UserCreated AS UserCreated,
-								  @VersionNum AS VersionNum	
-								FROM #TMP T
-								WHERE Parent_ID <> @ID
+				ELSE
+								INSERT INTO dbo.Framework_Lookups(FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+									SELECT @FileID,
+										   @StepItemID,
+										   StringValue,
+										   KeyName,
+										   SequenceNo,
+										   GETDATE(),
+										   @UserCreated,
+										   @VersionNum
+									FROM #TMP T
+									WHERE Parent_ID <> @ID
 										AND KeyName ='value'
-							  )TAB
-						ON FML.StepItemID=TAB.StepItemID AND FML.LookupName=TAB.KeyName
-						--WHEN MATCHED AND FML.LookupValue <> TAB.LookupValue THEN 
-						WHEN MATCHED THEN 
-								UPDATE SET 
-									LookupValue = TAB.LookupValue,
-									VersionNum = TAB.VersionNum,
-									DateModified = GETDATE(),
-									UserModified = '1'								
-						WHEN NOT MATCHED BY TARGET 
-							THEN INSERT (FileID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-									VALUES (@FileID,TAB.StepItemID,TAB.LookupValue,TAB.KeyName,TAB.SequenceNo,TAB.DateCreated,TAB.UserCreated,TAB.VersionNum)
-						WHEN NOT MATCHED BY SOURCE AND FML.StepItemID=@StepItemID
-							THEN DELETE;
-					
+									AND NOT EXISTS (SELECT 1 
+														FROM dbo.Framework_Lookups FMA
+														WHERE FileID = @FileID
+															  AND StepItemID= @StepItemID 
+															  AND LookupName= T.KeyName
+													)
+
 					UPDATE dbo.Framework_Metafield_Lookups SET VersionNum = @VersionNum
 		
 		END	--END OF OUTERMOST IF -> IF @StepID IS NOT NULL
@@ -855,6 +833,6 @@ SET @inputJSON =
 		
 		PRINT 'ParseJSONData Completed...'
 			 
-		EXEC dbo.CreateSchemaTables @VersionNum = @VersionNum
+		EXEC dbo.CreateSchemaTables @FileID = @FileID, @VersionNum = @VersionNum
 
 END

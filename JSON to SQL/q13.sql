@@ -1,5 +1,7 @@
  /*
-SELECT * FROM TAB_Framework_StepItems_history
+
+	use junk
+	go	 
 	
 DROP TABLE IF EXISTS TAB_Framework_Lookups
 drop table IF EXISTS TAB_Framework_Attributes
@@ -13,6 +15,12 @@ drop table IF EXISTS TAB_Framework_Attributes_history
 drop table IF EXISTS TAB_Framework_StepItems_history
 drop table IF EXISTS TAB_Framework_steps_history
 DROP TABLE IF EXISTS TAB_Frameworks_List_history
+
+	SELECT * from dbo.TAB_Frameworks_List
+	SELECT * from dbo.TAB_Frameworks_List_history
+
+ IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME ='TAB_Frameworks_List_History')
+ SELECT   * FROM TAB_Frameworks_List_History WHERE JSONFileKey = 'TAB' ORDER BY HistoryID DESC
 
 */
  EXEC dbo.PARSEJSONdATA 
@@ -29,7 +37,7 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "key": "name",
         "type": "textfield",
         "input": false,
-        "hideOnChildrenHidden": false 
+        "hideOnChildrenHidden": true 
     },
     "reference": {
         "label": "Reference",
