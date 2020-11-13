@@ -225,6 +225,22 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					UserModified = 1,
 					DateModified = GETUTCDATE()
 			WHERE StepID = @StepID
+
+			INSERT INTO [dbo].[Framework_Steps_history]
+				   (StepID,
+					FrameworkID,
+					[StepName]
+				   ,[UserCreated]
+				   ,[DateCreated]				   
+				   ,[VersionNum],
+				   PeriodIdentifierID)
+				SELECT	@StepID,
+						@FrameworkID,
+						@StepName,
+						1,
+						GETUTCDATE(),
+						@VersionNum,
+						1
 		--===========================================================================================================================================
 						
 		IF @StepID IS NOT NULL
@@ -235,7 +251,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				SET @SQL = ''
 
 				SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
-				SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@HistTableName,' WHERE StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY HistoryID DESC');	
+				SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@HistTableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY HistoryID DESC');	
 				PRINT @SQL  
 				EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT',@StepItemID OUTPUT;
 				
@@ -263,8 +279,31 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 							UserModified = 1,
 							DateModified = GETUTCDATE()
 					WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
-			
-
+							
+				INSERT INTO [dbo].[Framework_StepItems_history]
+						   (FrameworkID,
+							StepItemID,
+							[StepID]
+						   ,[StepItemName]
+						   ,[StepItemType]
+						   ,[StepItemKey]
+						   ,[OrderBy]
+						   ,[UserCreated]
+						   ,[DateCreated]						  
+						   ,[VersionNum],
+						   PeriodIdentifierID)
+				SELECT @FrameworkID,
+					   @StepItemID,
+					   @StepID,
+					   @StepItemName,
+					   @StepItemType,
+					   @StepItemKey,
+					   (SELECT SequenceNo FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
+					   1,
+					   GETUTCDATE(),
+					   @VersionNum,
+					   1 
+				
 				--IF @StepItemID IS NULL
 				--	SELECT @StepItemID = StepItemID
 				--	FROM dbo.Framework_StepItems
@@ -435,58 +474,6 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				GETUTCDATE(),
 				@VersionNum,
 				@PeriodIdentifierID
-
-		INSERT INTO [dbo].[Framework_Steps_history]
-				   (StepID,
-					FrameworkID,
-					[StepName]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   PeriodIdentifierID)
-		SELECT		StepID,
-					@FrameworkID,
-					[StepName]
-				   ,[UserCreated]
-				   ,[DateCreated]
-				   ,[UserModified]
-				   ,[DateModified]
-				   ,[VersionNum],
-				   @PeriodIdentifierID
-		FROM dbo.[Framework_Steps]
-
-
-				INSERT INTO [dbo].[Framework_StepItems_history]
-						   (FrameworkID,
-							StepItemID,
-							[StepID]
-						   ,[StepItemName]
-						   ,[StepItemType]
-						   ,[StepItemKey]
-						   ,[OrderBy]
-						   ,[UserCreated]
-						   ,[DateCreated]
-						   ,[UserModified]
-						   ,[DateModified]
-						   ,[VersionNum],
-						   PeriodIdentifierID)
-				SELECT @FrameworkID,
-					   StepItemID,
-					  [StepID]
-					,[StepItemName]
-					,[StepItemType]
-					,[StepItemKey]
-					,[OrderBy]
-					,[UserCreated]
-					,[DateCreated]
-					,[UserModified]
-					,[DateModified]
-					,[VersionNum],
-					@PeriodIdentifierID
-				FROM dbo.Framework_StepItems        
-
  
 		INSERT INTO [dbo].[Framework_Attributes_history]
 				   (FrameworkID,
