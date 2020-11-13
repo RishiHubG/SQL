@@ -28,7 +28,7 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
 '{
     "name": {
         "label": "Name",
-        "tableView": false,
+        "tableView": true,
         "validate": {
             "required": true,
             "minLength": 1,
@@ -37,7 +37,7 @@ DROP TABLE IF EXISTS TAB_Frameworks_List_history
         "key": "name",
         "type": "textfield",
         "input": false,
-        "hideOnChildrenHidden": true 
+        "hideOnChildrenHidden": false 
     },
     "reference": {
         "label": "Reference",

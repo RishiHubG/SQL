@@ -559,11 +559,11 @@ SET @inputJSON =
 								 OR
 								 ParentName = 'validate'	
 								 )
-							    AND NOT EXISTS (SELECT 1 
-												FROM dbo.Framework_Attributes FMA
-												WHERE FMA.StepItemID=@StepItemID 
-													  AND FMA.AttributeKey=T.KeyName
-												)
+						AND NOT EXISTS (SELECT 1 
+										FROM dbo.Framework_Attributes FMA
+										WHERE FMA.StepItemID=@StepItemID 
+												AND FMA.AttributeKey=T.KeyName
+										)
 					 
 				UPDATE FMA
 					SET VersionNum = @VersionNum

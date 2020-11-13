@@ -33,7 +33,7 @@ DECLARE @ID INT, @TemplateTableName VARCHAR(100),@ParentTableName VARCHAR(100), 
 DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500),KeyColName VARCHAR(100), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX),TableType VARCHAR(100))
 DECLARE @TBL_List_Constraints TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX))
 DECLARE @ConstraintSQL NVARCHAR(MAX),@HistoryTable VARCHAR(50)= '_history',@TableCheck VARCHAR(500)
-DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100)
+DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100),@KeyColName VARCHAR(100)
 
 
 	--GET THE CURRENT VERSION NO.: THIS WILL ACTUALLY BE PASSED FROM THE PREVIOUS SCRIPT/CODE:ParseJSON_v2.sql
@@ -52,8 +52,8 @@ INSERT INTO @TBL_List(TemplateTableName,KeyColName,ParentTableName,TableType,Con
 VALUES	('Framework_Lookups','LookupValue','Framework_StepItems','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemsID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]) '),
 		('Framework_Attributes','AttributeKey','Framework_StepItems','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]); '),		
 		('Framework_StepItems','StepItemKey','Framework_Steps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
-		('Framework_Steps','','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)'),
-		('Frameworks_List','','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
+		('Framework_Steps','StepName','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)'),
+		('Frameworks_List','JSONFileKey','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
 
 	INSERT INTO @TBL_List_Constraints(TemplateTableName)
 		SELECT TemplateTableName FROM @TBL_List	
@@ -79,7 +79,8 @@ BEGIN
 		   @NewTableName = NewTableName,
 		   @ParentTableName = ParentTableName,
 		   @ConstraintSQL = ConstraintSQL,
-		   @TableType = TableType
+		   @TableType = TableType,
+		   @KeyColName = KeyColName
 	FROM @TBL_List 
 	WHERE ID = @ID
 
@@ -106,9 +107,10 @@ BEGIN
 		FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM dbo.', @TemplateTableName) , NULL, 1);		
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
-
+		
 		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,'(', @cols, ') ', CHAR(10))		
-		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,';', CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE FileID=',@FileID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
 
@@ -160,17 +162,19 @@ BEGIN
 		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SET CurrentIdentifier = 0', CHAR(10))
 		SET @SQL = CONCAT(@SQL, 'WHERE FileID = ',@FileID, ' AND VersionNum < ',@VersionNum, CHAR(10))
+		SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%Attributes%'' OR ''',@NewTableName,''' LIKE ''%Lookups%'' ', CHAR(10))
 		PRINT @SQL
 		EXEC sp_executesql @SQL
 
 		SET @SQL = ''
 		
 		--UPDATE VERSION NUMBER (THIS APPLIES ONLY TO LIST/STEPS/STEPITEMS TABLES)			
-		--SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
-		--SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
-		--SET @SQL = CONCAT(@SQL, 'WHERE FileID = ',@FileID, CHAR(10))
-		--PRINT @SQL
-		--EXEC sp_executesql @SQL		
+		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
+		SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE FileID = ',@FileID, CHAR(10))
+		SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%List%'' OR ''',@NewTableName,''' LIKE ''%Steps%'' OR ''',@NewTableName,''' LIKE ''%StepItems%'' ', CHAR(10))
+		PRINT @SQL
+		EXEC sp_executesql @SQL		
 		---------------------------------------------------------------------------------------------------------------------------
 		--RETURN
 			
