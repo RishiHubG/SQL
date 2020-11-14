@@ -158,23 +158,22 @@ BEGIN
 
 		SET @SQL = ''
 
-		--UPDATE CURRENT IDENTIFIER IN HISTORY TABLE FOR OLDER VERSIONS( THIS APPLIES TO ATTRIBUTES/LOOKUPS ONLY AS WE DO NOT MAINTAIN DIFFERENT VERSION RECORDS FOR LIST/STEPS/STEPITEMS TABLES)
+		--UPDATE CURRENT IDENTIFIER IN HISTORY TABLE FOR OLDER VERSIONS
 		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SET PeriodIdentifierID = 0', CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, ' AND VersionNum < ',@VersionNum, CHAR(10))
-		--SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%Attributes%'' OR ''',@NewTableName,''' LIKE ''%Lookups%'' ', CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, ' AND VersionNum < ',@VersionNum, CHAR(10))		
 		PRINT @SQL
 		EXEC sp_executesql @SQL
 
 		SET @SQL = ''
 		
 		--UPDATE VERSION NUMBER (THIS APPLIES ONLY TO LIST/STEPS/STEPITEMS TABLES)			
-		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
-		SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, CHAR(10))
-		SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%List%'' OR ''',@NewTableName,''' LIKE ''%Steps%'' OR ''',@NewTableName,''' LIKE ''%StepItems%'' ', CHAR(10))
-		PRINT @SQL
-		EXEC sp_executesql @SQL		
+		--SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
+		--SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
+		--SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, CHAR(10))
+		--SET @SQL = CONCAT(@SQL, ' AND ''',@NewTableName,''' LIKE ''%List%'' OR ''',@NewTableName,''' LIKE ''%Steps%'' OR ''',@NewTableName,''' LIKE ''%StepItems%'' ', CHAR(10))
+		--PRINT @SQL
+		--EXEC sp_executesql @SQL		
 		---------------------------------------------------------------------------------------------------------------------------
 		--RETURN
 			
@@ -186,7 +185,7 @@ END
 		
 		--UPDATE OPERATION TYPE FLAG IN FRAMEWORK HISTORY TABLES==============================================
 		IF @VersionNum > 1
-			EXEC dbo.UpdateHistoryOperationType @TableInitial = @TableInitial, @VersionNum = @VersionNum		
+			EXEC dbo.UpdateHistoryOperationType @FrameworkID = @FrameworkID, @TableInitial = @TableInitial, @VersionNum = @VersionNum		
 		--====================================================================================================
 
 		 --SELECT * FROM @TBL		 	 

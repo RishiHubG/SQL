@@ -32,20 +32,7 @@ drop table IF EXISTS TAB_Framework_steps_history
  EXEC dbo.PARSEJSONdATA 
   @inputJSON =
 '{
-    "name": {
-        "label": "Name",
-        "tableView": false,
-        "validate": {
-            "required": true,
-            "minLength": 1,
-            "maxLength": 500
-        },
-        "key": "name",
-        "type": "textfield",
-        "input": false,
-        "hideOnChildrenHidden": false,
-		"parent": "General"
-    },
+    
     "reference": {
         "label": "Reference",
         "tableView": true,
@@ -347,4 +334,7 @@ drop table IF EXISTS TAB_Framework_steps_history
 		SELECT * FROM TAB_Framework_Attributes_history		
 		SELECT * FROM TAB_Framework_Lookups_history
 
+		SELECT * FROM dbo.TAB_Framework_Attributes_history WHERE VersionNum=4
+		EXEC dbo.UpdateHistoryOperationType @FrameworkID=1, @TableInitial ='TAB',@VersionNum=4
+		
 */
