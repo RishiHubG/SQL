@@ -12,7 +12,7 @@ drop table IF EXISTS TAB_Framework_StepItems
 drop table IF EXISTS TAB_Framework_Steps
 --DROP TABLE IF EXISTS TAB_Frameworks_List
 
- 
+  
 DROP TABLE IF EXISTS TAB_Framework_Lookups_history
 drop table IF EXISTS TAB_Framework_Attributes_history
 drop table IF EXISTS TAB_Framework_StepItems_history
@@ -20,7 +20,8 @@ drop table IF EXISTS TAB_Framework_steps_history
 --DROP TABLE IF EXISTS TAB_Frameworks_List_history
 
 	SELECT * from dbo.TAB_Frameworks_List
-	SELECT * from dbo.TAB_Frameworks_List_history
+	SELECT * from dbo.TAB_Framework_Attributes_history
+	SELECT * FROM Frameworks_List
 
  IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME ='TAB_Frameworks_List_History')
  SELECT   * FROM TAB_Frameworks_List_History WHERE JSONFileKey = 'TAB' ORDER BY HistoryID DESC
@@ -32,7 +33,20 @@ drop table IF EXISTS TAB_Framework_steps_history
  EXEC dbo.PARSEJSONdATA 
   @inputJSON =
 '{
-    
+    "name": {
+        "label": "Name",
+        "tableView": true,
+        "validate": {
+            "required": true,
+            "minLength": 1,
+            "maxLength": 500
+        },
+        "key": "name",
+        "type": "textfield",
+        "input": false,
+        "hideOnChildrenHidden": false,
+		"parent": "General"
+    },
     "reference": {
         "label": "Reference",
         "tableView": true,
@@ -327,6 +341,7 @@ drop table IF EXISTS TAB_Framework_steps_history
 		--SELECT * FROM Framework_Attributes
 		--SELECT * FROM  Framework_StepItems
 		--SELECT * FROM  Framework_Steps
+		--SELECT * FROM  Framework_Steps_history
 
 		
 		SELECT * FROM  TAB_Framework_Steps_history

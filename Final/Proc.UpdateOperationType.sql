@@ -126,19 +126,19 @@ BEGIN
 
 					SELECT * FROM #TMP_OperationType
 
-					SELECT CONCAT('INSERT INTO ',HistoryTableName,'(UserCreated,DateCreated,VersionNum,PeriodIdentifierID,OperationType,FrameworkID,StepItemID,AttributeKey)',CHAR(10),
-										' SELECT 1,','''',GETUTCDATE(),'''',',',@VersionNum,',1,''DELETE'',',@FrameworkID,',',CommonID,',''',KeyName,''';'								
-								)
-					FROM #TMP_OperationType
-					WHERE OperationType ='DELETE'
-						  AND HistoryTableName LIKE '%Framework_Attributes_History%'
+					--SELECT CONCAT('INSERT INTO ',HistoryTableName,'(UserCreated,DateCreated,VersionNum,PeriodIdentifierID,OperationType,FrameworkID,StepItemID,AttributeKey)',CHAR(10),
+					--					' SELECT 1,','''',GETUTCDATE(),'''',',',@VersionNum,',1,''DELETE'',',@FrameworkID,',',CommonID,',''',KeyName,''';'								
+					--			)
+					--FROM #TMP_OperationType
+					--WHERE OperationType ='DELETE'
+					--	  AND HistoryTableName LIKE '%Framework_Attributes_History%'
 					
-					SELECT CONCAT('INSERT INTO ',HistoryTableName,'(UserCreated,DateCreated,VersionNum,PeriodIdentifierID,OperationType,FrameworkID,StepItemID,StepID,StepItemName)',CHAR(10),
-										' SELECT 1,','''',GETUTCDATE(),'''',',',@VersionNum,',1,''DELETE'',',@FrameworkID,',',CommonID,',<StepID>,''',KeyName,''';'								
-								 )
-					FROM #TMP_OperationType T						 
-					WHERE OperationType ='DELETE'
-						  AND HistoryTableName LIKE '%Framework_StepItems_History%'
+					--SELECT CONCAT('INSERT INTO ',HistoryTableName,'(UserCreated,DateCreated,VersionNum,PeriodIdentifierID,OperationType,FrameworkID,StepItemID,StepID,StepItemName)',CHAR(10),
+					--					' SELECT 1,','''',GETUTCDATE(),'''',',',@VersionNum,',1,''DELETE'',',@FrameworkID,',',CommonID,',<StepID>,''',KeyName,''';'								
+					--			 )
+					--FROM #TMP_OperationType T						 
+					--WHERE OperationType ='DELETE'
+					--	  AND HistoryTableName LIKE '%Framework_StepItems_History%'
 
 					--UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
 					SET @Query = STUFF(

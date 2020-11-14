@@ -43,7 +43,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (2)-- (2,6),7
+	   AND Element_ID IN (2,6)-- (2,6),7
 	    
  
  --SELECT * FROM #TMP_Objects
@@ -60,7 +60,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@StepItemKey VARCHAR(100),
 			@Name VARCHAR(100) = 'TAB',
 			@SQL NVARCHAR(MAX),
-			@FrameworkID INT
+			@FrameworkID INT,
+			@IsAvailable BIT
 	 	
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
 	 DROP TABLE IF EXISTS TAB_DATA -- REMOVE THIS LATER, NOT REQUIRED
@@ -109,39 +110,43 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	--===========================================================================================================================
 
 			
-	DECLARE @HistTableName SYSNAME = 'Frameworks_List_History'
+	DECLARE @TableName SYSNAME = 'dbo.Frameworks_List'
 	SET @SQL = ''
 	
 	--GET THE FrameworkID & VERSION NO.: CHECK FOR THE EXISTENCE OF THE JSONKEY		
-	SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
-	SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @FrameworkID = FrameworkID, @VersionNum = VersionNum + 1 FROM ',@HistTableName,' WHERE Name = ''', @Name,''' ORDER BY HistoryID DESC');	
-	PRINT @SQL  
-	EXEC sp_executesql @SQL, N'@FrameworkID INT OUTPUT, @VersionNum INT OUTPUT',@FrameworkID OUTPUT, @VersionNum OUTPUT;
-	
-	--SELECT @VersionNum= MAX(VersionNum) + 1 FROM dbo.Frameworks_List_history WHERE JSONFile = @Name
-	
-	--SELECT @VersionNum
-	--RETURN
+		--SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10)) --ASSUSMPTION:Frameworks_List IS ALREADY AVAILABLE
+		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM ',@TableName,')', CHAR(10))	--ASSUSMPTION:Frameworks_List IS ALREADY AVAILABLE
+		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @FrameworkID = FrameworkID, @VersionNum = VersionNum + 1 FROM ',@TableName,' WHERE Name = ''', @Name,''' ORDER BY FrameworkID DESC');	
+		SET @SQL = CONCAT(@SQL,' IF @FrameworkID IS NULL ')
+		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SELECT @FrameworkID = MAX(FrameworkID) + 1,@VersionNum = MAX(VersionNum) + 1 FROM ',@TableName);
+		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' ELSE SELECT @FrameworkID = 1, @IsAvailable = NULL, @VersionNum = 1;', CHAR(10))	--FIRST RECORD
+		PRINT @SQL  
+		EXEC sp_executesql @SQL, N'@FrameworkID INT OUTPUT, @VersionNum INT OUTPUT, @IsAvailable BIT OUTPUT',@FrameworkID OUTPUT, @VersionNum OUTPUT,@IsAvailable OUTPUT;
 
-	--SELECT TOP 1 @VersionNum = VersionNum + 1
-	--FROM dbo.Frameworks_List
-	--WHERE Name = @Name		  
-	--ORDER BY VersionNum DESC
-	
 	IF @VersionNum IS NULL
 		SET @VersionNum = 1
 
-	--INSERT NEW JSONKEY IF IT DOES NOT EXIST=====================================================================================		
-	IF @FrameworkID IS NULL
+	--INSERT NEW JSONKEY(NAME) IF IT DOES NOT EXIST=====================================================================================		
+	IF @IsAvailable IS NULL OR @IsAvailable = 0	
 	BEGIN
-		INSERT INTO dbo.Frameworks_List (Name,FrameworkFile,UserCreated,DateCreated,VersionNum)
-			SELECT  @Name,	
+		SET IDENTITY_INSERT dbo.Frameworks_List ON;
+
+		INSERT INTO dbo.Frameworks_List (FrameworkID,Name,FrameworkFile,UserCreated,DateCreated,VersionNum)
+			SELECT  @FrameworkID,
+					@Name,	
 					@inputJSON,		
 					@UserCreated,
 					GETUTCDATE(),
 					@VersionNum
 
-		SET @FrameworkID = SCOPE_IDENTITY()	
+		--SET @FrameworkID = SCOPE_IDENTITY()	
+		SET IDENTITY_INSERT dbo.Frameworks_List OFF;
 	END	
 	ELSE ---RECORDS ALREADY AVAILABLE FOR PREVIOUS VERSIONS		
 		UPDATE dbo.Frameworks_List
@@ -204,20 +209,39 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			
 	
 		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================
-		SET @HistTableName = CONCAT(@Name,'_Framework_Steps_History')
+		--SET @HistTableName = CONCAT(@Name,'_Framework_Steps_History')		
 		SET @SQL = ''
 
-		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
-		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@HistTableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,''' ORDER BY HistoryID DESC');	
+		--SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
+		--SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@HistTableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,''' ORDER BY HistoryID DESC');	
+		--PRINT @SQL  
+		--EXEC sp_executesql @SQL, N'@StepID INT OUTPUT',@StepID OUTPUT;
+
+		SET @TableName = CONCAT(@Name,'_Framework_Steps')
+
+		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
+		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@TableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,''' ORDER BY StepID DESC;', CHAR(10));				
+		SET @SQL = CONCAT(@SQL,' IF @StepID IS NULL ')
+		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TableName);	
+		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' ELSE SELECT @StepID = 1, @IsAvailable = NULL;', CHAR(10))		--FIRST RECORD
 		PRINT @SQL  
-		EXEC sp_executesql @SQL, N'@StepID INT OUTPUT',@StepID OUTPUT;
+		EXEC sp_executesql @SQL, N'@StepID INT OUTPUT,@IsAvailable BIT OUTPUT',@StepID OUTPUT,@IsAvailable OUTPUT;
 		
-		IF @StepID IS NULL
-		BEGIN
-			INSERT INTO dbo.Framework_Steps (FrameworkID,StepName,DateCreated,UserCreated,VersionNum)
-				SELECT @FrameworkID,@StepName,GETUTCDATE(),@UserCreated,@VersionNum	
+		IF @IsAvailable IS NULL OR @IsAvailable = 0		
+		BEGIN			
+				SET IDENTITY_INSERT dbo.Framework_Steps ON;
+
+				INSERT INTO dbo.Framework_Steps (StepID,FrameworkID,StepName,DateCreated,UserCreated,VersionNum)
+				SELECT @StepID,@FrameworkID,@StepName,GETUTCDATE(),@UserCreated,@VersionNum	
 			
-			SET @StepID = SCOPE_IDENTITY()
+			--SET @StepID = SCOPE_IDENTITY()
+			SET IDENTITY_INSERT dbo.Framework_Steps OFF;
 		END
 		ELSE
 			UPDATE dbo.Framework_Steps
@@ -247,18 +271,39 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		BEGIN
 				
 				--CHECK FOR THE EXISTENCE OF THE STEPITEM======================================================================================================
-				SET @HistTableName = CONCAT(@Name,'_Framework_StepItems_History')
+				--SET @HistTableName = CONCAT(@Name,'_Framework_StepItems_History')
 				SET @SQL = ''
 
-				SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
-				SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@HistTableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY HistoryID DESC');	
-				PRINT @SQL  
-				EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT',@StepItemID OUTPUT;
-				
-				IF @StepItemID IS NULL
-				BEGIN
-					INSERT INTO dbo.Framework_StepItems (FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
-						SELECT  @FrameworkID,
+				--SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
+				--SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@HistTableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY HistoryID DESC');	
+				--PRINT @SQL  
+				--EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT',@StepItemID OUTPUT;
+			
+			SET @IsAvailable = NULL
+			SET @TableName = CONCAT(@Name,'_Framework_StepItems')
+
+			SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
+			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@TableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY StepItemID DESC');	
+			SET @SQL = CONCAT(@SQL,' IF @StepItemID IS NULL ')
+			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = MAX(StepItemID) + 1 FROM ',@TableName);	
+			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' ELSE SELECT @StepItemID = 1, @IsAvailable = NULL;', CHAR(10))	--FIRST RECORD
+			PRINT @SQL  
+			EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT,@IsAvailable BIT OUTPUT',@StepItemID OUTPUT,@IsAvailable OUTPUT;
+		
+		IF @IsAvailable IS NULL OR @IsAvailable = 0
+		BEGIN
+
+					SET IDENTITY_INSERT dbo.Framework_StepItems ON;
+
+					INSERT INTO dbo.Framework_StepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
+						SELECT  @StepItemID,
+								@FrameworkID,
 								@StepID,								
 								@StepItemName,
 								@StepItemType,
@@ -266,19 +311,20 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								(SELECT SequenceNo FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
 								GETUTCDATE(),@UserCreated,@VersionNum	
 
-					SET @StepItemID = SCOPE_IDENTITY()
-				END
-				ELSE IF NOT EXISTS(SELECT 1 FROM Framework_StepItems WHERE StepItemKey = @StepItemKey AND StepID = @StepID) --KEY MOVED TO A DIFFERENT STEP
-						UPDATE dbo.Framework_StepItems
-							SET StepID = @StepID,
-								VersionNum = @VersionNum
-						WHERE StepItemKey = @StepItemKey
-				ELSE
-					UPDATE dbo.Framework_StepItems
-						SET VersionNum = @VersionNum,
-							UserModified = 1,
-							DateModified = GETUTCDATE()
-					WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
+					--SET @StepItemID = SCOPE_IDENTITY()
+					SET IDENTITY_INSERT dbo.Framework_StepItems OFF;
+		END
+		ELSE IF NOT EXISTS(SELECT 1 FROM Framework_StepItems WHERE StepItemKey = @StepItemKey AND StepID = @StepID) --KEY MOVED TO A DIFFERENT STEP
+				UPDATE dbo.Framework_StepItems
+					SET StepID = @StepID,
+						VersionNum = @VersionNum
+				WHERE StepItemKey = @StepItemKey
+		ELSE
+			UPDATE dbo.Framework_StepItems
+				SET VersionNum = @VersionNum,
+					UserModified = 1,
+					DateModified = GETUTCDATE()
+			WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
 							
 				INSERT INTO [dbo].[Framework_StepItems_history]
 						   (FrameworkID,

@@ -78,3 +78,6 @@ GETUTCDATE() instead of GETDATE()
 Add the 8 static columns after HistoryID
 Add the 5 static columns after ID
 
+TO DO:
+1. DELETE operationType: How will it work in history table case a step item or a step is removed is removed? 
+

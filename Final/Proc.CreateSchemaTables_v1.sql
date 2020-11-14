@@ -86,7 +86,7 @@ BEGIN
 
 		 --GENERATE COLUMNS LIST FOR TEMPLATE TABLE
 		 -----------------------------------------------------------------------------------------------------------------------
-		 SELECT @cols += N', [' + [NAME] + '] ' + system_type_name + case is_nullable WHEN 1 THEN ' NULL' ELSE ' NOT NULL' END
+		 SELECT @cols = CONCAT(@cols,N', [' , [NAME], '] ' , system_type_name , CASE WHEN is_identity_column = 1 THEN ' IDENTITY(1,1) PRIMARY KEY ' END,case is_nullable WHEN 1 THEN ' NULL' ELSE ' NOT NULL' END)
 		 FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.'+ @TemplateTableName , NULL, 1);
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
@@ -111,6 +111,7 @@ BEGIN
 		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,'(', @cols, ') ', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))
 		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
+		SET @SQL = CONCAT('SET IDENTITY_INSERT ',@NewTableName,' ON ;', CHAR(10),@SQL)
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
 
@@ -126,8 +127,7 @@ BEGIN
 
 		 --GENERATE COLUMNS LIST FOR HISTORY TEMPLATE TABLE
 		 -----------------------------------------------------------------------------------------------------------------------
-		 SELECT @cols += N', [' + name + '] ' + system_type_name + case is_nullable when 1 then ' NULL' else ' NOT NULL' end + 
-						CASE WHEN is_identity_column = 1 THEN ' IDENTITY(1,1) ' ELSE '' END
+		 SELECT @cols = CONCAT(@cols,N', [' + name + '] ', system_type_name,  CASE WHEN is_identity_column = 1 THEN ' IDENTITY(1,1) PRIMARY KEY ' END,case is_nullable when 1 then ' NULL' else ' NOT NULL' end)
 		 FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM dbo.', @TemplateTableName,@HistoryTable) , NULL, 1);
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
