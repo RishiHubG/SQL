@@ -192,31 +192,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			   @StepItemName = (SELECT StringValue FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
 			   @StepItemKey = (SELECT StringValue FROM #TMP WHERE KeyName ='key' AND Parent_ID = @ID),	
 			   @StepName  = (SELECT StringValue FROM #TMP WHERE KeyName ='Parent' AND Parent_ID = @ID)	  
-			   
-			    
-			   			    
-		--SELECT TOP 1 @VersionNum = FMS.VersionNum + 1
-		--FROM dbo.Framework_Metafield_Steps FMS
-		--	 INNER JOIN dbo.Framework_Metafield FM ON FM.StepID = FMS.StepID
-		--WHERE FMS.StepName = @StepName
-		--	  AND FM.StepItemKey = @StepItemKey
-		--ORDER BY FMS.VersionNum DESC
-		
-		--IF @VersionNum IS NULL
-		--	SET @VersionNum = 1
-		--SELECT @VersionNum
-		--RETURN
-			
+			   			    		
 	
-		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================
-		--SET @HistTableName = CONCAT(@Name,'_Framework_Steps_History')		
+		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================		
 		SET @SQL = ''
-
-		--SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@HistTableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,''' ORDER BY HistoryID DESC');	
-		--PRINT @SQL  
-		--EXEC sp_executesql @SQL, N'@StepID INT OUTPUT',@StepID OUTPUT;
-
 		SET @TableName = CONCAT(@Name,'_Framework_Steps')
 
 		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
@@ -242,13 +221,6 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			
 			--SET @StepID = SCOPE_IDENTITY()
 			SET IDENTITY_INSERT dbo.Framework_Steps OFF;
-		END
-		ELSE
-			UPDATE dbo.Framework_Steps
-				SET VersionNum = @VersionNum,
-					UserModified = 1,
-					DateModified = GETUTCDATE()
-			WHERE StepID = @StepID
 
 			INSERT INTO [dbo].[Framework_Steps_history]
 				   (StepID,
@@ -265,20 +237,21 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						GETUTCDATE(),
 						@VersionNum,
 						1
+
+		END
+		ELSE
+			UPDATE dbo.Framework_Steps
+				SET VersionNum = @VersionNum,
+					UserModified = 1,
+					DateModified = GETUTCDATE()
+			WHERE StepID = @StepID			
 		--===========================================================================================================================================
 						
 		IF @StepID IS NOT NULL
 		BEGIN
 				
-				--CHECK FOR THE EXISTENCE OF THE STEPITEM======================================================================================================
-				--SET @HistTableName = CONCAT(@Name,'_Framework_StepItems_History')
-				SET @SQL = ''
-
-				--SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTableName,''')', CHAR(10))
-				--SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@HistTableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY HistoryID DESC');	
-				--PRINT @SQL  
-				--EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT',@StepItemID OUTPUT;
-			
+			--CHECK FOR THE EXISTENCE OF THE STEPITEM======================================================================================================
+			SET @SQL = ''
 			SET @IsAvailable = NULL
 			SET @TableName = CONCAT(@Name,'_Framework_StepItems')
 
