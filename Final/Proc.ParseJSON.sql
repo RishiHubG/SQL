@@ -61,7 +61,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@Name VARCHAR(100) = 'TAB',
 			@SQL NVARCHAR(MAX),
 			@FrameworkID INT,
-			@IsAvailable BIT
+			@IsAvailable BIT,
+			@TemplateTableName SYSNAME
 	 	
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
 	 DROP TABLE IF EXISTS TAB_DATA -- REMOVE THIS LATER, NOT REQUIRED
@@ -195,10 +196,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			   			    		
 	
 		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================		
-		SET @SQL = ''
-		SET @TableName = CONCAT(@Name,'_Framework_Steps')
-
-		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
+		SELECT @SQL = '', @StepID= NULL,@IsAvailable = NULL
+		SET @TemplateTableName = 'Framework_Steps'
+		SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
+		
+		SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
 		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@TableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,''' ORDER BY StepID DESC;', CHAR(10));				
@@ -208,20 +210,26 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TableName);	
 		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
-		SET @SQL = CONCAT(@SQL,' ELSE SELECT @StepID = 1, @IsAvailable = NULL;', CHAR(10))		--FIRST RECORD
+		SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))		--FIRST VERSION
+		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM dbo.',@TemplateTableName,')', CHAR(10))	--PROCESSING MULTIPLE STEPS IN THE VERY FIRST VERSION
+		SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TemplateTableName,CHAR(10));	
+		SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SELECT @StepID = 1, @IsAvailable = NULL;', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
 		PRINT @SQL  
 		EXEC sp_executesql @SQL, N'@StepID INT OUTPUT,@IsAvailable BIT OUTPUT',@StepID OUTPUT,@IsAvailable OUTPUT;
 		
 		IF @IsAvailable IS NULL OR @IsAvailable = 0		
 		BEGIN			
 				SET IDENTITY_INSERT dbo.Framework_Steps ON;
-
+				
 				INSERT INTO dbo.Framework_Steps (StepID,FrameworkID,StepName,DateCreated,UserCreated,VersionNum)
-				SELECT @StepID,@FrameworkID,@StepName,GETUTCDATE(),@UserCreated,@VersionNum	
+					SELECT @StepID,@FrameworkID,@StepName,GETUTCDATE(),@UserCreated,@VersionNum	
 			
 			--SET @StepID = SCOPE_IDENTITY()
 			SET IDENTITY_INSERT dbo.Framework_Steps OFF;
-
+			
 			INSERT INTO [dbo].[Framework_Steps_history]
 				   (StepID,
 					FrameworkID,
@@ -251,21 +259,27 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		BEGIN
 				
 			--CHECK FOR THE EXISTENCE OF THE STEPITEM======================================================================================================
-			SET @SQL = ''
-			SET @IsAvailable = NULL
-			SET @TableName = CONCAT(@Name,'_Framework_StepItems')
+			SELECT @SQL = '', @StepItemID= NULL,@IsAvailable = NULL
+			SET @TemplateTableName = 'Framework_StepItems'
+			SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
 
 			SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
 			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
-			SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@TableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY StepItemID DESC');	
+			SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@TableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY StepItemID DESC;', CHAR(10));	
 			SET @SQL = CONCAT(@SQL,' IF @StepItemID IS NULL ')
 			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = MAX(StepItemID) + 1 FROM ',@TableName);	
 			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
-			SET @SQL = CONCAT(@SQL,' ELSE SELECT @StepItemID = 1, @IsAvailable = NULL;', CHAR(10))	--FIRST RECORD
+			SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))		--FIRST VERSION
+			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM dbo.',@TemplateTableName,')', CHAR(10))	--PROCESSING MULTIPLE STEPS IN THE VERY FIRST VERSION
+			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = MAX(StepItemID) + 1 FROM ',@TemplateTableName,CHAR(10));	
+			SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = 1, @IsAvailable = NULL;', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))			
 			PRINT @SQL  
 			EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT,@IsAvailable BIT OUTPUT',@StepItemID OUTPUT,@IsAvailable OUTPUT;
 		
@@ -453,8 +467,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		DROP TABLE IF EXISTS #TMP
 		DROP TABLE IF EXISTS #TMP_Lookups
 
-		SELECT @StepID = NULL, @StepItemID = NULL
-
+		SELECT @StepID = NULL, @StepItemID = NULL, @IsAvailable = NULL, @SQL = NULL, @TemplateTableName = NULL
+		
  END
 
 		--SELECT * from dbo.Frameworks_List
