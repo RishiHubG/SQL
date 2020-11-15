@@ -43,7 +43,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (2,6)-- (2,6),7
+	   AND Element_ID IN (2,6,7)-- (2,6),7
 	    
  
  --SELECT * FROM #TMP_Objects
@@ -62,7 +62,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@SQL NVARCHAR(MAX),
 			@FrameworkID INT,
 			@IsAvailable BIT,
-			@TemplateTableName SYSNAME
+			@TemplateTableName SYSNAME,
+			@Counter INT = 1
 	 	
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
 	 DROP TABLE IF EXISTS TAB_DATA -- REMOVE THIS LATER, NOT REQUIRED
@@ -207,6 +208,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SET @SQL = CONCAT(@SQL,' IF @StepID IS NULL ')
 		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM dbo.',@TemplateTableName,')', CHAR(10))	--PROCESSING MULTIPLE STEPS
+		SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TemplateTableName,CHAR(10));	
+		SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TableName);	
 		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
@@ -270,6 +274,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			SET @SQL = CONCAT(@SQL,' IF @StepItemID IS NULL ')
 			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM dbo.',@TemplateTableName,')', CHAR(10))	--PROCESSING MULTIPLE STEPS
+			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = MAX(StepItemID) + 1 FROM ',@TemplateTableName,CHAR(10));	
+			SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = MAX(StepItemID) + 1 FROM ',@TableName);	
 			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
@@ -300,20 +307,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 					--SET @StepItemID = SCOPE_IDENTITY()
 					SET IDENTITY_INSERT dbo.Framework_StepItems OFF;
-		END
-		ELSE IF NOT EXISTS(SELECT 1 FROM Framework_StepItems WHERE StepItemKey = @StepItemKey AND StepID = @StepID) --KEY MOVED TO A DIFFERENT STEP
-				UPDATE dbo.Framework_StepItems
-					SET StepID = @StepID,
-						VersionNum = @VersionNum
-				WHERE StepItemKey = @StepItemKey
-		ELSE
-			UPDATE dbo.Framework_StepItems
-				SET VersionNum = @VersionNum,
-					UserModified = 1,
-					DateModified = GETUTCDATE()
-			WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
-							
-				INSERT INTO [dbo].[Framework_StepItems_history]
+
+					INSERT INTO [dbo].[Framework_StepItems_history]
 						   (FrameworkID,
 							StepItemID,
 							[StepID]
@@ -336,6 +331,20 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					   GETUTCDATE(),
 					   @VersionNum,
 					   1 
+				
+		END
+		ELSE IF NOT EXISTS(SELECT 1 FROM Framework_StepItems WHERE StepItemKey = @StepItemKey AND StepID = @StepID) --KEY MOVED TO A DIFFERENT STEP
+				UPDATE dbo.Framework_StepItems
+					SET StepID = @StepID,
+						VersionNum = @VersionNum
+				WHERE StepItemKey = @StepItemKey
+		ELSE
+			UPDATE dbo.Framework_StepItems
+				SET VersionNum = @VersionNum,
+					UserModified = 1,
+					DateModified = GETUTCDATE()
+			WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
+							
 				
 				--IF @StepItemID IS NULL
 				--	SELECT @StepItemID = StepItemID
