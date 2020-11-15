@@ -27,7 +27,8 @@ drop table IF EXISTS TAB_Framework_steps_history
  SELECT   * FROM TAB_Frameworks_List_History WHERE JSONFileKey = 'TAB' ORDER BY HistoryID DESC
 
   SELECT * FROM TAB_Framework_Steps_History WHERE FileID = 1 AND StepName = 'General' ORDER BY HistoryID DESC
-
+  	SET IDENTITY_INSERT dbo.[Framework_Attributes] OFF;
+		SET IDENTITY_INSERT dbo.Framework_Lookups OFF;
 
 */
  EXEC dbo.PARSEJSONdATA 

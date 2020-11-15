@@ -113,7 +113,7 @@ BEGIN
 		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,'(', @cols, ') ', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))
 		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE VersionNum = ', @VersionNum,' AND FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
-		--IF @NewTableName LIKE '%Framework_Steps%' OR @NewTableName LIKE '%Framework_StepItems%'
+		--IF @TemplateTableName NOT LIKE '%Framework_Lookups%'
 		SET @SQL = CONCAT('SET IDENTITY_INSERT ',@NewTableName,' ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT ',@NewTableName,' OFF ;')
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
