@@ -45,7 +45,6 @@ drop table IF EXISTS TAB_Framework_steps_history
         "type": "textfield",
         "input": false,
         "hideOnChildrenHidden": false,
-		"test":1,
 		"parent": "General"
     },
     "reference": {

@@ -29,7 +29,7 @@ drop table IF EXISTS TAB_Framework_steps_history
 DECLARE @NewTableName VARCHAR(100)='TAB'
 DECLARE @TableInitial VARCHAR(100) = @NewTableName
 DECLARE @TBL TABLE(ID INT IDENTITY(1,1),NewTableName VARCHAR(500),Item VARCHAR(MAX))
-DECLARE @ID INT, @TemplateTableName VARCHAR(100),@ParentTableName VARCHAR(100), @SQL NVARCHAR(MAX)
+DECLARE @ID INT, @TemplateTableName VARCHAR(100),@ParentTableName VARCHAR(100), @SQL NVARCHAR(MAX) = ''
 DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500),KeyColName VARCHAR(100), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX),TableType VARCHAR(100))
 DECLARE @TBL_List_Constraints TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX))
 DECLARE @ConstraintSQL NVARCHAR(MAX),@HistoryTable VARCHAR(50)= '_history',@TableCheck VARCHAR(500)
@@ -91,8 +91,10 @@ BEGIN
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 				
-		--SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName, CHAR(10))
-		SET @SQL = CONCAT('IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME =''',@NewTableName,''')', CHAR(10))
+		IF @TemplateTableName LIKE '%Framework_Lookups%' OR @TemplateTableName LIKE '%Framework_Attributes%'
+			SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName, ';',CHAR(10))
+
+		SET @SQL = CONCAT(@SQL,'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME =''',@NewTableName,''')', CHAR(10))
 		SET @SQL = CONCAT(@SQL, N' CREATE TABLE dbo.[', @NewTableName , '](', @cols, ') ', CHAR(10), CHAR(10))
 		--SET @TableCheck = CONCAT('IF NOT EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME=''',@NewTableName ,''')')
 		--SET @SQL = CONCAT(@TableCheck,CHAR(10),@SQL,';', CHAR(10), CHAR(10))	
@@ -110,8 +112,9 @@ BEGIN
 		
 		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,'(', @cols, ') ', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
-		SET @SQL = CONCAT('SET IDENTITY_INSERT ',@NewTableName,' ON ;', CHAR(10),@SQL)
+		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE VersionNum = ', @VersionNum,' AND FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
+		--IF @NewTableName LIKE '%Framework_Steps%' OR @NewTableName LIKE '%Framework_StepItems%'
+		SET @SQL = CONCAT('SET IDENTITY_INSERT ',@NewTableName,' ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT ',@NewTableName,' OFF ;')
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
 

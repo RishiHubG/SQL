@@ -81,7 +81,7 @@ CONSTRAINT PK_Framework_Attributes_AttributeID PRIMARY KEY(AttributeID)
 DROP TABLE  IF EXISTS dbo.Framework_Lookups
 CREATE TABLE dbo.Framework_Lookups
 (
-ID INT IDENTITY(1,1),
+LookupID INT IDENTITY(1,1),
 UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,

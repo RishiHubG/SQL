@@ -43,7 +43,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (2,6,7)-- (2,6),7
+	   AND Element_ID IN (6)-- (2,6),7
 	    
  
  --SELECT * FROM #TMP_Objects
@@ -63,7 +63,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@FrameworkID INT,
 			@IsAvailable BIT,
 			@TemplateTableName SYSNAME,
-			@Counter INT = 1
+			@Counter INT = 1,
+			@AttributeID INT, @LookupID INT
 	 	
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
 	 DROP TABLE IF EXISTS TAB_DATA -- REMOVE THIS LATER, NOT REQUIRED
@@ -157,7 +158,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				DateModified = GETUTCDATE()
 		WHERE FrameworkID = @FrameworkID --AND Name = @Name
  --==================================================================================================================================
-
+		
+ 		SET IDENTITY_INSERT dbo.[Framework_Attributes] ON;
+		SET IDENTITY_INSERT dbo.[Framework_Lookups] ON;
+		
 --PROCESS THE STEP ITEMS ONE BY ONE
  WHILE EXISTS(SELECT 1 FROM #TMP_Objects)
  BEGIN
@@ -231,10 +235,18 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				INSERT INTO dbo.Framework_Steps (StepID,FrameworkID,StepName,DateCreated,UserCreated,VersionNum)
 					SELECT @StepID,@FrameworkID,@StepName,GETUTCDATE(),@UserCreated,@VersionNum	
 			
-			--SET @StepID = SCOPE_IDENTITY()
-			SET IDENTITY_INSERT dbo.Framework_Steps OFF;
-			
-			INSERT INTO [dbo].[Framework_Steps_history]
+				--SET @StepID = SCOPE_IDENTITY()
+				SET IDENTITY_INSERT dbo.Framework_Steps OFF;
+		END
+		ELSE
+			UPDATE dbo.Framework_Steps
+				SET VersionNum = @VersionNum,
+					UserModified = 1,
+					DateModified = GETUTCDATE()
+			WHERE StepID = @StepID			
+		--===========================================================================================================================================
+		
+		INSERT INTO [dbo].[Framework_Steps_history]
 				   (StepID,
 					FrameworkID,
 					[StepName]
@@ -249,16 +261,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						GETUTCDATE(),
 						@VersionNum,
 						1
-
-		END
-		ELSE
-			UPDATE dbo.Framework_Steps
-				SET VersionNum = @VersionNum,
-					UserModified = 1,
-					DateModified = GETUTCDATE()
-			WHERE StepID = @StepID			
-		--===========================================================================================================================================
-						
+										
 		IF @StepID IS NOT NULL
 		BEGIN
 				
@@ -306,9 +309,21 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								GETUTCDATE(),@UserCreated,@VersionNum	
 
 					--SET @StepItemID = SCOPE_IDENTITY()
-					SET IDENTITY_INSERT dbo.Framework_StepItems OFF;
-
-					INSERT INTO [dbo].[Framework_StepItems_history]
+					SET IDENTITY_INSERT dbo.Framework_StepItems OFF;				
+		END
+		ELSE IF NOT EXISTS(SELECT 1 FROM Framework_StepItems WHERE StepItemKey = @StepItemKey AND StepID = @StepID) --KEY MOVED TO A DIFFERENT STEP
+				UPDATE dbo.Framework_StepItems
+					SET StepID = @StepID,
+						VersionNum = @VersionNum
+				WHERE StepItemKey = @StepItemKey
+		ELSE
+			UPDATE dbo.Framework_StepItems
+				SET VersionNum = @VersionNum,
+					UserModified = 1,
+					DateModified = GETUTCDATE()
+			WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
+							
+				INSERT INTO [dbo].[Framework_StepItems_history]
 						   (FrameworkID,
 							StepItemID,
 							[StepID]
@@ -331,21 +346,6 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					   GETUTCDATE(),
 					   @VersionNum,
 					   1 
-				
-		END
-		ELSE IF NOT EXISTS(SELECT 1 FROM Framework_StepItems WHERE StepItemKey = @StepItemKey AND StepID = @StepID) --KEY MOVED TO A DIFFERENT STEP
-				UPDATE dbo.Framework_StepItems
-					SET StepID = @StepID,
-						VersionNum = @VersionNum
-				WHERE StepItemKey = @StepItemKey
-		ELSE
-			UPDATE dbo.Framework_StepItems
-				SET VersionNum = @VersionNum,
-					UserModified = 1,
-					DateModified = GETUTCDATE()
-			WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
-							
-				
 				--IF @StepItemID IS NULL
 				--	SELECT @StepItemID = StepItemID
 				--	FROM dbo.Framework_StepItems
@@ -355,10 +355,44 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								
 				--SELECT * FROM #TMP 
 				--RETURN				
+					
+					--GET ATTRIBUTE/LOOKUP ID FOR NEW DATA THAT NEEDS TO BE INSERTED
+		--================================================================================================================================== 		
+		SELECT @SQL = ''
+		SET @TemplateTableName = 'Framework_Attributes'
+		SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
+		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
+		SET @SQL = CONCAT(@SQL,' SELECT @AttributeID = MAX(AttributeID) + 1 FROM ',@TableName);						
+		PRINT @SQL  
+		EXEC sp_executesql @SQL, N'@AttributeID INT OUTPUT',@AttributeID OUTPUT;
 
+		
+		IF @AttributeID IS NULL AND NOT EXISTS(SELECT 1 FROM dbo.Framework_Attributes)
+			SET @AttributeID = 0;
+		ELSE IF EXISTS(SELECT 1 FROM dbo.Framework_Attributes)
+			SELECT @AttributeID  = MAX(AttributeID) + 1 FROM dbo.Framework_Attributes
+		
+		SELECT CONCAT('ATTR:',@AttributeID	)
+		
+		SELECT @SQL = ''
+		SET @TemplateTableName = 'Framework_Lookups'
+		SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
+		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
+		SET @SQL = CONCAT(@SQL,' SELECT @LookupID = MAX(LookupID) + 1 FROM ',@TableName);						
+		PRINT @SQL  
+		EXEC sp_executesql @SQL, N'@LookupID INT OUTPUT',@LookupID OUTPUT;
+				
+		IF @LookupID IS NULL AND NOT EXISTS(SELECT 1 FROM dbo.Framework_Lookups)
+			SET @LookupID = 0;
+		ELSE IF @LookupID IS NOT NULL AND EXISTS(SELECT 1 FROM dbo.Framework_Lookups)
+			SELECT @LookupID  = MAX(LookupID) + 1 FROM dbo.Framework_Lookups	
+		--==================================================================================================================================
+							
+				
 					--GET THE STEPITEM ATTRIBUTES					 				
-					INSERT INTO dbo.Framework_Attributes(FrameworkID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)							
-						SELECT @FrameworkID,@StepItemID,StringValue,KeyName,SequenceNo,GETUTCDATE(),@UserCreated ,@VersionNum
+					INSERT INTO dbo.Framework_Attributes(AttributeID,FrameworkID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)							
+						SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @AttributeID,
+							   @FrameworkID,@StepItemID,StringValue,KeyName,SequenceNo,GETUTCDATE(),@UserCreated ,@VersionNum
 							FROM #TMP T
 							WHERE (Parent_ID = @ID
 								 OR
@@ -369,6 +403,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						--				WHERE FMA.StepItemID=@StepItemID 
 						--						AND FMA.AttributeKey=T.KeyName
 						--				)
+					
 					 
 				--UPDATE FMA
 				--	SET VersionNum = @VersionNum
@@ -397,14 +432,18 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						--					  AND StepItemID=@StepItemID 
 						--					  AND LookupName=@StepItemName
 						--			)
-						 INSERT INTO dbo.Framework_Lookups(FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-									VALUES (@FrameworkID,@StepItemID,@LookupValues,@StepItemName,1,GETUTCDATE(),@UserCreated,@VersionNum)
+
+												
+						 INSERT INTO dbo.Framework_Lookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+							SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
+								   @FrameworkID,@StepItemID,@LookupValues,@StepItemName,1,GETUTCDATE(),@UserCreated,@VersionNum
+						
 						
 				END
 				ELSE		
 				IF @StepItemType = 'select'
 				BEGIN				
-				
+						
 						SELECT Parent_ID,
 							   MAX(CASE WHEN KeyName='Label' THEN StringValue ELSE '' END) AS LookupName,
 							   MAX(CASE WHEN KeyName='Value' THEN StringValue ELSE '' END) AS LookupValue,
@@ -425,9 +464,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 												   END
 
 							 --SELECT * FROM #TMP_Lookups	
-							
-						 INSERT INTO dbo.Framework_Lookups(FrameworkID,StepItemID,LookupValue,LookupName,LookupType,OrderBy,DateCreated,UserCreated,VersionNum)
-									SELECT @FrameworkID,
+													
+						 INSERT INTO dbo.Framework_Lookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,LookupType,OrderBy,DateCreated,UserCreated,VersionNum)
+									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
+										   @FrameworkID,
 										   @StepItemID,
 										   LookupValue,
 										   LookupName,
@@ -444,11 +484,13 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 									--						  AND LookupName= T.LookupName
 									--				)
 
-
+							
 				END
 				ELSE
-								INSERT INTO dbo.Framework_Lookups(FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
-									SELECT @FrameworkID,
+								
+								INSERT INTO dbo.Framework_Lookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
+										   @FrameworkID,
 										   @StepItemID,
 										   StringValue,
 										   KeyName,
@@ -465,7 +507,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 									--						  AND StepItemID= @StepItemID 
 									--						  AND LookupName= T.KeyName
 									--				)
-
+									
 					UPDATE dbo.Framework_Metafield_Lookups SET VersionNum = @VersionNum
 		
 		END	--END OF OUTERMOST IF -> IF @StepID IS NOT NULL
@@ -476,7 +518,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		DROP TABLE IF EXISTS #TMP
 		DROP TABLE IF EXISTS #TMP_Lookups
 
-		SELECT @StepID = NULL, @StepItemID = NULL, @IsAvailable = NULL, @SQL = NULL, @TemplateTableName = NULL
+		SELECT @StepID = NULL, @StepItemID = NULL, @IsAvailable = NULL, @SQL = NULL, @TemplateTableName = NULL,
+			   @AttributeID = NULL, @LookupID = NULL
 		
  END
 
@@ -516,7 +559,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				GETUTCDATE(),
 				@VersionNum,
 				@PeriodIdentifierID
- 
+		
 		INSERT INTO [dbo].[Framework_Attributes_history]
 				   (FrameworkID,
 					AttributeID,
@@ -543,10 +586,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[VersionNum],
 				   @PeriodIdentifierID
 		FROM dbo.[Framework_Attributes]
+		ORDER BY [OrderBy]
 
+		
 		INSERT INTO [dbo].[Framework_Lookups_history]
 				   (FrameworkID,
-					ID,
+					LookupID,
 					[StepItemID]
 				   ,[LookupName]
 				   ,[LookupValue]
@@ -559,7 +604,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[VersionNum],
 				   PeriodIdentifierID)
 		SELECT		@FrameworkID,
-					ID,
+					LookupID,
 					[StepItemID]
 				   ,[LookupName]
 				   ,[LookupValue]
@@ -572,6 +617,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[VersionNum],
 				   @PeriodIdentifierID    
 		FROM dbo.Framework_Lookups
+		ORDER BY [OrderBy]
 
 		--UPDATE dbo.Frameworks_List_history SET PeriodIdentifierID = @VersionNum
 		--UPDATE dbo.Framework_Metafield_Steps_history SET PeriodIdentifierID = @VersionNum
@@ -581,6 +627,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
 	--**********************************************************************************************************************************	
 		
+		SET IDENTITY_INSERT dbo.[Framework_Attributes] OFF;
+		SET IDENTITY_INSERT dbo.Framework_Lookups OFF;
 		PRINT 'ParseJSONData Completed...'
 			 
 		EXEC dbo.CreateSchemaTables @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
