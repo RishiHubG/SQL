@@ -42,8 +42,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  FROM #TMP_ALLSTEPS
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
-	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (2)-- (2,6),7
+	   --AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
+	   AND Name NOT IN ('userCreated','dateCreated','userModified','dateModified','submit')
+	   AND NAME IN ('Name','riskCategory1')
 	    
  
  SELECT * FROM #TMP_Objects
@@ -87,14 +88,15 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 	 UPDATE #TMP_DATA
 		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea') THEN 'NVARCHAR' 
-							WHEN StringValue = 'number' THEN 'INT' 
+							WHEN StringValue = 'number' THEN 'INT'
+							WHEN StringValue = 'datetime' THEN 'DATETIME' 
 						END
 	
 	UPDATE #TMP_DATA
 		SET DataTypeLength = CASE WHEN DataType = 'NVARCHAR' THEN '(MAX)'
 							 END
 			
-	-- SELECT * FROM #TMP_DATA
+	 --SELECT * FROM #TMP_DATA
 
 	 DECLARE @DataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(

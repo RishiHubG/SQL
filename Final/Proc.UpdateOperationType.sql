@@ -30,7 +30,7 @@ BEGIN
 
 				DECLARE @ID INT,@TemplateTableName VARCHAR(100),@TableType VARCHAR(100),@KeyColName VARCHAR(100)
 				DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query NVARCHAR(MAX), @HistTableSuffix VARCHAR(50)='_history'
-				DECLARE @cols VARCHAR(MAX)='',@HistoryTableName VARCHAR(500),@KeyName VARCHAR(500),@SelectCols VARCHAR(MAX)
+				DECLARE @cols VARCHAR(MAX)='',@HistoryTableName VARCHAR(500),@KeyName VARCHAR(500),@SelectCols VARCHAR(MAX),@CommonID INT
 
 				SET @TableInitial = CONCAT('dbo.',@TableInitial)
 
@@ -131,7 +131,7 @@ BEGIN
 						
 					END		--END OF -> WHILE LOOP
 
-					--SELECT * FROM #TMP_OperationType
+					SELECT * FROM #TMP_OperationType
 
 					--SELECT CONCAT('INSERT INTO ',HistoryTableName,'(UserCreated,DateCreated,VersionNum,PeriodIdentifierID,OperationType,FrameworkID,StepItemID,AttributeKey)',CHAR(10),
 					--					' SELECT 1,','''',GETUTCDATE(),'''',',',@VersionNum,',1,''DELETE'',',@FrameworkID,',',CommonID,',''',KeyName,''';'								
@@ -148,10 +148,11 @@ BEGIN
 					--	  AND HistoryTableName LIKE '%Framework_StepItems_History%'
 					
 					--PROCESS DELETES=============================================================================================================
+					
 					DROP TABLE IF EXISTS #TMP_DELETES
 
 					SELECT IDENTITY(INT,1,1) AS ID, * INTO #TMP_DELETES FROM #TMP_OperationType WHERE OperationType ='DELETE'
-					SELECT * FROM #TMP_DELETES
+					--SELECT * FROM #TMP_DELETES
 					WHILE EXISTS(SELECT 1 FROM #TMP_DELETES)
 					BEGIN
 						
@@ -159,7 +160,8 @@ BEGIN
 
 						SELECT @HistoryTableName = HistoryTableName,
 							   @KeyColName = KeyColName,
-							   @KeyName = KeyName
+							   @KeyName = KeyName,
+							   @CommonID = CommonID
 						FROM #TMP_DELETES 
 						WHERE ID = @ID	
 						
@@ -168,15 +170,16 @@ BEGIN
 						WHERE NAME <> 'HistoryID';
 
 						SET @cols = STUFF(@cols, 1, 1, N'');						  
-							SELECT @HistoryTableName,@cols
+							
 							IF @cols <> ''
 							BEGIN
 								SET @SelectCols = @cols
 								SET @SelectCols = REPLACE(@SelectCols,'OperationType','''DELETE''')
 								SET @SelectCols = REPLACE(@SelectCols,'VersionNum',@VersionNum)
+								SET @SelectCols = REPLACE(@SelectCols,'PeriodIdentifierID','1')
 								SET @Query = CONCAT('INSERT INTO ',@HistoryTableName,'(',@cols,')', CHAR(10))
 								SET @Query = CONCAT(@Query,' SELECT ',@SelectCols,' FROM ',@HistoryTableName, CHAR(10))
-								SET @Query = CONCAT(@Query, ' WHERE FrameworkID=',@FrameworkID,' AND VersionNum=',@VersionNum - 1, ' AND ',@KeyColName,'=''',@KeyName,'''')
+								SET @Query = CONCAT(@Query, ' WHERE FrameworkID=',@FrameworkID,' AND VersionNum=',@VersionNum - 1, ' AND ',@KeyColName,'=''',@KeyName,''' AND StepItemID = ', @CommonID, ';')
 								PRINT @Query
 								EXEC sp_executesql @Query 
 							END
@@ -190,7 +193,7 @@ BEGIN
 					
 					--AS DELETES HAVE ALREADY BEEN PROCESSED BY ABOVE SNIPPET
 					DELETE FROM #TMP_OperationType WHERE OperationType ='DELETE'				
-
+					
 					--UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
 					SET @Query = STUFF(
 										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''' AND StepItemID = ', CommonID, ';', CHAR(10))
