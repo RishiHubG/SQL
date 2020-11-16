@@ -29,7 +29,8 @@ BEGIN
 				CREATE TABLE #TMP_OperationType(HistoryTableName VARCHAR(100),CommonID INT,KeyColName VARCHAR(100),ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50))
 
 				DECLARE @ID INT,@TemplateTableName VARCHAR(100),@TableType VARCHAR(100),@KeyColName VARCHAR(100)
-				DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query VARCHAR(MAX), @HistTableSuffix VARCHAR(50)='_history'
+				DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query NVARCHAR(MAX), @HistTableSuffix VARCHAR(50)='_history'
+				DECLARE @cols VARCHAR(MAX)='',@HistoryTableName VARCHAR(500),@KeyName VARCHAR(500),@SelectCols VARCHAR(MAX)
 
 				SET @TableInitial = CONCAT('dbo.',@TableInitial)
 
@@ -44,6 +45,8 @@ BEGIN
 						FROM #TBL_OperationTypeList 
 						WHERE ID = @ID		 
 
+						SET @HistoryTableName = CONCAT(@TableInitial,'_',@TemplateTableName,@HistTableSuffix)
+
 						DROP TABLE IF EXISTS #TMP_Items
 						CREATE TABLE #TMP_Items(CommonID INT,KeyName VARCHAR(100),KeyValue VARCHAR(1000),VersionNum INT)
 		
@@ -54,7 +57,8 @@ BEGIN
 													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.StepItemKey AS KeyName,Curr.StepItemName AS KeyValue,Curr.VersionNum
 													FROM ',@TableInitial,'_Framework_StepItems_history Curr
 														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
-													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')		
+													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
+													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		
 													)TAB'
 												)		
 						ELSE IF @TableType = 'Attributes'
@@ -66,6 +70,7 @@ BEGIN
 														 INNER JOIN ',@TableInitial,'_Framework_StepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
 														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,') 
+														  AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		
 													)TAB' 
 												)
 							ELSE IF @TableType = 'Lookups'
@@ -77,6 +82,7 @@ BEGIN
 														 INNER JOIN ',@TableInitial,'_Framework_StepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
 														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,') 
+														  AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''
 													)TAB' 
 											  )
 			
@@ -86,7 +92,7 @@ BEGIN
 								EXEC (@Query)
 
 						INSERT INTO #TMP_OperationType(HistoryTableName,CommonID,KeyColName,ModuleName,KeyName,OldValue,NewValue,OperationType)
-							SELECT CONCAT(@TableInitial,'_',@TemplateTableName,@HistTableSuffix),
+							SELECT @HistoryTableName,
 								   CommonID,	
 								   @KeyColName,
 								   @TableType AS ModuleName,
@@ -119,12 +125,13 @@ BEGIN
 							  AND NewValue IS NOT NULL
 							  AND OldValue IS NULL
 						
-						DELETE FROM #TBL_OperationTypeList WHERE ID = @ID				
-						SET @Query = NULL
-
+						DELETE FROM #TBL_OperationTypeList WHERE ID = @ID
+						DELETE FROM #TMP_Items				
+						SELECT @Query = NULL,@HistoryTableName = NULL
+						
 					END		--END OF -> WHILE LOOP
 
-					SELECT * FROM #TMP_OperationType
+					--SELECT * FROM #TMP_OperationType
 
 					--SELECT CONCAT('INSERT INTO ',HistoryTableName,'(UserCreated,DateCreated,VersionNum,PeriodIdentifierID,OperationType,FrameworkID,StepItemID,AttributeKey)',CHAR(10),
 					--					' SELECT 1,','''',GETUTCDATE(),'''',',',@VersionNum,',1,''DELETE'',',@FrameworkID,',',CommonID,',''',KeyName,''';'								
@@ -139,6 +146,50 @@ BEGIN
 					--FROM #TMP_OperationType T						 
 					--WHERE OperationType ='DELETE'
 					--	  AND HistoryTableName LIKE '%Framework_StepItems_History%'
+					
+					--PROCESS DELETES=============================================================================================================
+					DROP TABLE IF EXISTS #TMP_DELETES
+
+					SELECT IDENTITY(INT,1,1) AS ID, * INTO #TMP_DELETES FROM #TMP_OperationType WHERE OperationType ='DELETE'
+					SELECT * FROM #TMP_DELETES
+					WHILE EXISTS(SELECT 1 FROM #TMP_DELETES)
+					BEGIN
+						
+						SELECT @ID = MIN(ID) FROM #TMP_DELETES
+
+						SELECT @HistoryTableName = HistoryTableName,
+							   @KeyColName = KeyColName,
+							   @KeyName = KeyName
+						FROM #TMP_DELETES 
+						WHERE ID = @ID	
+						
+						SELECT @cols = CONCAT(@cols,N', ', name , ' ')
+						FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM ', @HistoryTableName) , NULL, 1)
+						WHERE NAME <> 'HistoryID';
+
+						SET @cols = STUFF(@cols, 1, 1, N'');						  
+							SELECT @HistoryTableName,@cols
+							IF @cols <> ''
+							BEGIN
+								SET @SelectCols = @cols
+								SET @SelectCols = REPLACE(@SelectCols,'OperationType','''DELETE''')
+								SET @SelectCols = REPLACE(@SelectCols,'VersionNum',@VersionNum)
+								SET @Query = CONCAT('INSERT INTO ',@HistoryTableName,'(',@cols,')', CHAR(10))
+								SET @Query = CONCAT(@Query,' SELECT ',@SelectCols,' FROM ',@HistoryTableName, CHAR(10))
+								SET @Query = CONCAT(@Query, ' WHERE FrameworkID=',@FrameworkID,' AND VersionNum=',@VersionNum - 1, ' AND ',@KeyColName,'=''',@KeyName,'''')
+								PRINT @Query
+								EXEC sp_executesql @Query 
+							END
+
+							SET @cols = ''
+							DELETE FROM #TMP_DELETES WHERE ID = @ID				
+							SET @Query = NULL	
+
+					END
+					--==========================================================================================================================================================
+					
+					--AS DELETES HAVE ALREADY BEEN PROCESSED BY ABOVE SNIPPET
+					DELETE FROM #TMP_OperationType WHERE OperationType ='DELETE'				
 
 					--UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
 					SET @Query = STUFF(

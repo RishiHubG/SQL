@@ -19,9 +19,8 @@ drop table IF EXISTS TAB_Framework_StepItems_history
 drop table IF EXISTS TAB_Framework_steps_history
 --DROP TABLE IF EXISTS TAB_Frameworks_List_history
 
-	 
+	SELECT * from dbo.TAB_Frameworks_List
 	SELECT * from dbo.TAB_Framework_Attributes_history
-	SELECT * FROM TAB_Framework_Lookups
 	SELECT * FROM Frameworks_List
 
  IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME ='TAB_Frameworks_List_History')
@@ -47,6 +46,7 @@ drop table IF EXISTS TAB_Framework_steps_history
         "type": "textfield",
         "input": false,
         "hideOnChildrenHidden": false,
+		"test":1,
 		"parent": "General"
     },
     "reference": {
@@ -345,8 +345,7 @@ drop table IF EXISTS TAB_Framework_steps_history
 		--SELECT * FROM  Framework_Steps
 		--SELECT * FROM  Framework_Steps_history
 
-		SELECT * from dbo.Frameworks_List
-		SELECT * from dbo.Frameworks_List_history
+		
 		SELECT * FROM  TAB_Framework_Steps_history
 		SELECT * FROM  TAB_Framework_StepItems_history
 		SELECT * FROM TAB_Framework_Attributes_history		
