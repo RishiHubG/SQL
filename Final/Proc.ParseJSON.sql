@@ -43,10 +43,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Element_ID IN (2,6,7)-- (2,6),7
+	   AND Element_ID IN (2)-- (2,6),7
 	    
  
- --SELECT * FROM #TMP_Objects
+ SELECT * FROM #TMP_Objects
  --RETURN
 	 	DECLARE @ID INT,		
 			@StepID INT,
@@ -374,16 +374,17 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SET @TemplateTableName = 'Framework_Lookups'
 		SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
 		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
+		SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM ',@TableName,')', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' SELECT @LookupID = MAX(LookupID) + 1 FROM ',@TableName);						
 		PRINT @SQL  
 		EXEC sp_executesql @SQL, N'@LookupID INT OUTPUT',@LookupID OUTPUT;
-				
-		IF @LookupID IS NULL AND NOT EXISTS(SELECT 1 FROM dbo.Framework_Lookups)
-			SET @LookupID = 0;
-		ELSE IF @LookupID IS NOT NULL AND EXISTS(SELECT 1 FROM dbo.Framework_Lookups)
-			SELECT @LookupID  = MAX(LookupID) + 1 FROM dbo.Framework_Lookups	
+			
+		IF @LookupID IS NULL AND NOT EXISTS(SELECT 1 FROM dbo.Framework_Lookups)		
+			SET @LookupID = 0;			
+		ELSE IF EXISTS(SELECT 1 FROM dbo.Framework_Lookups)		
+			SELECT @LookupID  = MAX(LookupID) + 1 FROM dbo.Framework_Lookups
 		--==================================================================================================================================
-							
+					
 					SET IDENTITY_INSERT dbo.[Framework_Attributes] ON;
 		
 					--GET THE STEPITEM ATTRIBUTES					 				
