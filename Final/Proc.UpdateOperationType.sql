@@ -26,7 +26,7 @@ BEGIN
 		BEGIN
 	
 				DROP TABLE IF EXISTS #TMP_OperationType
-				CREATE TABLE #TMP_OperationType(HistoryTableName VARCHAR(100),CommonID INT,KeyColName VARCHAR(100),ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50))
+				CREATE TABLE #TMP_OperationType(HistoryTableName VARCHAR(100),CommonID INT,KeyColName VARCHAR(100),ModuleName VARCHAR(50),KeyName VARCHAR(100),OldValue VARCHAR(MAX),NewValue VARCHAR(MAX),OperationType VARCHAR(50),TableType VARCHAR(50))
 
 				DECLARE @ID INT,@TemplateTableName VARCHAR(100),@TableType VARCHAR(100),@KeyColName VARCHAR(100)
 				DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query NVARCHAR(MAX), @HistTableSuffix VARCHAR(50)='_history'
@@ -49,7 +49,17 @@ BEGIN
 
 						DROP TABLE IF EXISTS #TMP_Items
 						CREATE TABLE #TMP_Items(CommonID INT,KeyName VARCHAR(100),KeyValue VARCHAR(1000),VersionNum INT)
-		
+						
+						IF @TableType = 'Steps'		
+							SET @Query = CONCAT('SELECT CommonID,KeyName,KeyValue,VersionNum			
+													FROM
+													(
+													SELECT DISTINCT Curr.StepID AS CommonID, Curr.StepName AS KeyName,Curr.StepName AS KeyValue,Curr.VersionNum
+													FROM ',@TableInitial,'_Framework_Steps_history Curr
+													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
+													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		
+													)TAB'
+												)	
 						IF @TableType = 'StepItems'		
 							SET @Query = CONCAT('SELECT CommonID,KeyName,KeyValue,VersionNum			
 													FROM
@@ -91,7 +101,7 @@ BEGIN
 							INSERT INTO #TMP_Items(CommonID,KeyName,KeyValue,VersionNum)	
 								EXEC (@Query)
 
-						INSERT INTO #TMP_OperationType(HistoryTableName,CommonID,KeyColName,ModuleName,KeyName,OldValue,NewValue,OperationType)
+						INSERT INTO #TMP_OperationType(HistoryTableName,CommonID,KeyColName,ModuleName,KeyName,OldValue,NewValue,OperationType,TableType)
 							SELECT @HistoryTableName,
 								   CommonID,	
 								   @KeyColName,
@@ -99,7 +109,8 @@ BEGIN
 								   KeyName,
 								   MAX(CASE WHEN VersionNum = @PrevVersionNum THEN KeyValue END) AS OldValue,
 								   MAX(CASE WHEN VersionNum = @VersionNum THEN KeyValue END) AS NewValue,
-								   CAST(NULL AS VARCHAR(50)) AS OperationType
+								   CAST(NULL AS VARCHAR(50)) AS OperationType,
+								   @TableType
 							FROM #TMP_Items
 							GROUP BY CommonID, KeyName
 
@@ -161,7 +172,8 @@ BEGIN
 						SELECT @HistoryTableName = HistoryTableName,
 							   @KeyColName = KeyColName,
 							   @KeyName = KeyName,
-							   @CommonID = CommonID
+							   @CommonID = CommonID,
+							   @TableType = TableType
 						FROM #TMP_DELETES 
 						WHERE ID = @ID	
 						
@@ -179,7 +191,12 @@ BEGIN
 								SET @SelectCols = REPLACE(@SelectCols,'PeriodIdentifierID','1')
 								SET @Query = CONCAT('INSERT INTO ',@HistoryTableName,'(',@cols,')', CHAR(10))
 								SET @Query = CONCAT(@Query,' SELECT ',@SelectCols,' FROM ',@HistoryTableName, CHAR(10))
-								SET @Query = CONCAT(@Query, ' WHERE FrameworkID=',@FrameworkID,' AND VersionNum=',@VersionNum - 1, ' AND ',@KeyColName,'=''',@KeyName,''' AND StepItemID = ', @CommonID, ';')
+								SET @Query = CONCAT(@Query, ' WHERE FrameworkID=',@FrameworkID,' AND VersionNum=',@VersionNum - 1, ' AND ',@KeyColName,'=''',@KeyName,'''')
+
+								IF @TableType IN ('StepItems','Attributes','Lookups')
+									SET @Query = CONCAT(@Query, ' AND StepItemID = ', @CommonID, ';')
+								ELSE IF @TableType = 'Steps'
+									SET @Query = CONCAT(@Query, ' AND StepID = ', @CommonID, ';')
 								PRINT @Query
 								EXEC sp_executesql @Query 
 							END
@@ -194,11 +211,26 @@ BEGIN
 					--AS DELETES HAVE ALREADY BEEN PROCESSED BY ABOVE SNIPPET
 					DELETE FROM #TMP_OperationType WHERE OperationType ='DELETE'				
 					
-					--UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
+					--FOR StepItems,Attributes,Lookups: UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
 					SET @Query = STUFF(
 										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''' AND StepItemID = ', CommonID, ';', CHAR(10))
 										FROM #TMP_OperationType
 										WHERE OperationType IS NOT NULL 
+											  AND TableType IN ('StepItems','Attributes','Lookups')
+										FOR XML PATH('')
+										),1,1,''
+									  )
+	
+					PRINT @Query
+					IF @Query IS NOT NULL
+						EXEC (@Query)
+
+					--FOR STEPS:UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
+					SET @Query = STUFF(
+										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''' AND StepID = ', CommonID, ';', CHAR(10))
+										FROM #TMP_OperationType
+										WHERE OperationType IS NOT NULL 
+											  AND TableType = 'Steps'
 										FOR XML PATH('')
 										),1,1,''
 									  )
