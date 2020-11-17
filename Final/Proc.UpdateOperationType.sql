@@ -68,7 +68,16 @@ BEGIN
 													FROM ',@TableInitial,'_Framework_StepItems_history Curr
 														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
-													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		
+													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''
+														  
+													UNION
+													
+													--CASE WHEN A STEPITEM IS MOVED TO ANOTHER STEP
+													SELECT DISTINCT Curr.StepItemID AS CommonID,''StepID'' AS KeyName,CAST(Curr.StepID AS VARCHAR(10)) AS KeyValue,Curr.VersionNum
+													FROM ',@TableInitial,'_Framework_StepItems_history Curr
+														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
+													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
+													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		 		
 													)TAB'
 												)		
 						ELSE IF @TableType = 'Attributes'
@@ -114,8 +123,7 @@ BEGIN
 							FROM #TMP_Items
 							GROUP BY CommonID, KeyName
 
-						--SELECT * FROM #TMP_Items
-						--SELECT * FROM #TMP_OperationType
+						--SELECT * FROM #TMP_Items						
 						--RETURN
 
 						UPDATE #TMP_OperationType
@@ -142,21 +150,7 @@ BEGIN
 						
 					END		--END OF -> WHILE LOOP
 
-					SELECT * FROM #TMP_OperationType
-
-					--SELECT CONCAT('INSERT INTO ',HistoryTableName,'(UserCreated,DateCreated,VersionNum,PeriodIdentifierID,OperationType,FrameworkID,StepItemID,AttributeKey)',CHAR(10),
-					--					' SELECT 1,','''',GETUTCDATE(),'''',',',@VersionNum,',1,''DELETE'',',@FrameworkID,',',CommonID,',''',KeyName,''';'								
-					--			)
-					--FROM #TMP_OperationType
-					--WHERE OperationType ='DELETE'
-					--	  AND HistoryTableName LIKE '%Framework_Attributes_History%'
-					
-					--SELECT CONCAT('INSERT INTO ',HistoryTableName,'(UserCreated,DateCreated,VersionNum,PeriodIdentifierID,OperationType,FrameworkID,StepItemID,StepID,StepItemName)',CHAR(10),
-					--					' SELECT 1,','''',GETUTCDATE(),'''',',',@VersionNum,',1,''DELETE'',',@FrameworkID,',',CommonID,',<StepID>,''',KeyName,''';'								
-					--			 )
-					--FROM #TMP_OperationType T						 
-					--WHERE OperationType ='DELETE'
-					--	  AND HistoryTableName LIKE '%Framework_StepItems_History%'
+					--SELECT * FROM #TMP_OperationType					
 					
 					--PROCESS DELETES=============================================================================================================
 					
@@ -213,7 +207,7 @@ BEGIN
 					
 					--FOR StepItems,Attributes,Lookups: UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
 					SET @Query = STUFF(
-										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''' AND StepItemID = ', CommonID, ';', CHAR(10))
+										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,CASE WHEN KeyName <>'StepID' THEN CONCAT(' AND ',KeyColName,'=''',KeyName,'''') END, ' AND StepItemID = ', CommonID, ';', CHAR(10))
 										FROM #TMP_OperationType
 										WHERE OperationType IS NOT NULL 
 											  AND TableType IN ('StepItems','Attributes','Lookups')

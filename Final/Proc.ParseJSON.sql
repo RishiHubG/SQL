@@ -273,7 +273,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
 			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
-			SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@TableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY StepItemID DESC;', CHAR(10));	
+			--STEPITEMKEY IS THE UNIQUE IDENTIFIER SO CAN OMIT STEPID
+			--SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@TableName,' WHERE FrameworkID =',@FrameworkID,' AND StepID = ', @StepID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY StepItemID DESC;', CHAR(10));	
+			SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepItemID = StepItemID FROM ',@TableName,' WHERE FrameworkID =',@FrameworkID,' AND StepItemKey = ''', @StepItemKey,''' ORDER BY StepItemID DESC;', CHAR(10));	
 			SET @SQL = CONCAT(@SQL,' IF @StepItemID IS NULL ')
 			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
