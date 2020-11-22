@@ -14,10 +14,10 @@ BEGIN
 		DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500),KeyColName VARCHAR(100), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX),TableType VARCHAR(100))
 
 		INSERT INTO @TBL_List(TemplateTableName,KeyColName,ParentTableName,TableType,ConstraintSQL)
-		VALUES	('Framework_Lookups','LookupValue','Framework_StepItems','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemsID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]) '),
-			('Framework_Attributes','AttributeKey','Framework_StepItems','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]); '),		
-			('Framework_StepItems','StepItemKey','Framework_Steps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
-			('Framework_Steps','StepName','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)')
+		VALUES	('FrameworkLookups','LookupValue','FrameworkStepItems','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemsID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]) '),
+			('FrameworkAttributes','AttributeKey','FrameworkStepItems','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]); '),		
+			('FrameworkStepItems','StepItemKey','FrameworkSteps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
+			('FrameworkSteps','StepName','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)')
 		DROP TABLE IF EXISTS #TBL_OperationTypeList
 		SELECT IDENTITY(INT,1,1) AS ID,TemplateTableName,KeyColName,TableType INTO #TBL_OperationTypeList FROM @TBL_List WHERE TableType <> ''
 		*/
@@ -55,7 +55,7 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepID AS CommonID, Curr.StepName AS KeyName,Curr.StepName AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_Framework_Steps_history Curr
+													FROM ',@TableInitial,'_FrameworkSteps_history Curr
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
 													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		
 													)TAB'
@@ -65,8 +65,8 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.StepItemKey AS KeyName,Curr.StepItemName AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_Framework_StepItems_history Curr
-														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
+													FROM ',@TableInitial,'_FrameworkStepItems_history Curr
+														 INNER JOIN ',@TableInitial,'_FrameworkSteps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
 													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''
 														  
@@ -74,8 +74,8 @@ BEGIN
 													
 													--CASE WHEN A STEPITEM IS MOVED TO ANOTHER STEP
 													SELECT DISTINCT Curr.StepItemID AS CommonID,''StepID'' AS KeyName,CAST(Curr.StepID AS VARCHAR(10)) AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_Framework_StepItems_history Curr
-														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
+													FROM ',@TableInitial,'_FrameworkStepItems_history Curr
+														 INNER JOIN ',@TableInitial,'_FrameworkSteps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
 													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		 		
 													)TAB'
@@ -85,9 +85,9 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.AttributeKey AS KeyName,Curr.AttributeValue AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_Framework_Attributes_history Curr	
-														 INNER JOIN ',@TableInitial,'_Framework_StepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
-														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
+													FROM ',@TableInitial,'_FrameworkAttributes_history Curr	
+														 INNER JOIN ',@TableInitial,'_FrameworkStepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
+														 INNER JOIN ',@TableInitial,'_FrameworkSteps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,') 
 														  AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		
 													)TAB' 
@@ -97,9 +97,9 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.LookupValue AS KeyName,Curr.LookupName AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_Framework_Lookups_history Curr	
-														 INNER JOIN ',@TableInitial,'_Framework_StepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
-														 INNER JOIN ',@TableInitial,'_Framework_Steps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
+													FROM ',@TableInitial,'_FrameworkLookups_history Curr	
+														 INNER JOIN ',@TableInitial,'_FrameworkStepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
+														 INNER JOIN ',@TableInitial,'_FrameworkSteps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,') 
 														  AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''
 													)TAB' 

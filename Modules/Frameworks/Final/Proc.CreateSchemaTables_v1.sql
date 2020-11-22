@@ -10,20 +10,20 @@ BEGIN
 	SET NOCOUNT ON;
 	PRINT 'STARTING CreateSchemaTables...'
 
---DROP TABLE IF EXISTS TAB_Framework_Lookups
---drop table IF EXISTS TAB_Framework_Attributes
---drop table IF EXISTS TAB_Framework_StepItems
---drop table IF EXISTS TAB_Framework_Steps
---DROP TABLE IF EXISTS TAB_Frameworks_List
+--DROP TABLE IF EXISTS TAB_FrameworkLookups
+--drop table IF EXISTS TAB_FrameworkAttributes
+--drop table IF EXISTS TAB_FrameworkStepItems
+--drop table IF EXISTS TAB_FrameworkSteps
+--DROP TABLE IF EXISTS TAB_Frameworks
 
 /*
 USE JUNK
 GO
-DROP TABLE IF EXISTS TAB_Framework_Lookups_history
-drop table IF EXISTS TAB_Framework_Attributes_history
-drop table IF EXISTS TAB_Framework_StepItems_history
-drop table IF EXISTS TAB_Framework_steps_history
---DROP TABLE IF EXISTS TAB_Frameworks_List_history
+DROP TABLE IF EXISTS TAB_FrameworkLookups_history
+drop table IF EXISTS TAB_FrameworkAttributes_history
+drop table IF EXISTS TAB_FrameworkStepItems_history
+drop table IF EXISTS TAB_FrameworkSteps_history
+--DROP TABLE IF EXISTS TAB_Frameworks_history
 */
 
 DECLARE @NewTableName VARCHAR(100)='TAB'
@@ -37,23 +37,23 @@ DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100),@KeyColName VA
 
 
 	--GET THE CURRENT VERSION NO.: THIS WILL ACTUALLY BE PASSED FROM THE PREVIOUS SCRIPT/CODE:ParseJSON_v2.sql
-	--DECLARE @VersionNum INT = (SELECT MAX(VersionNum) FROM dbo.Frameworks_List_history)
+	--DECLARE @VersionNum INT = (SELECT MAX(VersionNum) FROM dbo.Frameworks_history)
  
 
---DECLARE @DropConstraints_SQL VARCHAR(MAX) = 'ALTER TABLE [dbo].[Framework_StepItems] DROP CONSTRAINT [FK_Framework_StepItems_StepID];
---									ALTER TABLE [dbo].[Framework_Attributes] DROP CONSTRAINT [FK_Framework_Attributes_StepItemID];
---									ALTER TABLE [dbo].[Framework_Lookups] DROP CONSTRAINT [FK_Framework_Lookups_StepItemID];
---									ALTER TABLE [dbo].Framework_Steps DROP CONSTRAINT PK_Framework_Steps_StepID;
---									ALTER TABLE [dbo].Framework_StepItems DROP CONSTRAINT PK_Framework_StepItems_StepItemID;
---									ALTER TABLE [dbo].Framework_Attributes DROP CONSTRAINT PK_Framework_Attributes_StepItemID;'
+--DECLARE @DropConstraints_SQL VARCHAR(MAX) = 'ALTER TABLE [dbo].[FrameworkStepItems] DROP CONSTRAINT [FK_FrameworkStepItems_StepID];
+--									ALTER TABLE [dbo].[FrameworkAttributes] DROP CONSTRAINT [FK_FrameworkAttributes_StepItemID];
+--									ALTER TABLE [dbo].[FrameworkLookups] DROP CONSTRAINT [FK_FrameworkLookups_StepItemID];
+--									ALTER TABLE [dbo].FrameworkSteps DROP CONSTRAINT PK_FrameworkSteps_StepID;
+--									ALTER TABLE [dbo].FrameworkStepItems DROP CONSTRAINT PK_FrameworkStepItems_StepItemID;
+--									ALTER TABLE [dbo].FrameworkAttributes DROP CONSTRAINT PK_FrameworkAttributes_StepItemID;'
 
 
 INSERT INTO @TBL_List(TemplateTableName,KeyColName,ParentTableName,TableType,ConstraintSQL)
-VALUES	('Framework_Lookups','LookupValue','Framework_StepItems','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemsID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]) '),
-		('Framework_Attributes','AttributeKey','Framework_StepItems','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]); '),		
-		('Framework_StepItems','StepItemKey','Framework_Steps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
-		('Framework_Steps','StepName','','Steps','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)')
-		--,('Frameworks_List','Name','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
+VALUES	('FrameworkLookups','LookupValue','FrameworkStepItems','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemsID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]) '),
+		('FrameworkAttributes','AttributeKey','FrameworkStepItems','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]); '),		
+		('FrameworkStepItems','StepItemKey','FrameworkSteps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
+		('FrameworkSteps','StepName','','Steps','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)')
+		--,('Frameworks','Name','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
 
 	INSERT INTO @TBL_List_Constraints(TemplateTableName)
 		SELECT TemplateTableName FROM @TBL_List	
@@ -91,7 +91,7 @@ BEGIN
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 				
-		IF @TemplateTableName LIKE '%Framework_Lookups%' OR @TemplateTableName LIKE '%Framework_Attributes%'
+		IF @TemplateTableName LIKE '%FrameworkLookups%' OR @TemplateTableName LIKE '%FrameworkAttributes%'
 			SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName, ';',CHAR(10))
 
 		SET @SQL = CONCAT(@SQL,'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME =''',@NewTableName,''')', CHAR(10))
@@ -113,7 +113,7 @@ BEGIN
 		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,'(', @cols, ') ', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))
 		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE VersionNum = ', @VersionNum,' AND FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
-		--IF @TemplateTableName NOT LIKE '%Framework_Lookups%'
+		--IF @TemplateTableName NOT LIKE '%FrameworkLookups%'
 		SET @SQL = CONCAT('SET IDENTITY_INSERT ',@NewTableName,' ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT ',@NewTableName,' OFF ;')
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
