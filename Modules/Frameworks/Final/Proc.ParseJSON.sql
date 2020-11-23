@@ -197,7 +197,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SELECT @StepItemType = (SELECT StringValue FROM #TMP WHERE KeyName ='type' AND Parent_ID = @ID),
 			   @StepItemName = (SELECT StringValue FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
 			   @StepItemKey = (SELECT StringValue FROM #TMP WHERE KeyName ='key' AND Parent_ID = @ID),	
-			   @StepName  = (SELECT StringValue FROM #TMP WHERE KeyName ='Parent' AND Parent_ID = @ID)	  
+			   @StepName  = (SELECT StringValue FROM #TMP WHERE KeyName ='StepName')	  
+			   --@StepName  = (SELECT StringValue FROM #TMP WHERE KeyName ='StepName' AND Parent_ID = @ID)	  
 			   			    		
 	
 		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================		

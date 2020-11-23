@@ -44,9 +44,11 @@ drop table IF EXISTS TAB_Frameworksteps_history
         },
         "key": "name",
         "type": "textfield",
-        "input": false,
+        "input": true,
         "hideOnChildrenHidden": false,
-		"parent": "General"
+        "properties": {
+            "StepName": "General"
+        }
     },
     "reference": {
         "label": "Reference",
@@ -56,7 +58,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
         "type": "textfield",
         "input": true,
         "hideOnChildrenHidden": false,
-		"parent": "General"
+        "properties": {
+            "StepName": "General"
+        }
     },
     "reference1": {
         "label": "Reference",
@@ -70,7 +74,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
         "type": "textfield",
         "input": true,
         "hideOnChildrenHidden": false,
-		"parent": "General"
+        "properties": {
+            "StepName": "General"
+        }
     },
     "riskDescription": {
         "label": "Risk Description",
@@ -78,13 +84,12 @@ drop table IF EXISTS TAB_Frameworksteps_history
         "inputFormat": "html",
         "key": "riskDescription",
         "type": "textfield",
-        "input": true,
-		"parent": "Details"
+        "input": true
     },
     "riskCategory1": {
         "label": "Applicable Factor",
         "optionsLabelPosition": "right",
-        "tableView": true,
+        "tableView": false,
         "defaultValue": {
             "": false,
             "strategic": false,
@@ -112,8 +117,10 @@ drop table IF EXISTS TAB_Frameworksteps_history
         "type": "selectboxes",
         "input": true,
         "inputType": "checkbox",
-        "hideOnChildrenHidden": true,
-		"parent": "Details"
+        "hideOnChildrenHidden": false,
+        "properties": {
+            "StepName": "Details"
+        }
     },
     "riskCategory2": {
         "label": "Risk Category 1",
@@ -123,7 +130,7 @@ drop table IF EXISTS TAB_Frameworksteps_history
             "values": [
                 {
                     "label": "Nature",
-                    "value": "Nature"
+                    "value": "nature"
                 },
                 {
                     "label": "Machinery",
@@ -143,7 +150,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
         },
         "input": true,
         "hideOnChildrenHidden": false,
-		"parent": "Details"
+        "properties": {
+            "StepName": "Details"
+        }
     },
     "riskCategory3": {
         "label": "Risk Category 2",
@@ -173,7 +182,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
         },
         "input": true,
         "hideOnChildrenHidden": false,
-		"parent": "Details"
+        "properties": {
+            "StepName": "Details"
+        }
     },
     "likelyhood": {
         "label": "Likelyhood",
@@ -191,7 +202,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
         "key": "likelyhood",
         "type": "number",
         "input": true,
-		"parent": "Ratings"
+        "properties": {
+            "StepName": "Ratings"
+        }
     },
     "financialImpact": {
         "label": "Financial Impact",
@@ -205,7 +218,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
         "type": "number",
         "input": true,
         "decimalLimit": 2,
-		"parent": "Ratings"
+        "properties": {
+            "StepName": "Ratings"
+        }
     },
     "inherentRating": {
         "label": "Inherent Rating",
@@ -214,7 +229,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
         "key": "inherentRating",
         "type": "textfield",
         "input": true,
-		"parent": "Ratings"
+        "properties": {
+            "StepName": "Ratings"
+        }
     },
     "overallComment": {
         "label": "Overall Comment",
@@ -223,7 +240,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
         "key": "overallComment",
         "type": "textarea",
         "input": true,
-		"parent": "Summary"
+        "properties": {
+            "StepName": "Summary"
+        }
     },
     "dateCreated": {
         "label": "Date Created",

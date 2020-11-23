@@ -19,6 +19,9 @@ CREATE TABLE dbo.Frameworks
 	[Namespace]	VARCHAR(100),	
 	CONSTRAINT PK_Frameworks_ID PRIMARY KEY(FrameworkID)
 	)
+	
+	ALTER TABLE [dbo].Frameworks ADD CONSTRAINT DF_Frameworks_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
 
 	
 DROP TABLE  IF EXISTS dbo.FrameworkSteps
@@ -34,6 +37,10 @@ CREATE TABLE dbo.FrameworkSteps
 	StepName NVARCHAR(500) NOT NULL,
 	CONSTRAINT PK_FrameworkSteps_StepID PRIMARY KEY(StepID)
 	)
+	
+	
+	ALTER TABLE [dbo].FrameworkSteps ADD CONSTRAINT DF_FrameworkSteps_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
 
 	--ALTER TABLE dbo.FrameworkSteps ADD CONSTRAINT FK_FrameworkSteps_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
@@ -55,6 +62,10 @@ OrderBy INT,
 CONSTRAINT PK_Framework_Metafield_StepItemID PRIMARY KEY(StepItemID)
 )
 
+	
+	ALTER TABLE [dbo].FrameworkStepItems ADD CONSTRAINT DF_FrameworkStepItems_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
+
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_StepID FOREIGN KEY(StepID) REFERENCES dbo.FrameworkSteps(StepID)
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
@@ -75,6 +86,10 @@ OrderBy INT,
 CONSTRAINT PK_FrameworkAttributes_AttributeID PRIMARY KEY(AttributeID)
 )
 
+	
+	ALTER TABLE [dbo].FrameworkAttributes ADD CONSTRAINT DF_FrameworkAttributes_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
+
 --ALTER TABLE dbo.FrameworkAttributes ADD CONSTRAINT FK_FrameworkAttributess_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems(StepItemID)
 --ALTER TABLE dbo.FrameworkAttributes ADD CONSTRAINT FK_FrameworkAttributes_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
@@ -94,6 +109,10 @@ LookupValue NVARCHAR(100) NOT NULL,
 LookupType NVARCHAR(100) NULL,
 OrderBy INT
 )
+
+	
+	ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT DF_FrameworkLookups_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
 
 --ALTER TABLE dbo.FrameworkLookups ADD CONSTRAINT FK_FrameworkLookups_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems(StepItemID)
 --ALTER TABLE dbo.FrameworkLookups ADD CONSTRAINT FK_FrameworkLookups_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)

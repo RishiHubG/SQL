@@ -24,6 +24,10 @@ CREATE TABLE dbo.Frameworks_history
 	CONSTRAINT PK_Frameworks_history_HistoryID PRIMARY KEY(HistoryID)
 	)
 
+	ALTER TABLE [dbo].Frameworks_history ADD CONSTRAINT DF_Frameworks_history_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
+	
+
 	
 DROP TABLE  IF EXISTS dbo.FrameworkSteps_history
 CREATE TABLE dbo.FrameworkSteps_history
@@ -42,6 +46,8 @@ CREATE TABLE dbo.FrameworkSteps_history
 	StepName NVARCHAR(500) NOT NULL,	
 	CONSTRAINT PK_FrameworkSteps_history_HistoryID PRIMARY KEY(HistoryID)
 	)
+	ALTER TABLE [dbo].FrameworkSteps_history ADD CONSTRAINT DF_FrameworkSteps_history_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
 
 DROP TABLE  IF EXISTS dbo.FrameworkStepItems_history
 CREATE TABLE dbo.FrameworkStepItems_history
@@ -65,6 +71,8 @@ OrderBy INT,
 CONSTRAINT PK_FrameworkStepItems_history_HistoryID PRIMARY KEY(HistoryID)
 )
 
+	ALTER TABLE [dbo].FrameworkStepItems_history ADD CONSTRAINT DF_FrameworkStepItems_history_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
 --ALTER TABLE dbo.FrameworkStepItems_history ADD CONSTRAINT FK_FrameworkStepItems_history_StepID FOREIGN KEY(StepID) REFERENCES dbo.FrameworkSteps_history(StepID)
 
 
@@ -89,6 +97,8 @@ OrderBy INT,
 CONSTRAINT PK_FrameworkAttributes_historys_history_HistoryID PRIMARY KEY(HistoryID)
 )
 
+	ALTER TABLE [dbo].FrameworkAttributes_history ADD CONSTRAINT DF_FrameworkAttributes_history_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
 --ALTER TABLE dbo.FrameworkAttributes_history ADD CONSTRAINT FK_FrameworkAttributes_history_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems_history(StepItemID)
 
 DROP TABLE  IF EXISTS dbo.FrameworkLookups_history
@@ -112,4 +122,6 @@ LookupType NVARCHAR(100) NULL,
 OrderBy INT
 )
 
+	ALTER TABLE [dbo].FrameworkLookups_history ADD CONSTRAINT DF_FrameworkLookups_history_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
 --ALTER TABLE dbo.FrameworkLookups_history ADD CONSTRAINT FK_FrameworkLookups_history_history_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems_history(StepItemID)
