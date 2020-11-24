@@ -162,6 +162,41 @@ BEGIN
 					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertyXerf_Data ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
 					PRINT @SQL	
 					EXEC sp_executesql @SQL	
+
+					--CREATE _DATA_HISTORY TABLE
+					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertyXerf_Data_history ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
+					PRINT @SQL	
+					EXEC sp_executesql @SQL	
+
+					
+					--CREATE TRIGGER
+					DECLARE @cols VARCHAR(MAX) = ''
+
+					SELECT @cols = CONCAT(@cols,N', [',name,'] ')
+					FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.RegisterPropertyXerf_Data' , NULL, 1)
+					
+					SET @cols = STUFF(@cols, 1, 1, N'');
+									 
+
+					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='RegisterPropertyXerf_Data_Insert')						
+						SET @SQL = N'ALTER TRIGGER '
+					ELSE
+						SET @SQL = N'CREATE TRIGGER '
+
+					SET @SQL = CONCAT(@SQL,N' dbo.RegisterPropertyXerf_Data_Insert
+									   ON  dbo.RegisterPropertyXerf_Data
+									   AFTER INSERT
+									AS 
+									BEGIN
+										SET NOCOUNT ON;
+
+										INSERT INTO dbo.RegisterPropertyXerf_Data_history(<ColumnList>)
+											SELECT <columnList>
+											FROM INSERTED
+									END;',CHAR(10))
+					SET @SQL = REPLACE(@SQL,'<columnList>',@cols)
+					PRINT @SQL	
+					EXEC sp_executesql @SQL	
 				END
 		 --RETURN
 	 	

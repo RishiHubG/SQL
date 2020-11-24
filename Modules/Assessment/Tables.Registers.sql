@@ -69,7 +69,7 @@ GO
 DROP TABLE  IF EXISTS dbo.RegisterPropertyXerf_Data
 CREATE TABLE dbo.RegisterPropertyXerf_Data
 (
-ID INT IDENTITY(1,1),
+RegisterPropertyXerf_DataID INT IDENTITY(1,1),
 RegisterID INT ,
 UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,

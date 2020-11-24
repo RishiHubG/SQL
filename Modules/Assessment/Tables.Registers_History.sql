@@ -89,7 +89,7 @@ VersionNum INT NOT NULL,
 PeriodIdentifierID INT NOT NULL,
 OperationType VARCHAR(50),
 UserActionID INT,
-ID INT,
+RegisterPropertyXerf_DataID INT,
 RegisterID INT
 )
  		 
