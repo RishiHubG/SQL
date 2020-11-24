@@ -43,7 +43,7 @@ CREATE TABLE dbo.RegisterProperties_history
 	UserActionID INT,
 	RegisterPropertyID INT NOT NULL,
 	RegisterID INT NOT NULL,	
-	ColumnName VARCHAR(100) NOT NULL,
+	PropertyName VARCHAR(100) NOT NULL,
 	CONSTRAINT PK_RegisterProperties_history_HistoryID PRIMARY KEY(HistoryID)
 	)
 

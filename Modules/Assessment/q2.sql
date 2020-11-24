@@ -2,8 +2,25 @@ USE JUNK
 GO
 
 DECLARE @inputJSON VARCHAR(MAX) ='{
-     
-   
+     "test": {
+        "label": "test" ,
+        "type": "textfield" 
+    },
+    "name": {
+        "label": "Name",
+        "tableView": true,
+        "validate": {
+            "required": true,
+            "minLength": 3,
+            "maxLength": 500
+        },
+        "key": "name",
+        "properties": {
+            "StepName": "General"
+        },
+        "type": "textfield",
+        "input": true
+    },
     "description": {
         "label": "Description",
         "autoExpand": false,
@@ -118,9 +135,16 @@ DECLARE @inputJSON VARCHAR(MAX) ='{
 
 EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON
 
---SELECT * FROM dbo.Registers
---SELECT * FROM dbo.RegisterProperties
---SELECT * FROM dbo.RegistersPropertiesXref
---SELECT * FROM RegisterPropertyXerf_Data
+/*
+SELECT * FROM dbo.Registers
+SELECT * FROM dbo.RegisterProperties
+SELECT * FROM dbo.RegistersPropertiesXref
+SELECT * FROM RegisterPropertyXerf_Data
 
+SELECT * FROM dbo.Registers_history
+SELECT * FROM dbo.RegisterProperties_history
+SELECT * FROM dbo.RegistersPropertiesXref_history
+SELECT * FROM RegisterPropertyXerf_Data_history
+
+*/
 --ALTER TABLE RegisterPropertyXerf_Data ADD [Assessment Contact] [NVARCHAR] (MAX), [Level of Operation] [NVARCHAR] (MAX), [Currency] [NVARCHAR] (MAX), [Description] [NVARCHAR] (MAX), [Name] [NVARCHAR] (MAX)

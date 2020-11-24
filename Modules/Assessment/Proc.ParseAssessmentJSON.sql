@@ -165,6 +165,13 @@ BEGIN
 				END
 		 --RETURN
 	 	
-	 	 
-
+	 	 --DROP TEMP TABLES--------------------------------------
+		 DROP TABLE IF EXISTS #TMP_Objects
+		 DROP TABLE IF EXISTS #TMP_Assessments
+		 DROP TABLE IF EXISTS #TMP_RegisterProperties
+		 DROP TABLE IF EXISTS #TMP_AssessmentData
+		 DROP TABLE IF EXISTS #TMP_ALLSTEPS 
+		 DROP TABLE IF EXISTS #TMP_RegistersPropertiesXref
+		 DROP TABLE IF EXISTS #TMP_RegistersProperties
+		 --------------------------------------------------------
 END
