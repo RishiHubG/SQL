@@ -20,7 +20,8 @@ CREATE TABLE dbo.Registers
 	PropagatedAccessControlID INT,
 	PropagatedWFAccessControlID INT,
 	HasExtendedProperties BIT,
-	CONSTRAINT PK_Registers_RegisterID PRIMARY KEY(RegisterID)
+	CONSTRAINT PK_Registers_RegisterID PRIMARY KEY(RegisterID),
+	CONSTRAINT UQ_Registers_Name UNIQUE(Name),
 	)
 		ALTER TABLE [dbo].Registers ADD CONSTRAINT DF_Registers_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
 GO
@@ -28,14 +29,15 @@ GO
 DROP TABLE  IF EXISTS dbo.RegisterProperties
 CREATE TABLE dbo.RegisterProperties
 	(
-	PropertyID INT NOT NULL,
+	RegisterPropertyID INT IDENTITY(1,1) NOT NULL,
 	RegisterID INT NOT NULL,	
+	UserCreated INT NOT NULL,
 	DateCreated DATETIME2(0) NOT NULL,
 	UserModified INT,
 	DateModified DATETIME2(0),
 	VersionNum INT NOT NULL,
-	ColumnName VARCHAR(100) NOT NULL,
-	CONSTRAINT PK_RegisterProperties_PropertyID PRIMARY KEY(PropertyID)
+	PropertyName VARCHAR(100) NOT NULL,
+	CONSTRAINT PK_RegisterProperties_RegisterPropertyID PRIMARY KEY(RegisterPropertyID)
 	)
 
 	ALTER TABLE dbo.RegisterProperties ADD CONSTRAINT FK_RegisterProperties_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
@@ -44,17 +46,18 @@ GO
 DROP TABLE  IF EXISTS dbo.RegistersPropertiesXref
 CREATE TABLE dbo.RegistersPropertiesXref
 (
+RegistersPropertiesXrefID INT IDENTITY(1,1),
+RegisterPropertyID INT NOT NULL,
 RegisterID INT NOT NULL,
-PropertyID INT NOT NULL,
 UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
+PropertyName NVARCHAR(1000),
 IsRequired BIT,
 IsActive BIT, 
-PropertyName NVARCHAR(1000),
-CONSTRAINT PK_RegistersPropertiesXref_RegisterID_PropertyID PRIMARY KEY(RegisterID,PropertyID)
+CONSTRAINT PK_RegistersPropertiesXref_RegisterID_RegisterPropertyID PRIMARY KEY(RegistersPropertiesXrefID,RegisterPropertyID,RegisterID)
 )
  		ALTER TABLE [dbo].RegistersPropertiesXref ADD CONSTRAINT DF_RegistersPropertiesXref_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
 GO
@@ -66,12 +69,14 @@ GO
 DROP TABLE  IF EXISTS dbo.RegisterPropertyXerf_Data
 CREATE TABLE dbo.RegisterPropertyXerf_Data
 (
-RegisterID INT,
+ID INT IDENTITY(1,1),
+RegisterID INT ,
 UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
-VersionNum INT NOT NULL
+VersionNum INT NOT NULL,
+CONSTRAINT PK_RegisterPropertyXerf_Data_RegisterID PRIMARY KEY(RegisterID)
 )
  		ALTER TABLE [dbo].RegisterPropertyXerf_Data ADD CONSTRAINT DF_RegisterPropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
 GO

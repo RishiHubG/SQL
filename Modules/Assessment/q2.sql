@@ -2,25 +2,8 @@ USE JUNK
 GO
 
 DECLARE @inputJSON VARCHAR(MAX) ='{
- "test": {
-        "label": "test",       
-        "type": "textfield"          
-    },
-    "name": {
-        "label": "Name",
-        "tableView": true,
-        "validate": {
-            "required": true,
-            "minLength": 3,
-            "maxLength": 500
-        },
-        "key": "name",
-        "properties": {
-            "StepName": "General"
-        },
-        "type": "textfield",
-        "input": true
-    },
+     
+   
     "description": {
         "label": "Description",
         "autoExpand": false,
@@ -133,50 +116,11 @@ DECLARE @inputJSON VARCHAR(MAX) ='{
     }
 }'
 
-DROP TABLE IF EXISTS #TMP_ALLSTEPS
+EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON
 
- SELECT * INTO #TMP_ALLSTEPS
- FROM dbo.HierarchyFromJSON(@inputJSON)
- 
+--SELECT * FROM dbo.Registers
+--SELECT * FROM dbo.RegisterProperties
+--SELECT * FROM dbo.RegistersPropertiesXref
+--SELECT * FROM RegisterPropertyXerf_Data
 
- --SELECT * FROM #TMP_ALLSTEPS
- --RETURN
- --WHERE Name='StepName'
- --SELECT * FROM #TMP
- --WHERE Element_ID IN (11,18)
-
-
- DROP TABLE IF EXISTS #TMP_Objects
-
-  SELECT Element_ID,SequenceNo,Parent_ID,[Object_ID] AS ObjectID,Name,StringValue,ValueType 
-	INTO #TMP_Objects
- FROM #TMP_ALLSTEPS
- WHERE ValueType='Object'
-	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
-	   --AND KeyName  IN ('label','type')
-	   --AND Name NOT IN ('userCreated','dateCreated','userModified','dateModified','submit')
-	  
-	    SELECT * FROM #TMP_Objects
-
-	    --GET ALL THE CHILD ELEMENTS FOR A PARENT
-		;WITH CTE
-		AS
-		(	--PARENT
-			SELECT CAST('' AS VARCHAR(50)) ParentName, Element_ID,Parent_ID,SequenceNo,[Name] AS KeyName,StringValue,ValueType,CAST('Object' AS VARCHAR(50)) AS ElementType
-			FROM #TMP_Objects
-			--WHERE Element_ID = 2
-			      
-
-			UNION ALL
-
-			--CHILD ITEMS
-			SELECT CAST(C.KeyName as varchar(50)),TMP.Element_ID,TMP.Parent_ID,TMP.SequenceNo,TMP.[Name],TMP.StringValue,TMP.ValueType,CAST('ObjectItems' AS VARCHAR(50)) AS ElementType
-			FROM CTE C 
-				 INNER JOIN #TMP_ALLSTEPS TMP ON TMP.Parent_ID = C.Element_ID			
-			WHERE TMP.Name IN ('label','type')
-		)
-
-		SELECT *
-			--INTO #TMP 
-		FROM CTE
-		WHERE ValueType NOT IN ('Object','array')	
+--ALTER TABLE RegisterPropertyXerf_Data ADD [Assessment Contact] [NVARCHAR] (MAX), [Level of Operation] [NVARCHAR] (MAX), [Currency] [NVARCHAR] (MAX), [Description] [NVARCHAR] (MAX), [Name] [NVARCHAR] (MAX)

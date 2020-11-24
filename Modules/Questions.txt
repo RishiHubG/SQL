@@ -1,0 +1,7 @@
+Assessment (& Domain) Questions:
+1. is one json related to a single assessment?
+2. will an assessment have a key as well?
+3. will the properties be identified by name (the uniqueness)? (only insert/delete for properties)
+thus a property can be added/modified/deleted and identified using name?
+4. How to recognize if an assessment has properties or not? So any node with name not "Label" is a property?
+4. will all the 4 tables have versionNum and all history tables verionNum and currentIdentifier?

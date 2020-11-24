@@ -33,6 +33,7 @@ DROP TABLE  IF EXISTS dbo.RegisterProperties_history
 CREATE TABLE dbo.RegisterProperties_history
 	(
 	HistoryID INT IDENTITY(1,1),
+	UserCreated INT NOT NULL,
 	DateCreated DATETIME2(0) NOT NULL,
 	UserModified INT,
 	DateModified DATETIME2(0),
@@ -40,7 +41,7 @@ CREATE TABLE dbo.RegisterProperties_history
 	PeriodIdentifierID INT NOT NULL,
 	OperationType VARCHAR(50),
 	UserActionID INT,
-	PropertyID INT NOT NULL,
+	RegisterPropertyID INT NOT NULL,
 	RegisterID INT NOT NULL,	
 	ColumnName VARCHAR(100) NOT NULL,
 	CONSTRAINT PK_RegisterProperties_history_HistoryID PRIMARY KEY(HistoryID)
@@ -61,11 +62,12 @@ VersionNum INT NOT NULL,
 PeriodIdentifierID INT NOT NULL,
 OperationType VARCHAR(50),
 UserActionID INT,
+RegistersPropertiesXrefID INT NOT NULL,
 RegisterID INT NOT NULL,
-PropertyID INT NOT NULL,
+RegisterPropertyID INT NOT NULL,
+PropertyName NVARCHAR(1000),
 IsRequired BIT,
 IsActive BIT, 
-PropertyName NVARCHAR(1000),
 CONSTRAINT PK_RegistersPropertiesXref_history_HistoryID PRIMARY KEY(HistoryID)
 )
  
@@ -87,6 +89,7 @@ VersionNum INT NOT NULL,
 PeriodIdentifierID INT NOT NULL,
 OperationType VARCHAR(50),
 UserActionID INT,
+ID INT,
 RegisterID INT
 )
  		 
