@@ -1,6 +1,19 @@
 USE JUNK
 GO
 
+--CREATE TABLES
+:setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\"
+:r $(path)\Tables.Registers.sql
+:r $(path)\Tables.Registers_History.sql
+
+--CREATE TRIGGERS
+:setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\Triggers\"
+:r $(path)\Trg_RegisterProperties_Insert.sql
+:r $(path)\Trg_Registers_Insert.sql
+:r $(path)\Trg_RegistersPropertiesXref_Data_Insert.sql
+:r $(path)\Trg_RegistersPropertiesXref_Insert.sql
+
+
 DECLARE @inputJSON VARCHAR(MAX) ='{
      "test": {
         "label": "test" ,
