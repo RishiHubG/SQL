@@ -1,7 +1,7 @@
 USE JUNK
 GO
 
-DROP TABLE  IF EXISTS dbo.Registers,RegisterProperties,RegistersPropertiesXref,RegisterPropertyXerf_Data
+DROP TABLE  IF EXISTS RegistersPropertiesXref,RegisterPropertyXerf_Data,RegisterProperties,dbo.Registers
 
 DROP TABLE  IF EXISTS dbo.Registers
 CREATE TABLE dbo.Registers
@@ -41,6 +41,7 @@ CREATE TABLE dbo.RegisterProperties
 	)
 
 	ALTER TABLE dbo.RegisterProperties ADD CONSTRAINT FK_RegisterProperties_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+	ALTER TABLE [dbo].Registers ADD CONSTRAINT FK_RegisterProperties_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
 GO
 
 DROP TABLE  IF EXISTS dbo.RegistersPropertiesXref
@@ -60,6 +61,8 @@ IsActive BIT,
 CONSTRAINT PK_RegistersPropertiesXref_RegisterID_RegisterPropertyID PRIMARY KEY(RegistersPropertiesXrefID,RegisterPropertyID,RegisterID)
 )
  		ALTER TABLE [dbo].RegistersPropertiesXref ADD CONSTRAINT DF_RegistersPropertiesXref_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+		ALTER TABLE [dbo].RegistersPropertiesXref ADD CONSTRAINT FK_RegistersPropertiesXref_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
+		ALTER TABLE [dbo].RegistersPropertiesXref ADD CONSTRAINT FK_RegistersPropertiesXref_RegisterPropertyID FOREIGN KEY(RegisterPropertyID) REFERENCES dbo.RegisterProperties(RegisterPropertyID)
 GO
 
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_StepID FOREIGN KEY(StepID) REFERENCES dbo.FrameworkSteps(StepID)
@@ -79,4 +82,5 @@ VersionNum INT NOT NULL,
 CONSTRAINT PK_RegisterPropertyXerf_Data_RegisterID PRIMARY KEY(RegisterID)
 )
  		ALTER TABLE [dbo].RegisterPropertyXerf_Data ADD CONSTRAINT DF_RegisterPropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+		ALTER TABLE [dbo].RegisterPropertyXerf_Data ADD CONSTRAINT FK_RegisterPropertyXerf_Data_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
 GO
