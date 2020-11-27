@@ -1,10 +1,15 @@
 USE JUNK
 GO
 
+/*
 --CREATE TABLES
-:setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\"
+:setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\Tables\"
 :r $(path)\Tables.Registers.sql
 :r $(path)\Tables.Registers_History.sql
+
+--CREATE FUNCTION
+:SETVAR path "E:\New Company\GitHub\SQL\Modules\Assessment\Function\"
+:r $(path)\HierarchyFromJSON.SQL
 
 --CREATE TRIGGERS
 :setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\Triggers\"
@@ -12,14 +17,34 @@ GO
 :r $(path)\Trg_Registers_Insert.sql
 :r $(path)\Trg_RegistersPropertiesXref_Data_Insert.sql
 :r $(path)\Trg_RegistersPropertiesXref_Insert.sql
-
-
+*/
+--CREATE TABLES
+--:setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\Tables\"
+--:r $(path)\Tables.Registers.sql
+--:r $(path)\Tables.Registers_History.sql
+/*
+NOTES:
+1.WE NEED ONLY Label & Type FOR EACH NODE, THESE ARE THE ASSESSMENT PROPERTIES
+2. PROPERTIES CAN ONLY BE INSERTED/DELETED (NO UPDATES)
+*/
 DECLARE @inputJSON VARCHAR(MAX) ='{
-     "test": {
-        "label": "test" ,
-        "type": "textfield" 
-    },
-    "name": {
+ "test4": {		
+        "label": "test4",
+		"type":"textfield"
+		},
+ "test2": {		
+        "label": "test2",
+		"type":"textfield"
+		},
+  "test1": {		
+        "label": "test1",
+		"type":"textfield"
+		},
+     "test": {		
+        "label": "test",
+		"type":"textfield"
+		},
+    "name": {		
         "label": "Name",
         "tableView": true,
         "validate": {

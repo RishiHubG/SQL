@@ -3,10 +3,13 @@ Assessment (& Domain) Questions:
 2. will an assessment have a key as well?
 3. will the properties be identified by name (the uniqueness)? (only insert/delete for properties)
 thus a property can be added/modified/deleted and identified using name?
-4. How to recognize if an assessment has properties or not? So any node with name not "Label" is a property?
+4. How to recognize if an assessment has properties or not? So any node with name not "Label" is a property? Yes, noly check for "Label" and "Type"
 5. will all the 4 tables have versionNum and all history tables verionNum and currentIdentifier?
 6. RegisterPropertyXerf_Data_history: this will also have only column additions(same as base table)?
 
 
 TO DO:
 OperationType in history tables
+
+Qs:
+Table RegisterPropertyXerf & RegisterProperties seem similar??

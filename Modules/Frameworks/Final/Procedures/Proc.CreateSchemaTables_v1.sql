@@ -2,6 +2,21 @@
 USE JUNK
 GO
  
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+/***************************************************************************************************
+OBJECT NAME:        dbo.CreateSchemaTables
+CREATION DATE:      2020-11-27
+AUTHOR:             Rishi Nayar
+DESCRIPTION:		 
+USAGE:          	EXEC dbo.CreateSchemaTables @FrameworkID=1,@VersionNum=1
+
+CHANGE HISTORY:
+SNo.	Modification Date		Modified By				Comments
+*****************************************************************************************************/
  CREATE OR ALTER PROCEDURE dbo.CreateSchemaTables
 @FrameworkID INT,
 @VersionNum INT
@@ -155,7 +170,9 @@ BEGIN
 		SET @cols = STUFF(@cols, 1, 1, N'');
 
 		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,@HistoryTable,'(', @cols, ') ', CHAR(10))		
-		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,@HistoryTable,';', CHAR(10))
+		--IF @VersionNum = 1
+		--	SET @cols = REPLACE(@cols,'[OperationType]','''INSERT''')
+		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,@HistoryTable,';', CHAR(10))		
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
 

@@ -2,6 +2,24 @@
 USE JUNK
 GO
 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+/***************************************************************************************************
+OBJECT NAME:        dbo.UpdateHistoryOperationType
+CREATION DATE:      2020-11-27
+AUTHOR:             Rishi Nayar
+DESCRIPTION:		NOTES:
+					1.WE NEED ONLY Label & Type FOR EACH NODE, THESE ARE THE ASSESSMENT PROPERTIES
+				    2. PROPERTIES CAN ONLY BE INSERTED/DELETED (NO UPDATES)   
+USAGE:          	EXEC dbo.UpdateHistoryOperationType @FrameworkID =1,@TableInitial='TAB',@VersionNum=1
+
+CHANGE HISTORY:
+SNo.	Modification Date		Modified By				Comments
+*****************************************************************************************************/
+
 CREATE OR ALTER PROCEDURE dbo.UpdateHistoryOperationType
 @FrameworkID INT,
 @TableInitial VARCHAR(100),

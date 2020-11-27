@@ -31,10 +31,22 @@ drop table IF EXISTS TAB_Frameworksteps_history
 		SET IDENTITY_INSERT dbo.FrameworkLookups OFF;
 
 */
+
+----CREATE TABLES
+--:setvar path "E:\New Company\GitHub\SQL\Modules\Frameworks\Final"
+--:r $(path)\Tables.sql
+--:r $(path)\Tables.History.sql
+
+----CREATE FUNCTION
+--:SETVAR path "E:\New Company\GitHub\SQL\Modules\Frameworks\Final\Function\"
+--:r $(path)\HierarchyFromJSON.SQL
+
+
  EXEC dbo.PARSEJSONdATA 
   @inputJSON =
 '{
     "name": {
+	 
         "label": "Name",
         "tableView": true,
         "validate": {
