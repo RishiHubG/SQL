@@ -28,8 +28,8 @@ NOTES:
 2. PROPERTIES CAN ONLY BE INSERTED/DELETED (NO UPDATES)
 */
 DECLARE @inputJSON VARCHAR(MAX) ='{
- "test51": {		
-        "label": "test51",
+ "test4": {		
+        "label": "test4",
 		"type":"textfield"
 		},
  "test2": {		

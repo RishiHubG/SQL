@@ -279,8 +279,10 @@ BEGIN
 				SELECT RP.RegisterPropertyID,RP.RegisterID,RP.PropertyName,0 AS IsActive
 					INTO #TMP_MissingRegistersProperties
 				FROM dbo.RegisterProperties RP 
+					  INNER JOIN RegistersPropertiesXref RPX ON RPX.RegisterPropertyID = RP.RegisterPropertyID AND RPX.RegisterID=RP.RegisterID
 				WHERE NOT EXISTS(SELECT 1 FROM #TMP_Assessments WHERE StringValue = RP.PropertyName AND KeyName ='Label')
 					  AND RP.RegisterID = @RegisterID
+					   AND RPX.IsActive = 1
 
 				--INSERT BACK A PROPERTY WHICH WAS REMOVED EARLIER
 				SELECT RP.RegisterPropertyID,RP.RegisterID,RP.PropertyName,1 AS IsActive
