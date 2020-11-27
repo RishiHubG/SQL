@@ -13,7 +13,8 @@ CREATION DATE:      2020-11-27
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		NOTES:
 					1.WE NEED ONLY Label & Type FOR EACH NODE, THESE ARE THE ASSESSMENT PROPERTIES
-				    2. PROPERTIES CAN ONLY BE INSERTED/DELETED (NO UPDATES)   
+				    2. PROPERTIES CAN ONLY BE INSERTED/DELETED (NO UPDATES); FOR MARKING OPERATION TYPE=DELETE: WHEN A PROPERTY IS REMOVED THE PROPERTY IS NOT DELETED FROM THE TABLE BUT MARKED AS INACTIVE
+					   COLUMN FROM _DATA TABLE IS ALSO NOT REMOVED	
 USAGE:             
 					DECLARE @inputJSON VARCHAR(MAX) ='{
      
@@ -158,6 +159,8 @@ CREATE OR ALTER PROCEDURE dbo.ParseAssessmentJSON
 AS
 BEGIN
 	SET NOCOUNT ON; 
+	BEGIN TRY
+	BEGIN TRAN
 
 	DECLARE @ID INT,			
 			@VersionNum INT,
@@ -166,11 +169,11 @@ BEGIN
 			
  DROP TABLE IF EXISTS #TMP_Objects
  DROP TABLE IF EXISTS #TMP_Assessments
- DROP TABLE IF EXISTS #TMP_RegisterProperties
+ DROP TABLE IF EXISTS #TMP_NewRegisterProperties
  DROP TABLE IF EXISTS #TMP_AssessmentData
  DROP TABLE IF EXISTS #TMP_ALLSTEPS 
  DROP TABLE IF EXISTS #TMP_RegistersPropertiesXref
- CREATE TABLE #TMP_RegisterProperties(RegisterPropertyID INT,RegisterID INT,PropertyName VARCHAR(1000))
+ CREATE TABLE #TMP_NewRegisterProperties(RegisterPropertyID INT,RegisterID INT,PropertyName VARCHAR(1000))
  
  SELECT *
 		INTO #TMP_ALLSTEPS
@@ -251,7 +254,7 @@ BEGIN
 	   END		
 		--SELECT * FROM #TMP_Assessments
 			INSERT INTO dbo.RegisterProperties(RegisterID,UserCreated,VersionNum,PropertyName)
-				OUTPUT INSERTED.RegisterPropertyID, inserted.RegisterID,INSERTED.PropertyName INTO #TMP_RegisterProperties(RegisterPropertyID,RegisterID,PropertyName)
+				OUTPUT INSERTED.RegisterPropertyID, inserted.RegisterID,INSERTED.PropertyName INTO #TMP_NewRegisterProperties(RegisterPropertyID,RegisterID,PropertyName)
 			SELECT @RegisterID, @UserCreated, @VersionNum,StringValue
 			FROM #TMP_Assessments TA
 			WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterProperties WHERE RegisterID = @RegisterID AND PropertyName = TA.StringValue)-- AND VersionNum = @VersionNum) 
@@ -267,7 +270,7 @@ BEGIN
 			/*
 				SELECT RegisterPropertyID,RegisterID,PropertyName,1 AS IsActive
 					INTO #TMP_RegistersPropertiesXref
-				FROM #TMP_RegisterProperties TR
+				FROM #TMP_NewRegisterProperties TR
 				--WHERE NOT EXISTS(SELECT 1 FROM dbo.RegistersPropertiesXref WHERE RegisterPropertyID= TR.RegisterPropertyID AND RegisterID = @RegisterID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
 				
 				UNION
@@ -290,7 +293,7 @@ BEGIN
 			
 			INSERT INTO dbo.RegistersPropertiesXref(RegisterPropertyID,RegisterID,UserCreated,VersionNum,PropertyName,IsActive)
 				SELECT RegisterPropertyID, RegisterID,@UserCreated,@VersionNum,PropertyName,1
-				FROM #TMP_RegisterProperties --#TMP_RegisterProperties TR
+				FROM #TMP_NewRegisterProperties --#TMP_NewRegisterProperties TR
 				--WHERE NOT EXISTS(SELECT 1 FROM dbo.RegistersPropertiesXref WHERE RegisterPropertyID= TR.RegisterPropertyID AND RegisterID = @RegisterID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
 			
 			--UPDATE WITH CURRENT VERSION NO.
@@ -386,6 +389,10 @@ BEGIN
 				END
 		 --RETURN
 	 		
+			--POPULATE THE HISTORY TABLES FOR THE FIRST VERSION OF DATA (AFTER ALL THE DATA HAS BEEN POPULATED IN THE MAIN TABLES)
+			IF @VersionNum = 1 OR EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties)
+				EXEC dbo.UpdateAssessmentHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
+
 			--UPDATE OPERATION TYPE IN HISTORY TABLE-------
 			IF @VersionNum > 1
 			BEGIN
@@ -403,6 +410,13 @@ BEGIN
 			WHERE RPX_Hist.VersionNum = @VersionNum		
 				AND RPX_Hist.RegisterID = @RegisterID
 				  AND EXISTS(SELECT 1 FROM #TMP_MissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
+			
+			UPDATE RP_Hist
+				SET OperationType = 'DELETE'				 
+			FROM dbo.RegisterProperties_history RP_Hist				 
+			WHERE RP_Hist.VersionNum = @VersionNum		
+				AND RP_Hist.RegisterID = @RegisterID
+				  AND EXISTS(SELECT 1 FROM #TMP_MissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RP_Hist.PropertyName AND RegisterPropertyID = RP_Hist.RegisterPropertyID)
 
 
 			UPDATE RPX_Hist
@@ -410,25 +424,37 @@ BEGIN
 			FROM dbo.RegistersPropertiesXref_history RPX_Hist				 
 			WHERE RPX_Hist.VersionNum = @VersionNum		
 				AND RPX_Hist.RegisterID = @RegisterID
-				  AND EXISTS(SELECT 1 FROM #TMP_ActivateMissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
+				  AND (EXISTS(SELECT 1 FROM #TMP_ActivateMissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
+					   OR EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties  WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
+					  )
 			
-			--TO DO: INSERT(& UPDATE OPERATION TYPE) A NEW PROPERTY IN HISTORY
-
-
+			UPDATE RP_Hist
+				SET OperationType = 'INSERT'				 
+			FROM dbo.RegisterProperties_history RP_Hist				 
+			WHERE RP_Hist.VersionNum = @VersionNum		
+				AND RP_Hist.RegisterID = @RegisterID
+				  AND EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties WHERE RegisterID=@RegisterID AND PropertyName=RP_Hist.PropertyName AND RegisterPropertyID = RP_Hist.RegisterPropertyID)
+				  
+		 	
 			END
 			------------------------------------------------
-
-			--POPULATE THE HISTORY TABLES FOR THE FIRST VERSION OF DATA (AFTER ALL THE DATA HAS BEEN POPULATED IN THE MAIN TABLES)
-			IF @VersionNum = 1
-				EXEC dbo.UpdateAssessmentHistoryTables @RegisterID = @RegisterID,@versionNum = @VersionNum
-
-	 	 --DROP TEMP TABLES--------------------------------------
+		
+		 COMMIT
+	END TRY
+	BEGIN CATCH
+		SELECT ERROR_MESSAGE()
+		IF @@TRANCOUNT > 1 AND XACT_STATE() <> 0
+			ROLLBACK
+	END CATCH	
+	
+		--DROP TEMP TABLES--------------------------------------
 		 DROP TABLE IF EXISTS #TMP_Objects
 		 DROP TABLE IF EXISTS #TMP_Assessments
-		 DROP TABLE IF EXISTS #TMP_RegisterProperties
+		 DROP TABLE IF EXISTS #TMP_NewRegisterProperties
 		 DROP TABLE IF EXISTS #TMP_AssessmentData
 		 DROP TABLE IF EXISTS #TMP_ALLSTEPS 
 		 DROP TABLE IF EXISTS #TMP_RegistersPropertiesXref
 		 DROP TABLE IF EXISTS #TMP_RegistersProperties
 		 --------------------------------------------------------
+
 END

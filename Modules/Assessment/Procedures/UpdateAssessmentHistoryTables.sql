@@ -10,7 +10,7 @@ GO
 OBJECT NAME:        dbo.UpdateAssessmentHistoryTables
 CREATION DATE:      2020-11-27
 AUTHOR:             Rishi Nayar
-DESCRIPTION:		
+DESCRIPTION:		INSERT HISTORICAL DATA IN Registers_history,RegisterProperties_history,RegistersPropertiesXref_history
 USAGE:        		EXEC dbo.UpdateAssessmentHistoryTables @RegisterID =1,@versionNum = 1
 
 CHANGE HISTORY:
@@ -19,7 +19,7 @@ SNo.	Modification Date		Modified By				Comments
 
 CREATE OR ALTER PROCEDURE dbo.UpdateAssessmentHistoryTables
 @RegisterID INT,
-@versionNum INT
+@VersionNum INT
 AS
 BEGIN
 	SET NOCOUNT ON; 
@@ -46,7 +46,7 @@ BEGIN
 				   ,[DateCreated]
 				   ,[UserModified]
 				   ,[DateModified]
-				   ,@versionNum
+				   ,@VersionNum
 				   ,1
 				   ,NULL
 				   ,NULL
@@ -59,8 +59,9 @@ BEGIN
 				   ,[PropagatedAccessControlID]
 				   ,[PropagatedWFAccessControlID]
 				   ,[HasExtendedProperties]
-		FROM dbo.Registers
+		FROM dbo.Registers R
 		WHERE RegisterID = @RegisterID
+		      AND NOT EXISTS(SELECT 1 FROM [dbo].[Registers_history] WHERE [RegisterID]=R.[RegisterID] AND Name=R.NAME AND VersionNum = @VersionNum)
 
 		INSERT INTO [dbo].[RegisterProperties_history]
            ([UserCreated]
@@ -78,15 +79,16 @@ BEGIN
            ,[DateCreated]
            ,[UserModified]
            ,[DateModified]
-           ,@versionNum
+           ,@VersionNum
            ,1
            ,NULL
            ,NULL
            ,[RegisterPropertyID]
            ,[RegisterID]
            ,[PropertyName]
-		FROM dbo.RegisterProperties
+		FROM dbo.RegisterProperties R
 		WHERE RegisterID = @RegisterID
+			  AND NOT EXISTS(SELECT 1 FROM [dbo].[RegisterProperties_history] WHERE [RegisterID]=R.[RegisterID] AND RegisterPropertyID=R.RegisterPropertyID AND VersionNum = @VersionNum)
 
     	INSERT INTO [dbo].[RegistersPropertiesXref_history]
 					([UserCreated]
@@ -107,7 +109,7 @@ BEGIN
 			,[DateCreated]
 			,[UserModified]
 			,[DateModified]
-			,@versionNum
+			,@VersionNum
 			,1
 			,NULL
 			,NULL
@@ -117,7 +119,8 @@ BEGIN
 			,[PropertyName]
 			,[IsRequired]
 			,[IsActive]
-		FROM dbo.RegistersPropertiesXref
+		FROM dbo.RegistersPropertiesXref R
 		WHERE RegisterID = @RegisterID
+		      AND NOT EXISTS(SELECT 1 FROM [dbo].[RegistersPropertiesXref_history] WHERE [RegisterID]=R.[RegisterID] AND RegisterPropertyID=R.RegisterPropertyID AND VersionNum = @VersionNum)
 END
 GO
