@@ -9,7 +9,16 @@ thus a property can be added/modified/deleted and identified using name?
 
 
 TO DO:
-OperationType in history tables
+1. PEriodIDentifier
+2. Add Datatype to Properties
+3. Data type can change: update operation type
+Check for data type compatibility
+Int to float,decimal,bigint - allowed
+int to string - allowed
+date to datetime - allowed
+datetime to datetime - allowed
+
 
 Qs:
 Table RegisterPropertyXerf & RegisterProperties seem similar??
+

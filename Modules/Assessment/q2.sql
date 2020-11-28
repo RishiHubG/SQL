@@ -26,8 +26,43 @@ GO
 NOTES:
 1.WE NEED ONLY Label & Type FOR EACH NODE, THESE ARE THE ASSESSMENT PROPERTIES
 2. PROPERTIES CAN ONLY BE INSERTED/DELETED (NO UPDATES)
+
+SELECT * FROM dbo.Registers
+SELECT * FROM dbo.RegisterProperties
+SELECT * FROM dbo.RegistersPropertiesXref
+SELECT * FROM RegisterPropertyXerf_Data
+
+SELECT * FROM dbo.Registers_history
+SELECT * FROM dbo.RegisterProperties_history
+SELECT * FROM dbo.RegistersPropertiesXref_history
+SELECT * FROM RegisterPropertyXerf_Data_history
+
+		DECLARE @DataTypes TABLE
+		 (
+		 JSONType VARCHAR(50),
+		 DataType VARCHAR(50),
+		 DataTypeLength VARCHAR(50),
+		 CompatibleTypes VARCHAR(500)
+		 )
+
+		 INSERT INTO @DataTypes (JSONType,DataType,DataTypeLength,CompatibleTypes)
+						SELECT 'textfield','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
+			SELECT 'selectboxes','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
+			SELECT 'select','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
+			SELECT 'textarea','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
+			SELECT 'number','INT',null,'INT,FLOAT,DECIMAL,BIGINT' UNION ALL
+			SELECT 'datetime','DATETIME',NULL,'DATETIME,DATE' UNION ALL
+			SELECT 'date','DATE',NULL,'DATE,DATETIME,'
+
+	SELECT * FROM @DataTypes
+	 
 */
+--rollback
 DECLARE @inputJSON VARCHAR(MAX) ='{
+"test5": {		
+        "label": "test5",
+		"type":"textfield"		
+		},
  "test4": {		
         "label": "test4",
 		"type":"textfield"

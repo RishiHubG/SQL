@@ -165,7 +165,8 @@ BEGIN
 	DECLARE @ID INT,			
 			@VersionNum INT,
 			@RegisterID INT,
-			@SQL NVARCHAR(MAX)
+			@SQL NVARCHAR(MAX),
+			@IsDataTypesCompatible BIT = 1
 			
  DROP TABLE IF EXISTS #TMP_Objects
  DROP TABLE IF EXISTS #TMP_Assessments
@@ -174,7 +175,28 @@ BEGIN
  DROP TABLE IF EXISTS #TMP_ALLSTEPS 
  DROP TABLE IF EXISTS #TMP_RegistersPropertiesXref
  CREATE TABLE #TMP_NewRegisterProperties(RegisterPropertyID INT,RegisterID INT,PropertyName VARCHAR(1000))
- 
+	
+	--LIST OF COMPATIBLE DATA TYPES==============================================================
+		DECLARE @DataTypes TABLE
+		 (
+		 JSONType VARCHAR(50),
+		 DataType VARCHAR(50),
+		 DataTypeLength VARCHAR(50),
+		 CompatibleTypes VARCHAR(500)
+		 )
+
+		 INSERT INTO @DataTypes (JSONType,DataType,DataTypeLength,CompatibleTypes)
+			SELECT 'textfield','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
+			SELECT 'selectboxes','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
+			SELECT 'select','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
+			SELECT 'textarea','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
+			SELECT 'number','INT',null,'INT,FLOAT,DECIMAL,BIGINT' UNION ALL
+			SELECT 'datetime','DATETIME',NULL,'DATETIME,DATE' UNION ALL
+			SELECT 'date','DATE',NULL,'DATE,DATETIME,'
+
+			--SELECT * FROM @DataTypes
+	--===========================================================================================
+
  SELECT *
 		INTO #TMP_ALLSTEPS
  FROM dbo.HierarchyFromJSON(@inputJSON)
@@ -208,23 +230,32 @@ BEGIN
 
 		SELECT *, 
 			  CAST(NULL AS VARCHAR(100)) AS DataType,
-			  CAST(NULL AS VARCHAR(100)) AS DataTypeLength
+			  CAST(NULL AS VARCHAR(100)) AS DataTypeLength,
+			  CAST(NULL AS VARCHAR(100)) AS JSONType,
+			  CAST(NULL AS VARCHAR(100)) AS CompatibleTypes
 			INTO #TMP_Assessments
 		FROM CTE
 		WHERE ValueType NOT IN ('Object','array')
 		
-		UPDATE #TMP_Assessments
-		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea') THEN 'NVARCHAR' 
-							WHEN StringValue = 'number' THEN 'INT'
-							WHEN StringValue = 'datetime' THEN 'DATETIME' 
-						END
-		WHERE KeyName ='type'
-
-		UPDATE #TMP_Assessments
-		SET DataTypeLength = CASE WHEN DataType = 'NVARCHAR' THEN '(MAX)'
-							 END
-		WHERE KeyName ='type'
+		UPDATE TA
+		SET DataType = DT.DataType,
+			DataTypeLength = DT.DataTypeLength,
+			JSONType = TA.StringValue,
+			CompatibleTypes = DT.CompatibleTypes
+		FROM #TMP_Assessments TA
+			 INNER JOIN @DataTypes DT ON DT.JSONType = TA.StringValue
+		WHERE TA.KeyName ='type'
 		
+		UPDATE TA 
+				SET DataType= TA_Type.DataType,
+					DataTypeLength= TA_Type.DataTypeLength,
+					JSONType = TA_Type.StringValue,
+					CompatibleTypes = TA_Type.CompatibleTypes
+			FROM #TMP_Assessments TA
+			     INNER JOIN #TMP_Assessments TA_Type ON TA.Parent_ID = TA_Type.Parent_ID
+			WHERE TA.KeyName ='Label'
+			      AND TA_Type.KeyName ='Type'
+
 		--SELECT * FROM #TMP_Assessments
 		--RETURN
 		SELECT @VersionNum = VersionNum + 1,
@@ -253,9 +284,40 @@ BEGIN
 			WHERE RegisterID = @RegisterID
 	   END		
 		--SELECT * FROM #TMP_Assessments
-			INSERT INTO dbo.RegisterProperties(RegisterID,UserCreated,VersionNum,PropertyName)
+		--RETURN
+
+		  --CHECK FOR DATA TYPE COMPATIBILITY================================================================================
+			IF @VersionNum > 1 
+			BEGIN
+				
+				DROP TABLE IF EXISTS #TMP_DataTypeMismatch
+
+				SELECT @RegisterID AS RegisterID, @UserCreated AS UserCreated, @VersionNum AS VersionNum,TA.StringValue,TA.JSONType AS New_JSONType,
+					  TA.DataType AS New_DataType,RP.JsonType AS Old_JSONType,DT.CompatibleTypes AS Old_CompatibleTypes
+					 ,CHARINDEX(TA.DataType,DT.CompatibleTypes,1) AS Flag
+					INTO #TMP_DataTypeMismatch
+				FROM #TMP_Assessments TA
+								 INNER JOIN dbo.RegisterProperties RP ON RP.RegisterID = @RegisterID AND RP.PropertyName = TA.StringValue 
+								 INNER JOIN @DataTypes DT ON DT.JSONType = RP.JSONType
+							WHERE TA.KeyName ='Label'
+								  AND RP.VersionNum = @VersionNum - 1
+								  AND CHARINDEX(TA.DataType,DT.CompatibleTypes,1) = 0
+								  				
+				IF EXISTS(SELECT 1
+							FROM #TMP_DataTypeMismatch
+						  )						
+				BEGIN
+					SELECT * FROM #TMP_DataTypeMismatch;
+					THROW 50005, N'Data Type Compatibility Mismatch!!', 16;					
+					ROLLBACK
+					RETURN
+				END
+			END
+		--==================================================================================================================
+
+			INSERT INTO dbo.RegisterProperties(RegisterID,UserCreated,VersionNum,PropertyName,JSONType)
 				OUTPUT INSERTED.RegisterPropertyID, inserted.RegisterID,INSERTED.PropertyName INTO #TMP_NewRegisterProperties(RegisterPropertyID,RegisterID,PropertyName)
-			SELECT @RegisterID, @UserCreated, @VersionNum,StringValue
+			SELECT @RegisterID, @UserCreated, @VersionNum,StringValue,JSONType
 			FROM #TMP_Assessments TA
 			WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterProperties WHERE RegisterID = @RegisterID AND PropertyName = TA.StringValue)-- AND VersionNum = @VersionNum) 
 			      AND KeyName ='Label'
@@ -323,14 +385,7 @@ BEGIN
 			WHERE RegisterID = @RegisterID
 				 AND EXISTS(SELECT 1 FROM #TMP_ActivateMissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX.PropertyName AND RegisterPropertyID = RPX.RegisterPropertyID)
 				 			
-			UPDATE TA 
-				SET DataType= TA_Type.DataType,
-					DataTypeLength= TA_Type.DataTypeLength
-			FROM #TMP_Assessments TA
-			     INNER JOIN #TMP_Assessments TA_Type ON TA.Parent_ID = TA_Type.Parent_ID
-			WHERE TA.KeyName ='Label'
-			      AND TA_Type.KeyName ='Type'
-				
+							
 			SELECT * INTO #TMP_AssessmentData 
 			FROM #TMP_Assessments
 			WHERE KeyName ='Label'
@@ -445,7 +500,7 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 		SELECT ERROR_MESSAGE()
-		IF @@TRANCOUNT > 1 AND XACT_STATE() <> 0
+		IF @@TRANCOUNT = 1 AND XACT_STATE() <> 0
 			ROLLBACK
 	END CATCH	
 	

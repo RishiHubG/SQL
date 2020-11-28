@@ -37,6 +37,7 @@ CREATE TABLE dbo.RegisterProperties
 	DateModified DATETIME2(0),
 	VersionNum INT NOT NULL,
 	PropertyName VARCHAR(100) NOT NULL,
+	JSONType VARCHAR(50) NOT NULL,
 	CONSTRAINT PK_RegisterProperties_RegisterPropertyID PRIMARY KEY(RegisterPropertyID)
 	)
 

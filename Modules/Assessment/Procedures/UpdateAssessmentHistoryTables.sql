@@ -24,6 +24,8 @@ AS
 BEGIN
 	SET NOCOUNT ON; 
 		
+		DECLARE @PeriodIdentifierID INT = 1
+
 		INSERT INTO [dbo].[Registers_history]
 				   ([UserCreated]
 				   ,[DateCreated]
@@ -47,7 +49,7 @@ BEGIN
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,@VersionNum
-				   ,1
+				   ,@PeriodIdentifierID
 				   ,NULL
 				   ,NULL
 				   ,[RegisterID]
@@ -74,18 +76,20 @@ BEGIN
            ,[UserActionID]
            ,[RegisterPropertyID]
            ,[RegisterID]
-           ,[PropertyName])
+           ,[PropertyName],
+		   [JSONType])
 		SELECT  [UserCreated]
            ,[DateCreated]
            ,[UserModified]
            ,[DateModified]
            ,@VersionNum
-           ,1
+           ,@PeriodIdentifierID
            ,NULL
            ,NULL
            ,[RegisterPropertyID]
            ,[RegisterID]
-           ,[PropertyName]
+           ,[PropertyName],
+		   [JSONType]
 		FROM dbo.RegisterProperties R
 		WHERE RegisterID = @RegisterID
 			  AND NOT EXISTS(SELECT 1 FROM [dbo].[RegisterProperties_history] WHERE [RegisterID]=R.[RegisterID] AND RegisterPropertyID=R.RegisterPropertyID AND VersionNum = @VersionNum)
@@ -110,7 +114,7 @@ BEGIN
 			,[UserModified]
 			,[DateModified]
 			,@VersionNum
-			,1
+			,@PeriodIdentifierID
 			,NULL
 			,NULL
 			,[RegistersPropertiesXrefID]
@@ -122,5 +126,11 @@ BEGIN
 		FROM dbo.RegistersPropertiesXref R
 		WHERE RegisterID = @RegisterID
 		      AND NOT EXISTS(SELECT 1 FROM [dbo].[RegistersPropertiesXref_history] WHERE [RegisterID]=R.[RegisterID] AND RegisterPropertyID=R.RegisterPropertyID AND VersionNum = @VersionNum)
+
+
+		UPDATE dbo.Registers_history SET PeriodIdentifierID = 0 WHERE RegisterID = @RegisterID AND VersionNum < @VersionNum		
+		UPDATE dbo.RegisterProperties_history SET PeriodIdentifierID = 0 WHERE RegisterID = @RegisterID AND VersionNum < @VersionNum
+		UPDATE dbo.RegistersPropertiesXref_history SET PeriodIdentifierID = 0 WHERE RegisterID = @RegisterID AND VersionNum < @VersionNum
+
 END
 GO

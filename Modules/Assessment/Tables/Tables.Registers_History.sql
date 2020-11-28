@@ -44,6 +44,7 @@ CREATE TABLE dbo.RegisterProperties_history
 	RegisterPropertyID INT NOT NULL,
 	RegisterID INT NOT NULL,	
 	PropertyName VARCHAR(100) NOT NULL,
+	JSONType VARCHAR(50) NOT NULL,
 	CONSTRAINT PK_RegisterProperties_history_HistoryID PRIMARY KEY(HistoryID)
 	)
 
