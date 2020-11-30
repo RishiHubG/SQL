@@ -8,7 +8,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /***************************************************************************************************
-OBJECT NAME:        dbo.ParseAssessmentJSON
+OBJECT NAME:        dbo.ParseUniverseJSON
 CREATION DATE:      2020-11-27
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		NOTES:
@@ -145,14 +145,14 @@ USAGE:
 						}
 					}'
 
-					EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON
+					EXEC dbo.ParseUniverseJSON @UniverseName ='ABC',@inputJSON = @inputJSON
 
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
-CREATE OR ALTER PROCEDURE dbo.ParseAssessmentJSON
-@RegisterName VARCHAR(500),
+CREATE OR ALTER PROCEDURE dbo.ParseUniverseJSON
+@UniverseName VARCHAR(500),
 @inputJSON VARCHAR(MAX) = NULL,
 @UserCreated INT = 100,
 @UserModified INT = 200
@@ -164,17 +164,17 @@ BEGIN
 
 	DECLARE @ID INT,			
 			@VersionNum INT,
-			@RegisterID INT,
+			@UniverseID INT,
 			@SQL NVARCHAR(MAX),
 			@IsDataTypesCompatible BIT = 1
 			
  DROP TABLE IF EXISTS #TMP_Objects
  DROP TABLE IF EXISTS #TMP_Assessments
- DROP TABLE IF EXISTS #TMP_NewRegisterProperties
+ DROP TABLE IF EXISTS #TMP_NewUniverseProperties
  DROP TABLE IF EXISTS #TMP_AssessmentData
  DROP TABLE IF EXISTS #TMP_ALLSTEPS 
- DROP TABLE IF EXISTS #TMP_RegisterPropertiesXref
- CREATE TABLE #TMP_NewRegisterProperties(RegisterPropertyID INT,RegisterID INT,PropertyName VARCHAR(1000))
+ DROP TABLE IF EXISTS #TMP_UniversePropertiesXref
+ CREATE TABLE #TMP_NewUniverseProperties(UniversePropertyID INT,UniverseID INT,PropertyName VARCHAR(1000))
 	
 	--LIST OF COMPATIBLE DATA TYPES==============================================================
 		DECLARE @DataTypes TABLE
@@ -259,29 +259,29 @@ BEGIN
 		--SELECT * FROM #TMP_Assessments
 		--RETURN
 		SELECT @VersionNum = VersionNum + 1,
-			   @RegisterID = RegisterID
-		FROM dbo.Registers 
-		WHERE Name=@RegisterName
+			   @UniverseID = UniverseID
+		FROM dbo.Universe 
+		WHERE Name=@UniverseName
 				 
-		IF @RegisterID IS NULL
+		IF @UniverseID IS NULL
 		BEGIN
 			SET @VersionNum = 1
 
-			INSERT INTO dbo.Registers(Name,UserCreated,VersionNum)
-				SELECT @RegisterName, @UserCreated, @VersionNum
+			INSERT INTO dbo.Universe(Name,UserCreated,VersionNum)
+				SELECT @UniverseName, @UserCreated, @VersionNum
 
-			SET @RegisterID =SCOPE_IDENTITY()
+			SET @UniverseID =SCOPE_IDENTITY()
 		END
 		--ELSE
 		--BEGIN
 		--	 --POPULATE THE HISTORY TABLES PRIOR TO ANY OPERATION
-		--	EXEC dbo.UpdateAssessmentHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
+		--	EXEC dbo.UpdateUniverseHistoryTables @UniverseID = @UniverseID,@VersionNum = @VersionNum
 
-		--	UPDATE dbo.Registers
+		--	UPDATE dbo.Universe
 		--	SET VersionNum = @VersionNum,
 		--		UserModified = @UserModified,
 		--		DateModified = GETUTCDATE()
-		--	WHERE RegisterID = @RegisterID
+		--	WHERE UniverseID = @UniverseID
 	 --  END		
 		--SELECT * FROM #TMP_Assessments
 		--RETURN
@@ -293,12 +293,12 @@ BEGIN
 				--CHECK FOR DATA TYPE COMPATIBILITY-----------------------------------------------------------------------------------------------
 				DROP TABLE IF EXISTS #TMP_DataTypeMismatch
 
-				SELECT @RegisterID AS RegisterID, @UserCreated AS UserCreated, @VersionNum AS VersionNum,TA.StringValue,TA.JSONType AS New_JSONType,
+				SELECT @UniverseID AS UniverseID, @UserCreated AS UserCreated, @VersionNum AS VersionNum,TA.StringValue,TA.JSONType AS New_JSONType,
 					  TA.DataType AS New_DataType,RP.JsonType AS Old_JSONType,DT.CompatibleTypes AS Old_CompatibleTypes
 					 ,CHARINDEX(TA.DataType,DT.CompatibleTypes,1) AS Flag
 					INTO #TMP_DataTypeMismatch
 				FROM #TMP_Assessments TA
-					INNER JOIN dbo.RegisterProperties RP ON RP.RegisterID = @RegisterID AND RP.PropertyName = TA.StringValue 
+					INNER JOIN dbo.UniverseProperties RP ON RP.UniverseID = @UniverseID AND RP.PropertyName = TA.StringValue 
 					INNER JOIN @DataTypes DT ON DT.JSONType = RP.JSONType
 				WHERE TA.KeyName ='Label'
 					  AND RP.VersionNum = @VersionNum - 1
@@ -321,20 +321,20 @@ BEGIN
 						VersionNum = @VersionNum,
 						UserModified = @UserModified,
 						DateModified = GETUTCDATE()
-					FROM dbo.RegisterProperties RP
-						 INNER JOIN #TMP_Assessments TA ON RegisterID = @RegisterID AND PropertyName = TA.StringValue
-					WHERE RP.RegisterID = @RegisterID
+					FROM dbo.UniverseProperties RP
+						 INNER JOIN #TMP_Assessments TA ON UniverseID = @UniverseID AND PropertyName = TA.StringValue
+					WHERE RP.UniverseID = @UniverseID
 						  AND RP.JSONType <> TA.JSONType
 						  AND KeyName ='Label'
 
 				--POPULATE THE HISTORY TABLES PRIOR TO ANY OPERATION
-				EXEC dbo.UpdateAssessmentHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
+				EXEC dbo.UpdateUniverseHistoryTables @UniverseID = @UniverseID,@VersionNum = @VersionNum
 
-				UPDATE dbo.Registers
+				UPDATE dbo.Universe
 				SET VersionNum = @VersionNum,
 					UserModified = @UserModified,
 					DateModified = GETUTCDATE()
-				WHERE RegisterID = @RegisterID
+				WHERE UniverseID = @UniverseID
 
 			END
 		--==========================================================================================================================================================
@@ -348,84 +348,84 @@ BEGIN
 			--		VersionNum = @VersionNum,
 			--		UserModified = @UserModified,
 			--		DateModified = GETUTCDATE()
-			--	FROM dbo.RegisterProperties RP
-			--		 INNER JOIN #TMP_Assessments TA ON RegisterID = @RegisterID AND PropertyName = TA.StringValue
-			--	WHERE RP.RegisterID = @RegisterID
+			--	FROM dbo.UniverseProperties RP
+			--		 INNER JOIN #TMP_Assessments TA ON UniverseID = @UniverseID AND PropertyName = TA.StringValue
+			--	WHERE RP.UniverseID = @UniverseID
 			--		  AND RP.JSONType <> TA.JSONType
 			--		  AND KeyName ='Label'
 
 			--END
 			--INSERT NEW PROPERTIES (IF ANY)
-			INSERT INTO dbo.RegisterProperties(RegisterID,UserCreated,VersionNum,PropertyName,JSONType)
-				OUTPUT INSERTED.RegisterPropertyID, inserted.RegisterID,INSERTED.PropertyName INTO #TMP_NewRegisterProperties(RegisterPropertyID,RegisterID,PropertyName)
-			SELECT @RegisterID, @UserCreated, @VersionNum,StringValue,JSONType
+			INSERT INTO dbo.UniverseProperties(UniverseID,UserCreated,VersionNum,PropertyName,JSONType)
+				OUTPUT INSERTED.UniversePropertyID, inserted.UniverseID,INSERTED.PropertyName INTO #TMP_NewUniverseProperties(UniversePropertyID,UniverseID,PropertyName)
+			SELECT @UniverseID, @UserCreated, @VersionNum,StringValue,JSONType
 			FROM #TMP_Assessments TA
-			WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterProperties WHERE RegisterID = @RegisterID AND PropertyName = TA.StringValue)-- AND VersionNum = @VersionNum) 
+			WHERE NOT EXISTS(SELECT 1 FROM dbo.UniverseProperties WHERE UniverseID = @UniverseID AND PropertyName = TA.StringValue)-- AND VersionNum = @VersionNum) 
 			      AND KeyName ='Label'
 			
 			
 			--UPDATE WITH CURRENT VERSION NO.
-			UPDATE dbo.RegisterProperties
+			UPDATE dbo.UniverseProperties
 			SET VersionNum = @VersionNum,
 				UserModified = @UserModified,
 				DateModified = GETUTCDATE()
-			WHERE RegisterID = @RegisterID
+			WHERE UniverseID = @UniverseID
 
 			/*
-				SELECT RegisterPropertyID,RegisterID,PropertyName,1 AS IsActive
-					INTO #TMP_RegisterPropertiesXref
-				FROM #TMP_NewRegisterProperties TR
-				--WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterPropertiesXref WHERE RegisterPropertyID= TR.RegisterPropertyID AND RegisterID = @RegisterID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
+				SELECT UniversePropertyID,UniverseID,PropertyName,1 AS IsActive
+					INTO #TMP_UniversePropertiesXref
+				FROM #TMP_NewUniverseProperties TR
+				--WHERE NOT EXISTS(SELECT 1 FROM dbo.UniversePropertiesXref WHERE UniversePropertyID= TR.UniversePropertyID AND UniverseID = @UniverseID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
 				
 				UNION
 			*/
 				--INSERT MISSING PROPERTIES AS WELL: THIS IS TO HANDLE ANY DELETES IN THE CURRENT VERSION
-				SELECT RP.RegisterPropertyID,RP.RegisterID,RP.PropertyName,0 AS IsActive
-					INTO #TMP_MissingRegistersProperties
-				FROM dbo.RegisterProperties RP 
-					  INNER JOIN RegisterPropertiesXref RPX ON RPX.RegisterPropertyID = RP.RegisterPropertyID AND RPX.RegisterID=RP.RegisterID
+				SELECT RP.UniversePropertyID,RP.UniverseID,RP.PropertyName,0 AS IsActive
+					INTO #TMP_MissingUniverseProperties
+				FROM dbo.UniverseProperties RP 
+					  INNER JOIN UniversePropertiesXref RPX ON RPX.UniversePropertyID = RP.UniversePropertyID AND RPX.UniverseID=RP.UniverseID
 				WHERE NOT EXISTS(SELECT 1 FROM #TMP_Assessments WHERE StringValue = RP.PropertyName AND KeyName ='Label')
-					  AND RP.RegisterID = @RegisterID
+					  AND RP.UniverseID = @UniverseID
 					   AND RPX.IsActive = 1
 
 				--INSERT BACK A PROPERTY WHICH WAS REMOVED EARLIER
-				SELECT RP.RegisterPropertyID,RP.RegisterID,RP.PropertyName,1 AS IsActive
-					INTO #TMP_ActivateMissingRegistersProperties
-				FROM dbo.RegisterProperties RP
-					 INNER JOIN RegisterPropertiesXref RPX ON RPX.RegisterPropertyID = RP.RegisterPropertyID AND RPX.RegisterID=RP.RegisterID
+				SELECT RP.UniversePropertyID,RP.UniverseID,RP.PropertyName,1 AS IsActive
+					INTO #TMP_ActivateMissingUniverseProperties
+				FROM dbo.UniverseProperties RP
+					 INNER JOIN UniversePropertiesXref RPX ON RPX.UniversePropertyID = RP.UniversePropertyID AND RPX.UniverseID=RP.UniverseID
 				WHERE EXISTS(SELECT 1 FROM #TMP_Assessments TA WHERE TA.StringValue = RP.PropertyName AND KeyName ='Label')
-					 AND RP.RegisterID = @RegisterID
+					 AND RP.UniverseID = @UniverseID
 					 AND RPX.IsActive = 0	
 			
-			INSERT INTO dbo.RegisterPropertiesXref(RegisterPropertyID,RegisterID,UserCreated,VersionNum,PropertyName,IsActive)
-				SELECT RegisterPropertyID, RegisterID,@UserCreated,@VersionNum,PropertyName,1
-				FROM #TMP_NewRegisterProperties --#TMP_NewRegisterProperties TR
-				--WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterPropertiesXref WHERE RegisterPropertyID= TR.RegisterPropertyID AND RegisterID = @RegisterID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
+			INSERT INTO dbo.UniversePropertiesXref(UniversePropertyID,UniverseID,UserCreated,VersionNum,PropertyName,IsActive)
+				SELECT UniversePropertyID, UniverseID,@UserCreated,@VersionNum,PropertyName,1
+				FROM #TMP_NewUniverseProperties --#TMP_NewUniverseProperties TR
+				--WHERE NOT EXISTS(SELECT 1 FROM dbo.UniversePropertiesXref WHERE UniversePropertyID= TR.UniversePropertyID AND UniverseID = @UniverseID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
 			
 			--UPDATE WITH CURRENT VERSION NO.
-			UPDATE dbo.RegisterPropertiesXref
+			UPDATE dbo.UniversePropertiesXref
 			SET VersionNum = @VersionNum,
 				UserModified = @UserModified,
 				DateModified = GETUTCDATE()
-			WHERE RegisterID = @RegisterID
+			WHERE UniverseID = @UniverseID
 
 			--INACTIVATE THE PROPERTIES WHICH WERE REMOVED
 			UPDATE RPX
 			SET IsActive = 0,
 				UserModified = @UserModified,
 				DateModified = GETUTCDATE()
-			FROM dbo.RegisterPropertiesXref RPX		
-			WHERE RegisterID = @RegisterID
-				 AND EXISTS(SELECT 1 FROM #TMP_MissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX.PropertyName AND RegisterPropertyID = RPX.RegisterPropertyID)
+			FROM dbo.UniversePropertiesXref RPX		
+			WHERE UniverseID = @UniverseID
+				 AND EXISTS(SELECT 1 FROM #TMP_MissingUniverseProperties WHERE UniverseID=@UniverseID AND PropertyName=RPX.PropertyName AND UniversePropertyID = RPX.UniversePropertyID)
 			
 			--ACTIVATE THE PROPERTIES WHICH WERE ADDED BACK
 			UPDATE RPX
 			SET IsActive = 1,
 				UserModified = @UserModified,
 				DateModified = GETUTCDATE()
-			FROM dbo.RegisterPropertiesXref RPX		
-			WHERE RegisterID = @RegisterID
-				 AND EXISTS(SELECT 1 FROM #TMP_ActivateMissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX.PropertyName AND RegisterPropertyID = RPX.RegisterPropertyID)
+			FROM dbo.UniversePropertiesXref RPX		
+			WHERE UniverseID = @UniverseID
+				 AND EXISTS(SELECT 1 FROM #TMP_ActivateMissingUniverseProperties WHERE UniverseID=@UniverseID AND PropertyName=RPX.PropertyName AND UniversePropertyID = RPX.UniversePropertyID)
 				 			
 							
 			SELECT * INTO #TMP_AssessmentData 
@@ -439,7 +439,7 @@ BEGIN
 				 SET @DataCols =STUFF(
 							 (SELECT CONCAT(', [',TA.StringValue,'] [', TA.DataType,'] ', TA.DataTypeLength)
 							 FROM #TMP_AssessmentData TA								  
-							  WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.StringValue AND C.object_id =OBJECT_ID('RegisterPropertyXerf_Data'))
+							  WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.StringValue AND C.object_id =OBJECT_ID('UniversePropertyXerf_Data'))
 							 FOR XML PATH('')
 							 )
 							 ,1,1,'')
@@ -447,12 +447,12 @@ BEGIN
 
 				IF @DataCols IS NOT NULL
 				BEGIN
-					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertyXerf_Data ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
+					SET @SQL = CONCAT(N' ALTER TABLE dbo.UniversePropertyXerf_Data ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
 					PRINT @SQL	
 					EXEC sp_executesql @SQL	
 
 					--CREATE _DATA_HISTORY TABLE
-					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertyXerf_Data_history ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
+					SET @SQL = CONCAT(N' ALTER TABLE dbo.UniversePropertyXerf_Data_history ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
 					PRINT @SQL	
 					EXEC sp_executesql @SQL	
 
@@ -461,24 +461,24 @@ BEGIN
 					DECLARE @cols VARCHAR(MAX) = ''
 
 					SELECT @cols = CONCAT(@cols,N', [',name,'] ')
-					FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.RegisterPropertyXerf_Data' , NULL, 1)
+					FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.UniversePropertyXerf_Data' , NULL, 1)
 					
 					SET @cols = STUFF(@cols, 1, 1, N'');
 									 
 
-					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='RegisterPropertyXerf_Data_Insert')						
+					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='UniversePropertyXerf_Data_Insert')						
 						SET @SQL = N'ALTER TRIGGER '
 					ELSE
 						SET @SQL = N'CREATE TRIGGER '
 
-					SET @SQL = CONCAT(@SQL,N' dbo.RegisterPropertyXerf_Data_Insert
-									   ON  dbo.RegisterPropertyXerf_Data
+					SET @SQL = CONCAT(@SQL,N' dbo.UniversePropertyXerf_Data_Insert
+									   ON  dbo.UniversePropertyXerf_Data
 									   AFTER INSERT
 									AS 
 									BEGIN
 										SET NOCOUNT ON;
 
-										INSERT INTO dbo.RegisterPropertyXerf_Data_history(<ColumnList>)
+										INSERT INTO dbo.UniversePropertyXerf_Data_history(<ColumnList>)
 											SELECT <columnList>
 											FROM INSERTED
 									END;',CHAR(10))
@@ -489,8 +489,8 @@ BEGIN
 		 --RETURN
 	 		
 			--POPULATE THE HISTORY TABLES FOR THE FIRST VERSION OF DATA (AFTER ALL THE DATA HAS BEEN POPULATED IN THE MAIN TABLES)
-			IF @VersionNum = 1 OR EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties)
-				EXEC dbo.UpdateAssessmentHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
+			IF @VersionNum = 1 OR EXISTS(SELECT 1 FROM #TMP_NewUniverseProperties)
+				EXEC dbo.UpdateUniverseHistoryTables @UniverseID = @UniverseID,@VersionNum = @VersionNum
 
 			--UPDATE OPERATION TYPE IN HISTORY TABLE-------
 			IF @VersionNum > 1
@@ -498,48 +498,48 @@ BEGIN
 
 			--UPDATE RPX_Hist
 			--	SET OperationType = 'DELETE'				 
-			--FROM dbo.RegisterPropertiesXref_history RPX_Hist
-			--	 INNER JOIN dbo.RegisterPropertiesXref RPX ON RPX.RegisterID=RPX_Hist.RegisterID AND RPX.RegisterPropertyID=RPX_Hist.RegisterPropertyID
+			--FROM dbo.UniversePropertiesXref_history RPX_Hist
+			--	 INNER JOIN dbo.UniversePropertiesXref RPX ON RPX.UniverseID=RPX_Hist.UniverseID AND RPX.UniversePropertyID=RPX_Hist.UniversePropertyID
 			--WHERE RPX_Hist.VersionNum = @VersionNum
 			--	  AND Rpx.IsActive = 0
 				 
 			UPDATE RPX_Hist
 				SET OperationType = 'DELETE'				 
-			FROM dbo.RegisterPropertiesXref_history RPX_Hist				 
+			FROM dbo.UniversePropertiesXref_history RPX_Hist				 
 			WHERE RPX_Hist.VersionNum = @VersionNum		
-				  AND RPX_Hist.RegisterID = @RegisterID
-				  AND EXISTS(SELECT 1 FROM #TMP_MissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
+				  AND RPX_Hist.UniverseID = @UniverseID
+				  AND EXISTS(SELECT 1 FROM #TMP_MissingUniverseProperties WHERE UniverseID=@UniverseID AND PropertyName=RPX_Hist.PropertyName AND UniversePropertyID = RPX_Hist.UniversePropertyID)
 			
 			UPDATE RP_Hist
 				SET OperationType = 'DELETE'				 
-			FROM dbo.RegisterProperties_history RP_Hist				 
+			FROM dbo.UniverseProperties_history RP_Hist				 
 			WHERE RP_Hist.VersionNum = @VersionNum		
-				  AND RP_Hist.RegisterID = @RegisterID
-				  AND EXISTS(SELECT 1 FROM #TMP_MissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RP_Hist.PropertyName AND RegisterPropertyID = RP_Hist.RegisterPropertyID)
+				  AND RP_Hist.UniverseID = @UniverseID
+				  AND EXISTS(SELECT 1 FROM #TMP_MissingUniverseProperties WHERE UniverseID=@UniverseID AND PropertyName=RP_Hist.PropertyName AND UniversePropertyID = RP_Hist.UniversePropertyID)
 
 
 			UPDATE RPX_Hist
 				SET OperationType = 'INSERT'				 
-			FROM dbo.RegisterPropertiesXref_history RPX_Hist				 
+			FROM dbo.UniversePropertiesXref_history RPX_Hist				 
 			WHERE RPX_Hist.VersionNum = @VersionNum		
-				  AND RPX_Hist.RegisterID = @RegisterID
-				  AND (EXISTS(SELECT 1 FROM #TMP_ActivateMissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
-					   OR EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties  WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
+				  AND RPX_Hist.UniverseID = @UniverseID
+				  AND (EXISTS(SELECT 1 FROM #TMP_ActivateMissingUniverseProperties WHERE UniverseID=@UniverseID AND PropertyName=RPX_Hist.PropertyName AND UniversePropertyID = RPX_Hist.UniversePropertyID)
+					   OR EXISTS(SELECT 1 FROM #TMP_NewUniverseProperties  WHERE UniverseID=@UniverseID AND PropertyName=RPX_Hist.PropertyName AND UniversePropertyID = RPX_Hist.UniversePropertyID)
 					  )
 			
 			UPDATE RP_Hist
 				SET OperationType = 'INSERT'				 
-			FROM dbo.RegisterProperties_history RP_Hist				 
+			FROM dbo.UniverseProperties_history RP_Hist				 
 			WHERE RP_Hist.VersionNum = @VersionNum		
-				  AND RP_Hist.RegisterID = @RegisterID
-				  AND EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties WHERE RegisterID=@RegisterID AND PropertyName=RP_Hist.PropertyName AND RegisterPropertyID = RP_Hist.RegisterPropertyID)
+				  AND RP_Hist.UniverseID = @UniverseID
+				  AND EXISTS(SELECT 1 FROM #TMP_NewUniverseProperties WHERE UniverseID=@UniverseID AND PropertyName=RP_Hist.PropertyName AND UniversePropertyID = RP_Hist.UniversePropertyID)
 				  
 		 	UPDATE RP_Hist
 				SET OperationType = 'UPDATE'				 
-			FROM dbo.RegisterProperties_history RP_Hist				 
+			FROM dbo.UniverseProperties_history RP_Hist				 
 			WHERE RP_Hist.VersionNum = @VersionNum		
-				  AND RP_Hist.RegisterID = @RegisterID
-				  AND EXISTS(SELECT 1 FROM RegisterProperties_history WHERE RegisterID=@RegisterID AND PropertyName=RP_Hist.PropertyName AND RegisterPropertyID = RP_Hist.RegisterPropertyID
+				  AND RP_Hist.UniverseID = @UniverseID
+				  AND EXISTS(SELECT 1 FROM UniverseProperties_history WHERE UniverseID=@UniverseID AND PropertyName=RP_Hist.PropertyName AND UniversePropertyID = RP_Hist.UniversePropertyID
 								AND VersionNum = RP_Hist.VersionNum - 1
 								AND JSONType <> RP_Hist.JSONType
 							)
@@ -558,11 +558,11 @@ BEGIN
 		--DROP TEMP TABLES--------------------------------------
 		 DROP TABLE IF EXISTS #TMP_Objects
 		 DROP TABLE IF EXISTS #TMP_Assessments
-		 DROP TABLE IF EXISTS #TMP_NewRegisterProperties
+		 DROP TABLE IF EXISTS #TMP_NewUniverseProperties
 		 DROP TABLE IF EXISTS #TMP_AssessmentData
 		 DROP TABLE IF EXISTS #TMP_ALLSTEPS 
-		 DROP TABLE IF EXISTS #TMP_RegisterPropertiesXref
-		 DROP TABLE IF EXISTS #TMP_RegistersProperties
+		 DROP TABLE IF EXISTS #TMP_UniversePropertiesXref
+		 DROP TABLE IF EXISTS #TMP_UniverseProperties
 		 --------------------------------------------------------
 
 END

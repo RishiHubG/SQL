@@ -1,7 +1,7 @@
 USE JUNK
 GO
 
-DROP TABLE  IF EXISTS RegistersPropertiesXref,RegisterPropertyXerf_Data,RegisterProperties,dbo.Registers
+DROP TABLE  IF EXISTS RegisterPropertiesXref,RegisterPropertyXerf_Data,RegisterProperties,dbo.Registers
 
 DROP TABLE  IF EXISTS dbo.Registers
 CREATE TABLE dbo.Registers
@@ -45,10 +45,10 @@ CREATE TABLE dbo.RegisterProperties
 	ALTER TABLE [dbo].Registers ADD CONSTRAINT FK_RegisterProperties_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
 GO
 
-DROP TABLE  IF EXISTS dbo.RegistersPropertiesXref
-CREATE TABLE dbo.RegistersPropertiesXref
+DROP TABLE  IF EXISTS dbo.RegisterPropertiesXref
+CREATE TABLE dbo.RegisterPropertiesXref
 (
-RegistersPropertiesXrefID INT IDENTITY(1,1),
+RegisterPropertiesXrefID INT IDENTITY(1,1),
 RegisterPropertyID INT NOT NULL,
 RegisterID INT NOT NULL,
 UserCreated INT NOT NULL,
@@ -59,11 +59,11 @@ VersionNum INT NOT NULL,
 PropertyName NVARCHAR(1000),
 IsRequired BIT,
 IsActive BIT, 
-CONSTRAINT PK_RegistersPropertiesXref_RegisterID_RegisterPropertyID PRIMARY KEY(RegistersPropertiesXrefID,RegisterPropertyID,RegisterID)
+CONSTRAINT PK_RegisterPropertiesXref_RegisterID_RegisterPropertyID PRIMARY KEY(RegisterPropertiesXrefID,RegisterPropertyID,RegisterID)
 )
- 		ALTER TABLE [dbo].RegistersPropertiesXref ADD CONSTRAINT DF_RegistersPropertiesXref_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-		ALTER TABLE [dbo].RegistersPropertiesXref ADD CONSTRAINT FK_RegistersPropertiesXref_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
-		ALTER TABLE [dbo].RegistersPropertiesXref ADD CONSTRAINT FK_RegistersPropertiesXref_RegisterPropertyID FOREIGN KEY(RegisterPropertyID) REFERENCES dbo.RegisterProperties(RegisterPropertyID)
+ 		ALTER TABLE [dbo].RegisterPropertiesXref ADD CONSTRAINT DF_RegisterPropertiesXref_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+		ALTER TABLE [dbo].RegisterPropertiesXref ADD CONSTRAINT FK_RegisterPropertiesXref_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
+		ALTER TABLE [dbo].RegisterPropertiesXref ADD CONSTRAINT FK_RegisterPropertiesXref_RegisterPropertyID FOREIGN KEY(RegisterPropertyID) REFERENCES dbo.RegisterProperties(RegisterPropertyID)
 GO
 
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_StepID FOREIGN KEY(StepID) REFERENCES dbo.FrameworkSteps(StepID)

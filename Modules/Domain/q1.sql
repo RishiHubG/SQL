@@ -1,11 +1,11 @@
 USE JUNK
 GO
- 
+
 /*
 --CREATE TABLES
 :setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\Tables\"
-:r $(path)\Tables.Registers.sql
-:r $(path)\Tables.Registers_History.sql
+:r $(path)\Tables.Universe.sql
+:r $(path)\Tables.Universe_History.sql
 
 --CREATE FUNCTION
 :SETVAR path "E:\New Company\GitHub\SQL\Modules\Assessment\Function\"
@@ -13,29 +13,29 @@ GO
 
 --CREATE TRIGGERS
 :setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\Triggers\"
-:r $(path)\Trg_RegisterProperties_Insert.sql
-:r $(path)\Trg_Registers_Insert.sql
-:r $(path)\Trg_RegistersPropertiesXref_Data_Insert.sql
-:r $(path)\Trg_RegistersPropertiesXref_Insert.sql
+:r $(path)\Trg_UniverseProperties_Insert.sql
+:r $(path)\Trg_Universe_Insert.sql
+:r $(path)\Trg_UniversePropertiesXref_Data_Insert.sql
+:r $(path)\Trg_UniversePropertiesXref_Insert.sql
 */
 --CREATE TABLES
 --:setvar path "E:\New Company\GitHub\SQL\Modules\Assessment\Tables\"
---:r $(path)\Tables.Registers.sql
---:r $(path)\Tables.Registers_History.sql
+--:r $(path)\Tables.Universe.sql
+--:r $(path)\Tables.Universe_History.sql
 /*
 NOTES:
 1.WE NEED ONLY Label & Type FOR EACH NODE, THESE ARE THE ASSESSMENT PROPERTIES
 2. PROPERTIES CAN ONLY BE INSERTED/DELETED (NO UPDATES)
 
-SELECT * FROM dbo.Registers
-SELECT * FROM dbo.RegisterProperties
-SELECT * FROM dbo.RegistersPropertiesXref
-SELECT * FROM RegisterPropertyXerf_Data
+SELECT * FROM dbo.Universe
+SELECT * FROM dbo.UniverseProperties
+SELECT * FROM dbo.UniversePropertiesXref
+SELECT * FROM UniversePropertyXerf_Data
 
-SELECT * FROM dbo.Registers_history
-SELECT * FROM dbo.RegisterProperties_history
-SELECT * FROM dbo.RegistersPropertiesXref_history
-SELECT * FROM RegisterPropertyXerf_Data_history
+SELECT * FROM dbo.Universe_history
+SELECT * FROM dbo.UniverseProperties_history
+SELECT * FROM dbo.UniversePropertiesXref_history
+SELECT * FROM UniversePropertyXerf_Data_history
 
 		DECLARE @DataTypes TABLE
 		 (
@@ -57,6 +57,7 @@ SELECT * FROM RegisterPropertyXerf_Data_history
 	SELECT * FROM @DataTypes
 	 
 */
+ 
 --rollback
 DECLARE @inputJSON VARCHAR(MAX) ='{
 "test6": {		
@@ -210,18 +211,18 @@ DECLARE @inputJSON VARCHAR(MAX) ='{
     }
 }'
 
-EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON
+EXEC dbo.ParseUniverseJSON @UniverseName ='ABC',@inputJSON = @inputJSON
 
 /*
-SELECT * FROM dbo.Registers
-SELECT * FROM dbo.RegisterProperties
-SELECT * FROM dbo.RegistersPropertiesXref
-SELECT * FROM RegisterPropertyXerf_Data
+SELECT * FROM dbo.Universe
+SELECT * FROM dbo.UniverseProperties
+SELECT * FROM dbo.UniversePropertiesXref
+SELECT * FROM UniversePropertyXerf_Data
 
-SELECT * FROM dbo.Registers_history
-SELECT * FROM dbo.RegisterProperties_history
-SELECT * FROM dbo.RegistersPropertiesXref_history
-SELECT * FROM RegisterPropertyXerf_Data_history
+SELECT * FROM dbo.Universe_history
+SELECT * FROM dbo.UniverseProperties_history
+SELECT * FROM dbo.UniversePropertiesXref_history
+SELECT * FROM UniversePropertyXerf_Data_history
 
 */
---ALTER TABLE RegisterPropertyXerf_Data ADD [Assessment Contact] [NVARCHAR] (MAX), [Level of Operation] [NVARCHAR] (MAX), [Currency] [NVARCHAR] (MAX), [Description] [NVARCHAR] (MAX), [Name] [NVARCHAR] (MAX)
+--ALTER TABLE UniversePropertyXerf_Data ADD [Assessment Contact] [NVARCHAR] (MAX), [Level of Operation] [NVARCHAR] (MAX), [Currency] [NVARCHAR] (MAX), [Description] [NVARCHAR] (MAX), [Name] [NVARCHAR] (MAX)
