@@ -272,24 +272,25 @@ BEGIN
 
 			SET @RegisterID =SCOPE_IDENTITY()
 		END
-		ELSE
-		BEGIN
-			 --POPULATE THE HISTORY TABLES PRIOR TO ANY OPERATION
-			EXEC dbo.UpdateAssessmentHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
+		--ELSE
+		--BEGIN
+		--	 --POPULATE THE HISTORY TABLES PRIOR TO ANY OPERATION
+		--	EXEC dbo.UpdateAssessmentHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
 
-			UPDATE dbo.Registers
-			SET VersionNum = @VersionNum,
-				UserModified = @UserModified,
-				DateModified = GETUTCDATE()
-			WHERE RegisterID = @RegisterID
-	   END		
+		--	UPDATE dbo.Registers
+		--	SET VersionNum = @VersionNum,
+		--		UserModified = @UserModified,
+		--		DateModified = GETUTCDATE()
+		--	WHERE RegisterID = @RegisterID
+	 --  END		
 		--SELECT * FROM #TMP_Assessments
 		--RETURN
 
-		  --CHECK FOR DATA TYPE COMPATIBILITY================================================================================
+		  --=================================================================================================================================
 			IF @VersionNum > 1 
 			BEGIN
 				
+				--CHECK FOR DATA TYPE COMPATIBILITY-----------------------------------------------------------------------------------------------
 				DROP TABLE IF EXISTS #TMP_DataTypeMismatch
 
 				SELECT @RegisterID AS RegisterID, @UserCreated AS UserCreated, @VersionNum AS VersionNum,TA.StringValue,TA.JSONType AS New_JSONType,
@@ -297,11 +298,11 @@ BEGIN
 					 ,CHARINDEX(TA.DataType,DT.CompatibleTypes,1) AS Flag
 					INTO #TMP_DataTypeMismatch
 				FROM #TMP_Assessments TA
-								 INNER JOIN dbo.RegisterProperties RP ON RP.RegisterID = @RegisterID AND RP.PropertyName = TA.StringValue 
-								 INNER JOIN @DataTypes DT ON DT.JSONType = RP.JSONType
-							WHERE TA.KeyName ='Label'
-								  AND RP.VersionNum = @VersionNum - 1
-								  AND CHARINDEX(TA.DataType,DT.CompatibleTypes,1) = 0
+					INNER JOIN dbo.RegisterProperties RP ON RP.RegisterID = @RegisterID AND RP.PropertyName = TA.StringValue 
+					INNER JOIN @DataTypes DT ON DT.JSONType = RP.JSONType
+				WHERE TA.KeyName ='Label'
+					  AND RP.VersionNum = @VersionNum - 1
+					  AND CHARINDEX(TA.DataType,DT.CompatibleTypes,1) = 0
 								  				
 				IF EXISTS(SELECT 1
 							FROM #TMP_DataTypeMismatch
@@ -312,15 +313,56 @@ BEGIN
 					ROLLBACK
 					RETURN
 				END
-			END
-		--==================================================================================================================
+				-------------------------------------------------------------------------------------------------------------------------------------
+					
+					--IF "Type" FOR A PROPERTY HAS CHANGED
+					UPDATE RP
+					SET JsonType = TA.JsonType,
+						VersionNum = @VersionNum,
+						UserModified = @UserModified,
+						DateModified = GETUTCDATE()
+					FROM dbo.RegisterProperties RP
+						 INNER JOIN #TMP_Assessments TA ON RegisterID = @RegisterID AND PropertyName = TA.StringValue
+					WHERE RP.RegisterID = @RegisterID
+						  AND RP.JSONType <> TA.JSONType
+						  AND KeyName ='Label'
 
+				--POPULATE THE HISTORY TABLES PRIOR TO ANY OPERATION
+				EXEC dbo.UpdateAssessmentHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
+
+				UPDATE dbo.Registers
+				SET VersionNum = @VersionNum,
+					UserModified = @UserModified,
+					DateModified = GETUTCDATE()
+				WHERE RegisterID = @RegisterID
+
+			END
+		--==========================================================================================================================================================
+			
+			--IF "Type" FOR A PROPERTY HAS CHANGED
+			--IF @VersionNum > 1
+			--BEGIN
+
+			--	UPDATE RP
+			--	SET JsonType = TA.JsonType,
+			--		VersionNum = @VersionNum,
+			--		UserModified = @UserModified,
+			--		DateModified = GETUTCDATE()
+			--	FROM dbo.RegisterProperties RP
+			--		 INNER JOIN #TMP_Assessments TA ON RegisterID = @RegisterID AND PropertyName = TA.StringValue
+			--	WHERE RP.RegisterID = @RegisterID
+			--		  AND RP.JSONType <> TA.JSONType
+			--		  AND KeyName ='Label'
+
+			--END
+			--INSERT NEW PROPERTIES (IF ANY)
 			INSERT INTO dbo.RegisterProperties(RegisterID,UserCreated,VersionNum,PropertyName,JSONType)
 				OUTPUT INSERTED.RegisterPropertyID, inserted.RegisterID,INSERTED.PropertyName INTO #TMP_NewRegisterProperties(RegisterPropertyID,RegisterID,PropertyName)
 			SELECT @RegisterID, @UserCreated, @VersionNum,StringValue,JSONType
 			FROM #TMP_Assessments TA
 			WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterProperties WHERE RegisterID = @RegisterID AND PropertyName = TA.StringValue)-- AND VersionNum = @VersionNum) 
 			      AND KeyName ='Label'
+			
 			
 			--UPDATE WITH CURRENT VERSION NO.
 			UPDATE dbo.RegisterProperties
@@ -465,14 +507,14 @@ BEGIN
 				SET OperationType = 'DELETE'				 
 			FROM dbo.RegistersPropertiesXref_history RPX_Hist				 
 			WHERE RPX_Hist.VersionNum = @VersionNum		
-				AND RPX_Hist.RegisterID = @RegisterID
+				  AND RPX_Hist.RegisterID = @RegisterID
 				  AND EXISTS(SELECT 1 FROM #TMP_MissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
 			
 			UPDATE RP_Hist
 				SET OperationType = 'DELETE'				 
 			FROM dbo.RegisterProperties_history RP_Hist				 
 			WHERE RP_Hist.VersionNum = @VersionNum		
-				AND RP_Hist.RegisterID = @RegisterID
+				  AND RP_Hist.RegisterID = @RegisterID
 				  AND EXISTS(SELECT 1 FROM #TMP_MissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RP_Hist.PropertyName AND RegisterPropertyID = RP_Hist.RegisterPropertyID)
 
 
@@ -480,7 +522,7 @@ BEGIN
 				SET OperationType = 'INSERT'				 
 			FROM dbo.RegistersPropertiesXref_history RPX_Hist				 
 			WHERE RPX_Hist.VersionNum = @VersionNum		
-				AND RPX_Hist.RegisterID = @RegisterID
+				  AND RPX_Hist.RegisterID = @RegisterID
 				  AND (EXISTS(SELECT 1 FROM #TMP_ActivateMissingRegistersProperties WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
 					   OR EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties  WHERE RegisterID=@RegisterID AND PropertyName=RPX_Hist.PropertyName AND RegisterPropertyID = RPX_Hist.RegisterPropertyID)
 					  )
@@ -489,10 +531,19 @@ BEGIN
 				SET OperationType = 'INSERT'				 
 			FROM dbo.RegisterProperties_history RP_Hist				 
 			WHERE RP_Hist.VersionNum = @VersionNum		
-				AND RP_Hist.RegisterID = @RegisterID
+				  AND RP_Hist.RegisterID = @RegisterID
 				  AND EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties WHERE RegisterID=@RegisterID AND PropertyName=RP_Hist.PropertyName AND RegisterPropertyID = RP_Hist.RegisterPropertyID)
 				  
-		 	
+		 	UPDATE RP_Hist
+				SET OperationType = 'UPDATE'				 
+			FROM dbo.RegisterProperties_history RP_Hist				 
+			WHERE RP_Hist.VersionNum = @VersionNum		
+				  AND RP_Hist.RegisterID = @RegisterID
+				  AND EXISTS(SELECT 1 FROM RegisterProperties_history WHERE RegisterID=@RegisterID AND PropertyName=RP_Hist.PropertyName AND RegisterPropertyID = RP_Hist.RegisterPropertyID
+								AND VersionNum = RP_Hist.VersionNum - 1
+								AND JSONType <> RP_Hist.JSONType
+							)
+	
 			END
 			------------------------------------------------
 		

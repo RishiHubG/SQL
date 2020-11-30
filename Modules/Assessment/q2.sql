@@ -59,6 +59,10 @@ SELECT * FROM RegisterPropertyXerf_Data_history
 */
 --rollback
 DECLARE @inputJSON VARCHAR(MAX) ='{
+"test6": {		
+        "label": "test6",
+		"type":"number"		
+		},
 "test5": {		
         "label": "test5",
 		"type":"textfield"		
