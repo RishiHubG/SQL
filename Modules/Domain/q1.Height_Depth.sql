@@ -14,5 +14,8 @@ UPDATE Universe SET Height=0,Depth=0;
 
 SELECT * FROM [Universe] WHERE ParentID IS NULL
 
-EXEC dbo.CalculateHeightAndDepth @TName = 'Universe'
+EXEC dbo.CalculateUniverseHeightAndDepth 
 
+SELECT * FROM [Universe] WHERE Height between 3 AND 121
+SELECT * FROM [Universe] WHERE ParentID IS NULL
+SELECT * FROM [Universe] WHERE ParentID=182

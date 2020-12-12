@@ -5,43 +5,25 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
  
-
-
+ 
 /*==============================================================================================
-OBJECT NAME	 :  dbo.CalculateHeightAndDepth
+OBJECT NAME	 :  dbo.CalculateUniverseHeightAndDepth
 PURPOSE	     :  
 CREATED BY	 :  
 CREATION DATE:  
 
-USAGE: EXEC dbo.CalculateHeightAndDepth @TName = 'Universe'	  
+USAGE: EXEC dbo.CalculateUniverseHeightAndDepth
 
 CHANGE HISTORY:
 SNo.   MODIFIED BY		DATE 			DESCRIPTION
 ===============================================================================================*/
 
-CREATE OR ALTER PROCEDURE [dbo].CalculateHeightAndDepth
-	@TName varchar(500),
-	@ReportingStructureID INT = NULL 
+CREATE OR ALTER PROCEDURE [dbo].CalculateUniverseHeightAndDepth
 AS
 BEGIN
 BEGIN TRY
 
-		SET NOCOUNT ON
-	
-		IF (@TName IS NULL)
-			RAISERROR('Please provide a valid table name to execute the procedure logic.',16,1);
-
-			DECLARE @SQL VARCHAR(MAX)
-			
-			DECLARE	@PKName varchar(500),  @query varchar(max)
-
-			SELECT @PKName = col.name 
-			FROM		sys.tables t
-					INNER JOIN	sys.indexes i		ON t.object_id = i.object_id
-					INNER JOIN	sys.index_columns c ON t.object_id = c.object_id	AND i.index_id = c.index_id
-					INNER JOIN	sys.columns col		ON c.object_id = col.object_id	AND c.column_id = col.column_id
-			WHERE i.is_primary_key = 1	AND t.name = @TName
-			
+		SET NOCOUNT ON;	
 
 			--GET HEIGHT===============================================================================================================================
 					
@@ -49,19 +31,9 @@ BEGIN TRY
 			--CREATE TABLE #TMP(ID INT, Name VARCHAR(500),ParentID INT,Height INT,Depth INT,Lvl INT)
 
 			DECLARE @ID INT=0
-
-			IF @ReportingStructureID IS NULL
-			BEGIN
-				SET @SQL =CONCAT('SELECT ',@PKName,', Name,ParentID,Height,Depth FROM ',@TName)
+				
 				INSERT INTO #TMP_HeightAndDepth(ID,Name,ParentID,Height,Depth)
-					EXEC (@SQL)
-			END
-			ELSE	
-				INSERT INTO #TMP_HeightAndDepth(ID,Name,ParentID,Height,Depth)			
-					SELECT SVR.ReportingPositionID, P.Name, SVR.ReportsToPositionID AS ParentID, 0, 0
-					FROM dbo.SVReportingPosition SVR 
-						INNER JOIN dbo.SVPosition P ON P.positionid = SVR.PositionID
-					WHERE SVR.ReportingStructureID = @ReportingStructureID
+					SELECT UniverseID,[Name],ParentID,Height,Depth FROM dbo.Universe
 
 			--SELECT * FROM	#TMP_HeightAndDepth
 			UPDATE #TMP_HeightAndDepth SET Height = 0, Depth = 0
@@ -172,24 +144,13 @@ BEGIN TRY
 			--SELECT * FROM #TMP_HeightAndDepth ORDER BY HEIGHT	
 		--============================================================================================================================						
 	
-					--UPDATE HEIGHT & DEPTH IN THE MAIN TABLE
-					IF @ReportingStructureID IS NULL
-					BEGIN
-							SET @SQL =CONCAT('	UPDATE S
-													SET Height = T.Height,
-														Depth = T.Depth 
-												FROM #TMP_HeightAndDepth T
-													 INNER JOIN dbo.',@TName,' S ON S.',@PKName,' = T.ID					
-											')
-							EXEC (@SQL)
-					END
-					ELSE	
-						UPDATE S
+						--UPDATE HEIGHT & DEPTH IN THE MAIN TABLE
+					 	UPDATE S
 							SET Height = T.Height,
 								Depth = T.Depth 
 						FROM #TMP_HeightAndDepth T
-							INNER JOIN dbo.SVReportingPosition S ON S.ReportingPositionID = T.ID
-						WHERE S.ReportingStructureID = @ReportingStructureID											
+								INNER JOIN dbo.Universe S ON S.UniverseID = T.ID					
+					 										
 				
 
 			IF OBJECT_ID('TEMPDB..#TMP') IS NOT NULL
