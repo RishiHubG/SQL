@@ -38,7 +38,9 @@ BEGIN
 				   ,[UniverseID]
 				   ,[Name]
 				   ,[FrameworkID]
-				  -- ,[UniverseID]
+				    ,ParentID
+					,Height
+					,Depth				  
 				   ,[AccessControlID]
 				   ,[WorkFlowACID]
 				   ,[PropagatedAccessControlID]
@@ -55,7 +57,9 @@ BEGIN
 				   ,[UniverseID]
 				   ,[Name]
 				   ,[FrameworkID]
-				  -- ,[UniverseID]
+				    ,ParentID
+					,Height
+					,Depth					 
 				   ,[AccessControlID]
 				   ,[WorkFlowACID]
 				   ,[PropagatedAccessControlID]
