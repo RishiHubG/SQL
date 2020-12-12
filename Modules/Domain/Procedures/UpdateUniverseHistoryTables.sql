@@ -57,7 +57,7 @@ BEGIN
 				   ,[UniverseID]
 				   ,[Name]
 				   ,[FrameworkID]
-				    ,ParentID
+				     ,ParentID
 					,Height
 					,Depth					 
 				   ,[AccessControlID]

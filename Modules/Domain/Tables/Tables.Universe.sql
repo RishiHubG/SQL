@@ -24,7 +24,7 @@ CREATE TABLE dbo.Universe
 	PropagatedWFAccessControlID INT,
 	HasExtendedProperties BIT,
 	CONSTRAINT PK_Universe_UniverseID PRIMARY KEY(UniverseID),
-	CONSTRAINT UQ_Universe_Name UNIQUE(Name),
+	CONSTRAINT UQ_Universe_Name UNIQUE(Name,ParentID),
 	)
 		ALTER TABLE [dbo].Universe ADD CONSTRAINT DF_Universe_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
 GO
