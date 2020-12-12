@@ -44,7 +44,7 @@ SELECT * FROM RegisterPropertyXerf_Data_history
 		 DataTypeLength VARCHAR(50),
 		 CompatibleTypes VARCHAR(500)
 		 )
-
+		 
 		 INSERT INTO @DataTypes (JSONType,DataType,DataTypeLength,CompatibleTypes)
 						SELECT 'textfield','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
 			SELECT 'selectboxes','NVARCHAR','(MAX)','NVARCHAR' UNION ALL
@@ -210,7 +210,7 @@ DECLARE @inputJSON VARCHAR(MAX) ='{
     }
 }'
 
-EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON
+EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON, @UserCreated=100
 
 /*
 SELECT * FROM dbo.Registers

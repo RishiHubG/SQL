@@ -211,7 +211,7 @@ DECLARE @inputJSON VARCHAR(MAX) ='{
     }
 }'
 
-EXEC dbo.ParseUniverseJSON @UniverseName ='ABC',@inputJSON = @inputJSON
+EXEC dbo.ParseUniverseJSON @UniverseName ='ABC',@inputJSON = @inputJSON, @UserCreated=100
 
 /*
 SELECT * FROM dbo.Universe
