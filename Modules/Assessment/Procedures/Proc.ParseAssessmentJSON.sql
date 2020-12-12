@@ -145,7 +145,7 @@ USAGE:
 						}
 					}'
 
-					EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON
+					EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON,@UserCreated = 100,@UserModified=NULL
 
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
@@ -154,8 +154,8 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.ParseAssessmentJSON
 @RegisterName VARCHAR(500),
 @inputJSON VARCHAR(MAX) = NULL,
-@UserCreated INT = 100,
-@UserModified INT = 200
+@UserCreated INT,
+@UserModified INT = NULL
 AS
 BEGIN
 	SET NOCOUNT ON; 

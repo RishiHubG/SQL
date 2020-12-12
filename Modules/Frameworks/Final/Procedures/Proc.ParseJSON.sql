@@ -329,7 +329,8 @@ SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
 CREATE OR ALTER PROCEDURE dbo.ParseJSONData
-@inputJSON VARCHAR(MAX) = NULL
+@inputJSON VARCHAR(MAX) = NULL,
+@UserCreated INT
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -379,7 +380,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@StepItemName VARCHAR(500),
 			@LookupValues VARCHAR(1000),
 			@StepItemID INT,
-			@UserCreated INT = 1,
+			--@UserCreated INT = 1,
 			@VersionNum INT,
 			@StepItemKey VARCHAR(100),
 			@Name VARCHAR(100) = 'TAB',
