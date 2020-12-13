@@ -624,18 +624,18 @@ BEGIN TRAN;
 		SELECT * from dbo.FrameworkAttributes_history
 		SELECT * from dbo.FrameworkLookups_history
 
-		 
+		SELECT * FROM TAB_DATA	 
 		SELECT * FROM  TAB_FrameworkSteps
 		SELECT * FROM  TAB_FrameworkStepItems
 		SELECT * FROM TAB_FrameworkAttributes		
 		SELECT * FROM TAB_FrameworkLookups
 		
-
-		--SELECT * FROM FrameworkLookups
-		--SELECT * FROM FrameworkAttributes
-		--SELECT * FROM  FrameworkStepItems
-		--SELECT * FROM  FrameworkSteps
-		--SELECT * FROM  FrameworkSteps_history
+	
+		SELECT * FROM FrameworkLookups
+		SELECT * FROM FrameworkAttributes
+		SELECT * FROM  FrameworkStepItems
+		SELECT * FROM  FrameworkSteps
+		SELECT * FROM  FrameworkSteps_history
 
 		
 		SELECT * FROM  TAB_FrameworkSteps_history

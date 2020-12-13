@@ -14,7 +14,9 @@ CREATION DATE:      2020-11-27
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		NOTES:
 					Steps: ASSUMPTION -> STEPS VERSIONING CAN ONLNY BE LIMITED TO INSERT OR DELETE (i.e. A STEP(A TAB) CAN BE ADDED OR REMOVED ONLY)
-USAGE:          	EXEC dbo.ParseFrameworkJSONData @inputJSON=  '{
+USAGE:          	EXEC dbo.ParseFrameworkJSONData  @Name = 'TAB',
+													 @UserCreated=100,
+													 @inputJSON=  '{
 															"name": {
 	 
 																"label": "Name",
@@ -66,7 +68,10 @@ USAGE:          	EXEC dbo.ParseFrameworkJSONData @inputJSON=  '{
 																"inputFormat": "html",
 																"key": "riskDescription",
 																"type": "textfield",
-																"input": true
+																"input": true,
+																"properties": {
+																	"StepName": "Details"
+																}
 															},
 															"riskCategory1": {
 																"label": "Applicable Factor",
@@ -225,103 +230,7 @@ USAGE:          	EXEC dbo.ParseFrameworkJSONData @inputJSON=  '{
 																"properties": {
 																	"StepName": "Summary"
 																}
-															},
-															"dateCreated": {
-																"label": "Date Created",
-																"labelPosition": "left-left",
-																"disabled": true,
-																"tableView": false,
-																"enableMinDateInput": false,
-																"datePicker": {
-																	"disableWeekends": false,
-																	"disableWeekdays": false
-																},
-																"enableMaxDateInput": false,
-																"key": "dateCreated",
-																"type": "datetime",
-																"input": true,
-																"widget": {
-																	"type": "calendar",
-																	"displayInTimezone": "viewer",
-																	"language": "en",
-																	"useLocaleSettings": false,
-																	"allowInput": true,
-																	"mode": "single",
-																	"enableTime": true,
-																	"noCalendar": false,
-																	"format": "yyyy-MM-dd hh:mm a",
-																	"hourIncrement": 1,
-																	"minuteIncrement": 1,
-																	"time_24hr": false,
-																	"minDate": null,
-																	"disableWeekends": false,
-																	"disableWeekdays": false,
-																	"maxDate": null
-																},
-																"hideOnChildrenHidden": false
-															},
-															"userCreated": {
-																"label": "User Created",
-																"labelPosition": "left-left",
-																"disabled": true,
-																"tableView": true,
-																"key": "userCreated",
-																"type": "textfield",
-																"input": true,
-																"hideOnChildrenHidden": false
-															},
-															"dateModified": {
-																"label": "Date Modified",
-																"labelPosition": "left-left",
-																"disabled": true,
-																"tableView": false,
-																"enableMinDateInput": false,
-																"datePicker": {
-																	"disableWeekends": false,
-																	"disableWeekdays": false
-																},
-																"enableMaxDateInput": false,
-																"key": "dateModified",
-																"type": "datetime",
-																"input": true,
-																"widget": {
-																	"type": "calendar",
-																	"displayInTimezone": "viewer",
-																	"language": "en",
-																	"useLocaleSettings": false,
-																	"allowInput": true,
-																	"mode": "single",
-																	"enableTime": true,
-																	"noCalendar": false,
-																	"format": "yyyy-MM-dd hh:mm a",
-																	"hourIncrement": 1,
-																	"minuteIncrement": 1,
-																	"time_24hr": false,
-																	"minDate": null,
-																	"disableWeekends": false,
-																	"disableWeekdays": false,
-																	"maxDate": null
-																},
-																"hideOnChildrenHidden": false
-															},
-															"userModified": {
-																"label": "User Modified",
-																"labelPosition": "left-left",
-																"disabled": true,
-																"tableView": true,
-																"key": "userModified",
-																"type": "textfield",
-																"input": true,
-																"hideOnChildrenHidden": false
-															},
-															"submit": {
-																"type": "button",
-																"label": "Submit",
-																"key": "submit",
-																"disableOnInvalid": true,
-																"input": true,
-																"tableView": false
-															}
+															} 
 														}'
 
 CHANGE HISTORY:
@@ -618,22 +527,23 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					DateModified = GETUTCDATE()
 			WHERE StepID = @StepID			
 		--===========================================================================================================================================
-		
-		INSERT INTO [dbo].[FrameworkSteps_history]
-				   (StepID,
-					FrameworkID,
-					[StepName]
-				   ,[UserCreated]
-				   ,[DateCreated]				   
-				   ,[VersionNum],
-				   PeriodIdentifierID)
-				SELECT	@StepID,
-						@FrameworkID,
-						@StepName,
-						1,
-						GETUTCDATE(),
-						@VersionNum,
-						1
+
+		IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkSteps_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND VersionNum=@VersionNum AND StepName=@StepName)
+			INSERT INTO [dbo].[FrameworkSteps_history]
+					   (StepID,
+						FrameworkID,
+						[StepName]
+					   ,[UserCreated]
+					   ,[DateCreated]				   
+					   ,[VersionNum],
+					   PeriodIdentifierID)
+					SELECT	@StepID,
+							@FrameworkID,
+							@StepName,
+							1,
+							GETUTCDATE(),
+							@VersionNum,
+							1
 										
 		IF @StepID IS NOT NULL
 		BEGIN
@@ -706,7 +616,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					UserModified = 1,
 					DateModified = GETUTCDATE()
 			WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
-							
+			
+			IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND StepItemID=@StepItemID AND VersionNum=@VersionNum)
 				INSERT INTO [dbo].[FrameworkStepItems_history]
 						   (FrameworkID,
 							StepItemID,
