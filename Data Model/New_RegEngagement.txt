@@ -1,55 +1,4 @@
- use junk
-	go	
- /*
-  --type=day: split into 4 columns (day,month,year,full column name)
-
-	use junk
-	go	 
-
-TRUNCATE TABLE Frameworks
-TRUNCATE TABLE Frameworks_HISTORY
-	
-DROP TABLE IF EXISTS TAB_FrameworkLookups
-drop table IF EXISTS TAB_FrameworkAttributes
-drop table IF EXISTS TAB_FrameworkStepItems
-drop table IF EXISTS TAB_FrameworkSteps
-
-  
-DROP TABLE IF EXISTS TAB_FrameworkLookups_history
-drop table IF EXISTS TAB_FrameworkAttributes_history
-drop table IF EXISTS TAB_FrameworkStepItems_history
-drop table IF EXISTS TAB_Frameworksteps_history
-
-	SELECT * FROM TAB_DATA
-	SELECT * from dbo.TAB_FrameworkAttributes_history
-	SELECT * FROM Frameworks
-
- IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME ='TAB_FrameworksList_History')
- SELECT   * FROM TAB_Frameworks_List_History WHERE JSONFileKey = 'TAB' ORDER BY HistoryID DESC
-
-  SELECT * FROM TAB_Framework_Steps_History WHERE FileID = 1 AND StepName = 'General' ORDER BY HistoryID DESC
-  	SET IDENTITY_INSERT dbo.[FrameworkAttributes] OFF;
-		SET IDENTITY_INSERT dbo.FrameworkLookups OFF;
-
-*/
-
-----CREATE TABLES
---:setvar path "E:\New Company\GitHub\SQL\Modules\Frameworks\Final"
---:r $(path)\Tables.sql
---:r $(path)\Tables.History.sql
-
-----CREATE FUNCTION
---:SETVAR path "E:\New Company\GitHub\SQL\Modules\Frameworks\Final\Function\"
---:r $(path)\HierarchyFromJSON.SQL
-
---COMMIT
-----ROLLBACK
-BEGIN TRAN;
- EXEC dbo.ParseFrameworkJSONData
- @Name = 'TAB',
- @UserCreated=100,
-  @inputJSON =
-'{
+{
     "name": {
         "label": "Name",
         "tableView": true,
@@ -614,36 +563,4 @@ BEGIN TRAN;
         "input": true,
         "hideOnChildrenHidden": false
     }
-}'
-
-/*
-		SELECT * from dbo.Frameworks
-		SELECT * from dbo.Frameworks_history
-		SELECT * from dbo.FrameworkSteps_history
-		SELECT * from dbo.FrameworkStepItems_history
-		SELECT * from dbo.FrameworkAttributes_history
-		SELECT * from dbo.FrameworkLookups_history
-
-		 
-		SELECT * FROM  TAB_FrameworkSteps
-		SELECT * FROM  TAB_FrameworkStepItems
-		SELECT * FROM TAB_FrameworkAttributes		
-		SELECT * FROM TAB_FrameworkLookups
-		
-
-		--SELECT * FROM FrameworkLookups
-		--SELECT * FROM FrameworkAttributes
-		--SELECT * FROM  FrameworkStepItems
-		--SELECT * FROM  FrameworkSteps
-		--SELECT * FROM  FrameworkSteps_history
-
-		
-		SELECT * FROM  TAB_FrameworkSteps_history
-		SELECT * FROM  TAB_FrameworkStepItems_history
-		SELECT * FROM TAB_FrameworkAttributes_history		
-		SELECT * FROM TAB_FrameworkLookups_history
-
-		SELECT * FROM dbo.TAB_Framework_Attributes_history WHERE VersionNum=4
-		EXEC dbo.UpdateHistoryOperationType @FrameworkID=1, @TableInitial ='TAB',@VersionNum=4
-		
-*/
+}

@@ -460,8 +460,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	FROM #TMP_DATA TD
 		 INNER JOIN #TMP_DATA_DOT TDD ON TD.Element_ID=TDD.Element_ID
 	WHERE TD.StringValue <> @DayString
-		 SELECT * FROM #TMP_DATA
-	
+			
 	 DECLARE @DataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(
 					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
