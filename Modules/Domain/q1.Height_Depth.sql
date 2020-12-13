@@ -1,4 +1,6 @@
- 
+ USE JUNK
+ GO
+
  DELETE FROM [Universe]
 
 
@@ -19,3 +21,5 @@ EXEC dbo.CalculateUniverseHeightAndDepth
 SELECT * FROM [Universe] WHERE Height between 3 AND 121
 SELECT * FROM [Universe] WHERE ParentID IS NULL
 SELECT * FROM [Universe] WHERE ParentID=182
+
+EXEC dbo.ValidateUniverse_HeightAndDepth

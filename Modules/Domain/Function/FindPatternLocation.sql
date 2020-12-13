@@ -1,7 +1,13 @@
-CREATE OR ALTER FUNCTION dbo.FindPatternLocation
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE OR ALTER FUNCTION [dbo].[FindPatternLocation]
 (
     @string NVARCHAR(MAX),
-    @term   NVARCHAR(255)
+    @term   NVARCHAR(MAX)
 )
 RETURNS TABLE
 AS
@@ -15,3 +21,6 @@ AS
       WHERE Number > 1 AND Number <= CONVERT(INT, LEN(@string)+1)
       AND SUBSTRING(@term + @string, Number, LEN(@term)) = @term
     ) AS y);
+
+
+
