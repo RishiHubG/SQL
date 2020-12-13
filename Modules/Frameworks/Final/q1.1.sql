@@ -1,6 +1,7 @@
  use junk
 	go	
  /*
+  --type=day: split into 4 columns (day,month,year,full column name)
 
 	use junk
 	go	 
@@ -19,7 +20,7 @@ drop table IF EXISTS TAB_FrameworkAttributes_history
 drop table IF EXISTS TAB_FrameworkStepItems_history
 drop table IF EXISTS TAB_Frameworksteps_history
 
-	SELECT * from dbo.TAB_FrameworksList
+	SELECT * FROM TAB_DATA
 	SELECT * from dbo.TAB_FrameworkAttributes_history
 	SELECT * FROM Frameworks
 
@@ -42,7 +43,8 @@ drop table IF EXISTS TAB_Frameworksteps_history
 --:r $(path)\HierarchyFromJSON.SQL
 
 
- EXEC dbo.PARSEJSONdATA 
+ EXEC dbo.ParseFrameworkJSONData
+ @Name = 'TAB',
  @UserCreated=100,
   @inputJSON =
 '{

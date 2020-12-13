@@ -9,12 +9,12 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /***************************************************************************************************
-OBJECT NAME:        dbo.ParseJSONData
+OBJECT NAME:        dbo.ParseFrameworkJSONData
 CREATION DATE:      2020-11-27
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		NOTES:
 					Steps: ASSUMPTION -> STEPS VERSIONING CAN ONLNY BE LIMITED TO INSERT OR DELETE (i.e. A STEP(A TAB) CAN BE ADDED OR REMOVED ONLY)
-USAGE:          	EXEC dbo.ParseJSONData @inputJSON=  '{
+USAGE:          	EXEC dbo.ParseFrameworkJSONData @inputJSON=  '{
 															"name": {
 	 
 																"label": "Name",
@@ -328,8 +328,9 @@ CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
-CREATE OR ALTER PROCEDURE dbo.ParseJSONData
-@inputJSON VARCHAR(MAX) = NULL,
+CREATE OR ALTER PROCEDURE dbo.ParseFrameworkJSONData
+@Name VARCHAR(100),
+@InputJSON VARCHAR(MAX) = NULL,
 @UserCreated INT
 AS
 BEGIN
@@ -368,10 +369,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   --AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
 	   AND Name NOT IN ('userCreated','dateCreated','userModified','dateModified','submit')
-	   AND NAME IN ('Name','riskCategory1')
+	  -- AND NAME IN ('Name','riskCategory1')
 	    
  
- SELECT * FROM #TMP_Objects
+-- SELECT * FROM #TMP_Objects
  --RETURN
 	 	DECLARE @ID INT,		
 			@StepID INT,
@@ -382,7 +383,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@StepItemID INT,			
 			@VersionNum INT,
 			@StepItemKey VARCHAR(100),
-			@Name VARCHAR(100) = 'TAB',
+			--@Name VARCHAR(100) = 'TAB',
 			@SQL NVARCHAR(MAX),
 			@FrameworkID INT,
 			@IsAvailable BIT,
@@ -392,6 +393,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 	
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
 	 DROP TABLE IF EXISTS TAB_DATA -- REMOVE THIS LATER, NOT REQUIRED
+
+	 DECLARE @DayString VARCHAR(20)='day'
 	 DECLARE @SQL_ID VARCHAR(MAX)='ID INT IDENTITY(1,1)'
 	 DECLARE @StaticCols VARCHAR(MAX) =	 
 	 'UserCreated INT NOT NULL, 
@@ -401,6 +404,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 VersionNum INT NOT NULL'
 	 
 	 DROP TABLE IF EXISTS #TMP_DATA
+     DROP TABLE IF EXISTS #TMP_DATA_DAY
+	 DROP TABLE IF EXISTS #TMP_DATA_DOT
 
 	 SELECT TOB.Element_ID, TOB.NAME,TA.StringValue, CAST(NULL AS VARCHAR(50)) AS DataType,
 			CAST(NULL AS VARCHAR(50)) AS DataTypeLength
@@ -408,19 +413,55 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 FROM #TMP_Objects TOB
 		 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TOB.Element_ID
 	 WHERE TA.Name = 'type'
-
+	
 	 UPDATE #TMP_DATA
-		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea') THEN 'NVARCHAR' 
-							WHEN StringValue = 'number' THEN 'INT'
-							WHEN StringValue = 'datetime' THEN 'DATETIME' 
-						END
+		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button') THEN 'NVARCHAR' 
+							WHEN StringValue IN ('number','checkbox','radio') THEN 'INT'
+							WHEN StringValue = 'datetime' THEN 'DATETIME' 							
+							WHEN StringValue = 'currency' THEN 'FLOAT'
+							WHEN StringValue = 'time' THEN 'TIME'
+					   END
 	
 	UPDATE #TMP_DATA
 		SET DataTypeLength = CASE WHEN DataType = 'NVARCHAR' THEN '(MAX)'
 							 END
-			
-	 --SELECT * FROM #TMP_DATA
+		
+	 SELECT T.Element_ID,T.Name, MAX(TAB.pos) AS Pos
+		INTO #TMP_DATA_DAY
+	 FROM #TMP_DATA T
+		  CROSS APPLY dbo.[FindPatternLocation](T.Name,'.')TAB
+	WHERE T.StringValue= @DayString
+	GROUP BY T.Element_ID,T.Name
+	
+	INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType)
+		SELECT Element_ID,CONCAT(SUBSTRING(Name,Pos+1,len(Name)),'_Day'),@DayString,'INT'
+		FROM #TMP_DATA_DAY
+		UNION
+		SELECT Element_ID,CONCAT(SUBSTRING(Name,Pos+1,len(Name)),'_Month'),@DayString,'INT'
+		FROM #TMP_DATA_DAY
+		UNION
+		SELECT Element_ID,CONCAT(SUBSTRING(Name,Pos+1,len(Name)),'_Year'),@DayString,'INT'
+		FROM #TMP_DATA_DAY
+		UNION
+		SELECT Element_ID,CONCAT(SUBSTRING(Name,Pos+1,len(Name)),'_Date'),@DayString,'INT'
+		FROM #TMP_DATA_DAY
+	
+	--SINCE WE HAVE CREATED 4 NEW COLUMNS OUT OF THIS REMOVE THIS RECORD
+	DELETE TD FROM #TMP_DATA TD WHERE EXISTS(SELECT 1 FROM #TMP_DATA_DAY WHERE Name=TD.Name) AND StringValue='day'
+	 
+	SELECT T.Element_ID,T.Name, MAX(TAB.pos) AS Pos
+		INTO #TMP_DATA_DOT
+	 FROM #TMP_DATA T
+		  CROSS APPLY dbo.[FindPatternLocation](T.Name,'.')TAB		
+	GROUP BY T.Element_ID,T.Name
 
+	UPDATE TD
+		SET Name = SUBSTRING(TDD.Name,TDD.Pos+1,len(TDD.Name))
+	FROM #TMP_DATA TD
+		 INNER JOIN #TMP_DATA_DOT TDD ON TD.Element_ID=TDD.Element_ID
+	WHERE TD.StringValue <> @DayString
+		 SELECT * FROM #TMP_DATA
+	
 	 DECLARE @DataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(
 					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
@@ -545,7 +586,16 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))		--FIRST VERSION
 		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM dbo.',@TemplateTableName,')', CHAR(10))	--PROCESSING MULTIPLE STEPS IN THE VERY FIRST VERSION
+		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SELECT @StepID = StepID FROM ',@TemplateTableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,'''',CHAR(10));
+		SET @SQL = CONCAT(@SQL,' IF @StepID IS NULL ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TemplateTableName,CHAR(10));	
+		SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
+		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' SELECT @StepID = 1, @IsAvailable = NULL;', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
@@ -612,10 +662,19 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))		--FIRST VERSION
 			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM dbo.',@TemplateTableName,')', CHAR(10))	--PROCESSING MULTIPLE STEPS IN THE VERY FIRST VERSION
+			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = StepItemID FROM ',@TemplateTableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepItemKey = ''', @StepItemKey,'''',CHAR(10));
+			SET @SQL = CONCAT(@SQL,' IF @StepItemID IS NULL ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = MAX(StepItemID) + 1 FROM ',@TemplateTableName,CHAR(10));	
+			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
 			SET @SQL = CONCAT(@SQL,' SELECT @StepItemID = 1, @IsAvailable = NULL;', CHAR(10))
-			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))			
+			SET @SQL = CONCAT(@SQL,' END ', CHAR(10))	
 			PRINT @SQL  
 			EXEC sp_executesql @SQL, N'@StepItemID INT OUTPUT,@IsAvailable BIT OUTPUT',@StepItemID OUTPUT,@IsAvailable OUTPUT;
 		
