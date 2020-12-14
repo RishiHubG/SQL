@@ -8,16 +8,16 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /***************************************************************************************************
-OBJECT NAME:        dbo.CreateSchemaTables
+OBJECT NAME:        dbo.CreateFrameworkSchemaTables
 CREATION DATE:      2020-11-27
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		 
-USAGE:          	EXEC dbo.CreateSchemaTables @FrameworkID=1,@VersionNum=1
+USAGE:          	EXEC dbo.CreateFrameworkSchemaTables @FrameworkID=1,@VersionNum=1
 
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
- CREATE OR ALTER PROCEDURE dbo.CreateSchemaTables
+ CREATE OR ALTER PROCEDURE dbo.CreateFrameworkSchemaTables
 @FrameworkID INT,
 @VersionNum INT
 AS
@@ -205,7 +205,7 @@ END
 		
 		--UPDATE OPERATION TYPE FLAG IN FRAMEWORK HISTORY TABLES==============================================
 		IF @VersionNum > 1
-			EXEC dbo.UpdateHistoryOperationType @FrameworkID = @FrameworkID, @TableInitial = @TableInitial, @VersionNum = @VersionNum		
+			EXEC dbo.UpdateFrameworkHistoryOperationType @FrameworkID = @FrameworkID, @TableInitial = @TableInitial, @VersionNum = @VersionNum		
 		--====================================================================================================
 
 		 --SELECT * FROM @TBL		 	 

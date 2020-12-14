@@ -626,6 +626,7 @@ BEGIN TRAN;
 
 		SELECT * FROM TAB_DATA	 
 		SELECT * FROM  TAB_FrameworkSteps
+
 		SELECT * FROM  TAB_FrameworkStepItems
 		SELECT * FROM TAB_FrameworkAttributes		
 		SELECT * FROM TAB_FrameworkLookups
