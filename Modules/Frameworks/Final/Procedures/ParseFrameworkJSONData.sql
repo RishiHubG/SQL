@@ -13,225 +13,12 @@ OBJECT NAME:        dbo.ParseFrameworkJSONData
 CREATION DATE:      2020-11-27
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		NOTES:
-					Steps: ASSUMPTION -> STEPS VERSIONING CAN ONLNY BE LIMITED TO INSERT OR DELETE (i.e. A STEP(A TAB) CAN BE ADDED OR REMOVED ONLY)
+					Steps: ASSUMPTION: 1. STEPS VERSIONING CAN ONLY BE LIMITED TO INSERT OR DELETE (i.e. A STEP(A TAB) CAN BE ADDED OR REMOVED ONLY)
+									   2. STEPNAME/STEPITEM WILL BE IN FORMAT: STEPNAME.STEPITEM 
+										  IT CAN HAVE MULTIPLE DOTS IN BETWEEN BUT TEXT BEFORE THE 1ST DOT IS ALWAYS A STEP, TEXT AFTER THE LAST DOT IS ALWAYS A STEP ITEM
 USAGE:          	EXEC dbo.ParseFrameworkJSONData  @Name = 'TAB',
 													 @UserCreated=100,
-													 @inputJSON=  '{
-															"name": {
-	 
-																"label": "Name",
-																"tableView": true,
-																"validate": {
-																	"required": true,
-																	"minLength": 1,
-																	"maxLength": 500
-																},
-																"key": "name",
-																"type": "textfield",
-																"input": true,
-																"hideOnChildrenHidden": false,
-																"properties": {
-																	"StepName": "General"
-																}
-															},
-															"reference": {
-																"label": "Reference",
-																"tableView": true,
-																"inputFormat": "html",
-																"key": "reference",
-																"type": "textfield",
-																"input": true,
-																"hideOnChildrenHidden": false,
-																"properties": {
-																	"StepName": "General"
-																}
-															},
-															"reference1": {
-																"label": "Reference",
-																"disabled": true,
-																"tableView": true,
-																"validate": {
-																	"unique": true
-																},
-																"unique": true,
-																"key": "reference1",
-																"type": "textfield",
-																"input": true,
-																"hideOnChildrenHidden": false,
-																"properties": {
-																	"StepName": "General"
-																}
-															},
-															"riskDescription": {
-																"label": "Risk Description",
-																"tableView": true,
-																"inputFormat": "html",
-																"key": "riskDescription",
-																"type": "textfield",
-																"input": true,
-																"properties": {
-																	"StepName": "Details"
-																}
-															},
-															"riskCategory1": {
-																"label": "Applicable Factor",
-																"optionsLabelPosition": "right",
-																"tableView": false,
-																"defaultValue": {
-																	"": false,
-																	"strategic": false,
-																	"busienss": false,
-																	"management": false
-																},
-																"values": [
-																	{
-																		"label": "Strategic",
-																		"value": "strategic",
-																		"shortcut": ""
-																	},
-																	{
-																		"label": "Busienss",
-																		"value": "busienss",
-																		"shortcut": ""
-																	},
-																	{
-																		"label": "Management",
-																		"value": "management",
-																		"shortcut": ""
-																	}
-																],
-																"key": "riskCategory1",
-																"type": "selectboxes",
-																"input": true,
-																"inputType": "checkbox",
-																"hideOnChildrenHidden": false,
-																"properties": {
-																	"StepName": "Details"
-																}
-															},
-															"riskCategory2": {
-																"label": "Risk Category 1",
-																"widget": "choicesjs",
-																"tableView": true,
-																"data": {
-																	"values": [
-																		{
-																			"label": "Nature",
-																			"value": "nature"
-																		},
-																		{
-																			"label": "Machinery",
-																			"value": "machinery"
-																		},
-																		{
-																			"label": "Legal",
-																			"value": "legal"
-																		}
-																	]
-																},
-																"selectThreshold": 0.3,
-																"key": "riskCategory2",
-																"type": "select",
-																"indexeddb": {
-																	"filter": {}
-																},
-																"input": true,
-																"hideOnChildrenHidden": false,
-																"properties": {
-																	"StepName": "Details"
-																}
-															},
-															"riskCategory3": {
-																"label": "Risk Category 2",
-																"widget": "choicesjs",
-																"tableView": true,
-																"data": {
-																	"values": [
-																		{
-																			"label": "Flood",
-																			"value": "flood"
-																		},
-																		{
-																			"label": "Fire",
-																			"value": "fire"
-																		},
-																		{
-																			"label": "Earthquake",
-																			"value": "earthquake"
-																		}
-																	]
-																},
-																"selectThreshold": 0.3,
-																"key": "riskCategory3",
-																"type": "select",
-																"indexeddb": {
-																	"filter": {}
-																},
-																"input": true,
-																"hideOnChildrenHidden": false,
-																"properties": {
-																	"StepName": "Details"
-																}
-															},
-															"likelyhood": {
-																"label": "Likelyhood",
-																"mask": false,
-																"spellcheck": true,
-																"tableView": false,
-																"delimiter": false,
-																"requireDecimal": false,
-																"inputFormat": "plain",
-																"validate": {
-																	"required": true,
-																	"min": 0,
-																	"max": 100
-																},
-																"key": "likelyhood",
-																"type": "number",
-																"input": true,
-																"properties": {
-																	"StepName": "Ratings"
-																}
-															},
-															"financialImpact": {
-																"label": "Financial Impact",
-																"mask": false,
-																"spellcheck": true,
-																"tableView": false,
-																"delimiter": true,
-																"requireDecimal": true,
-																"inputFormat": "plain",
-																"key": "financialImpact",
-																"type": "number",
-																"input": true,
-																"decimalLimit": 2,
-																"properties": {
-																	"StepName": "Ratings"
-																}
-															},
-															"inherentRating": {
-																"label": "Inherent Rating",
-																"tableView": true,
-																"calculateValue": "value = data.likelyhood/100 + data.FinancialImpact;",
-																"key": "inherentRating",
-																"type": "textfield",
-																"input": true,
-																"properties": {
-																	"StepName": "Ratings"
-																}
-															},
-															"overallComment": {
-																"label": "Overall Comment",
-																"autoExpand": false,
-																"tableView": true,
-																"key": "overallComment",
-																"type": "textarea",
-																"input": true,
-																"properties": {
-																	"StepName": "Summary"
-																}
-															} 
-														}'
+													 @inputJSON=  ''
 
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
@@ -315,9 +102,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 DROP TABLE IF EXISTS #TMP_DATA
      DROP TABLE IF EXISTS #TMP_DATA_DAY
 	 DROP TABLE IF EXISTS #TMP_DATA_DOT
+	 DROP TABLE IF EXISTS #TMP_DATA_StepName	 
 
 	 SELECT TOB.Element_ID, TOB.NAME,TA.StringValue, CAST(NULL AS VARCHAR(50)) AS DataType,
-			CAST(NULL AS VARCHAR(50)) AS DataTypeLength
+			CAST(NULL AS VARCHAR(50)) AS DataTypeLength,
+			CAST(NULL AS VARCHAR(500)) AS StepName
 		INTO #TMP_DATA
 	 FROM #TMP_Objects TOB
 		 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TOB.Element_ID
@@ -357,19 +146,29 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	
 	--SINCE WE HAVE CREATED 4 NEW COLUMNS OUT OF THIS REMOVE THIS RECORD
 	DELETE TD FROM #TMP_DATA TD WHERE EXISTS(SELECT 1 FROM #TMP_DATA_DAY WHERE Name=TD.Name) AND StringValue='day'
-	 
-	SELECT T.Element_ID,T.Name, MAX(TAB.pos) AS Pos
+	
+	--EXTRACT STEP ITEM(AFTER LAST DOT) & STEP NAME(BEFORE FIRST DOT)-----------------
+	SELECT T.Element_ID,T.Name, MAX(TAB.pos) AS Pos,MIN(TAB.pos) AS MinPos
 		INTO #TMP_DATA_DOT
 	 FROM #TMP_DATA T
 		  CROSS APPLY dbo.[FindPatternLocation](T.Name,'.')TAB		
 	GROUP BY T.Element_ID,T.Name
 
+	--STEP ITEM
 	UPDATE TD
 		SET Name = SUBSTRING(TDD.Name,TDD.Pos+1,len(TDD.Name))
 	FROM #TMP_DATA TD
 		 INNER JOIN #TMP_DATA_DOT TDD ON TD.Element_ID=TDD.Element_ID
 	WHERE TD.StringValue <> @DayString
-			
+	 
+	--STEP NAME
+	UPDATE TD
+		SET StepName = SUBSTRING(TDD.Name,1,TDD.MinPos-1)
+	FROM #TMP_DATA TD
+		 INNER JOIN #TMP_DATA_DOT TDD ON TD.Element_ID=TDD.Element_ID
+	WHERE TD.StringValue <> @DayString
+	-----------------------------------------------------------------------------------
+				
 	 DECLARE @DataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(
 					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
@@ -469,8 +268,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SELECT @StepItemType = (SELECT StringValue FROM #TMP WHERE KeyName ='type' AND Parent_ID = @ID),
 			   @StepItemName = (SELECT StringValue FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
 			   @StepItemKey = (SELECT StringValue FROM #TMP WHERE KeyName ='key' AND Parent_ID = @ID),	
-			   @StepName  = (SELECT StringValue FROM #TMP WHERE KeyName ='StepName')	  
-			   --@StepName  = (SELECT StringValue FROM #TMP WHERE KeyName ='StepName' AND Parent_ID = @ID)	  
+			   @StepName  = (SELECT TOP 1 TD.StepName FROM #TMP T INNER JOIN #TMP_DATA TD ON T.Parent_ID = TD.Element_ID )  
 			   			    		
 	
 		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================		
