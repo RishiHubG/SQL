@@ -565,4 +565,10 @@ BEGIN
 		 DROP TABLE IF EXISTS #TMP_UniverseProperties
 		 --------------------------------------------------------
 
+		 --INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
+		DECLARE @Params VARCHAR(MAX)
+		SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated)
+		--PRINT @PARAMS
+		EXEC dbo.InsertObjectLog @@PROCID,@Params,@UserCreated
+		------------------------------------------------------------------------------------------------------------------------------------------
 END

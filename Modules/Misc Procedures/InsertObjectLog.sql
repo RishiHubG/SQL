@@ -4,11 +4,11 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /***************************************************************************************************
-OBJECT NAME:        dbo.ObjectLog
+OBJECT NAME:        dbo.InsertObjectLog
 CREATION DATE:      2020-12-18
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		
-USAGE:          	EXEC dbo.ObjectLog @ObjectNameWithParam = ''
+USAGE:          	EXEC dbo.InsertObjectLog @ObjectNameWithParam = ''
 
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
@@ -16,23 +16,18 @@ SNo.	Modification Date		Modified By				Comments
 
 CREATE OR ALTER PROCEDURE dbo.InsertObjectLog
  @PROCID INT,	
- @ObjectNameWithParam VARCHAR(MAX)
+ @Params VARCHAR(MAX),
+ @UserCreated INT
 AS
 BEGIN
 	SET NOCOUNT ON;
 	
-	DECLARE @ObjectName SYSNAME = OBJECT_NAME(@@PROCID)
+	DECLARE @ObjectName VARCHAR(MAX) = OBJECT_NAME(@PROCID)
+	SET @ObjectName = CONCAT('EXEC dbo.',@ObjectName,' ',@Params)
 
-	INSERT INTO dbo.ObjectLog(ObjectNameWithParam, DateExecuted)
-		SELECT @ObjectNameWithParam, GETUTCDATE()
-
-		/*
-		SELECT @@PROCID,OBJECT_NAME(@@PROCID)
-	--SELECT * FROM SYS.parameters WHERE OBJECT_ID=@@PROCID
-	
-	SELECT CONCAT(CHAR(39),[Name],CHAR(39),[Name])FROM SYS.parameters WHERE OBJECT_ID=@@PROCID
+	INSERT INTO dbo.ObjectLog(ObjectNameWithParam,UserCreated, DateExecuted)
+		SELECT @ObjectName,@UserCreated, GETUTCDATE()
 		
-		*/
 
 END
 
