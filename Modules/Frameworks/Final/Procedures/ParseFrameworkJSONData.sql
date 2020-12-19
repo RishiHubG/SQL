@@ -28,7 +28,8 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.ParseFrameworkJSONData
 @Name VARCHAR(100),
 @InputJSON VARCHAR(MAX),
-@UserCreated INT
+@UserCreated INT,
+@LogRequest BIT = 1
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -727,9 +728,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		EXEC dbo.CreateFrameworkSchemaTables @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
-		DECLARE @Params VARCHAR(MAX)
-		SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated)
-		--PRINT @PARAMS
-		EXEC dbo.InsertObjectLog @@PROCID,@Params,@UserCreated
+		IF @LogRequest = 1
+		BEGIN
+			DECLARE @Params VARCHAR(MAX)
+			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated,',@LogRequest=1')
+			--PRINT @PARAMS
+			EXEC dbo.InsertObjectLog @@PROCID,@Params,@UserCreated
+		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 END

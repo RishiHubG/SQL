@@ -153,9 +153,10 @@ SNo.	Modification Date		Modified By				Comments
 
 CREATE OR ALTER PROCEDURE dbo.ParseAssessmentJSON
 @RegisterName VARCHAR(500),
-@inputJSON VARCHAR(MAX) = NULL,
+@inputJSON VARCHAR(MAX),
 @UserCreated INT,
-@UserModified INT = NULL
+@UserModified INT = NULL,
+@LogRequest BIT = 1
 AS
 BEGIN
 	SET NOCOUNT ON; 
@@ -566,9 +567,12 @@ BEGIN
 		 --------------------------------------------------------
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
-		DECLARE @Params VARCHAR(MAX)
-		SET @Params = CONCAT('@RegisterName=', CHAR(39),@RegisterName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated)
-		--PRINT @PARAMS
-		EXEC dbo.InsertObjectLog @@PROCID,@Params,@UserCreated
+		IF @LogRequest = 1
+		BEGIN
+			DECLARE @Params VARCHAR(MAX)
+			SET @Params = CONCAT('@RegisterName=', CHAR(39),@RegisterName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated,',@LogRequest=1')
+			--PRINT @PARAMS
+			EXEC dbo.InsertObjectLog @@PROCID,@Params,@UserCreated
+		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 END
