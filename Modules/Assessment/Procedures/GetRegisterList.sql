@@ -49,7 +49,9 @@ BEGIN
 			SET @Params = CONCAT(@Params,',@ParentEntityType=', CHAR(39),@ParentEntityType, CHAR(39),',@UserCreated=',@UserCreated,',@MethodName=',CHAR(39),@MethodName, CHAR(39))
 			SET @Params = CONCAT(@Params,',@LogRequest=1')
 			--PRINT @PARAMS
-			EXEC dbo.InsertObjectLog @@PROCID,@Params,@UserCreated
+			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
+									 @Params = @Params,
+									 @UserCreated = @UserCreated
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 END

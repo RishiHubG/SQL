@@ -572,7 +572,9 @@ BEGIN
 			DECLARE @Params VARCHAR(MAX)
 			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated,',@LogRequest=1')
 			--PRINT @PARAMS
-			EXEC dbo.InsertObjectLog @@PROCID,@Params,@UserCreated
+			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
+									 @Params = @Params,
+									 @UserCreated = @UserCreated
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 END
