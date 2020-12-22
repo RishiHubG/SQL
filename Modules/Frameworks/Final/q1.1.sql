@@ -47,7 +47,7 @@ drop table IF EXISTS TAB_Frameworksteps_history
 BEGIN TRAN;
  EXEC dbo.ParseFrameworkJSONData
  @Name = 'TAB',
- @UserCreated=100,
+ @UserLoginID=100,
   @inputJSON =
 '{
     "general.name": {

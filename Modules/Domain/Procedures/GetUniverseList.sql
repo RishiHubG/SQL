@@ -12,7 +12,7 @@ USAGE:          	EXEC dbo.GetUniverseList @EntityID=NULL,
 											@EntityType=NULL,
 											@ParentEntityID = NULL,
 											@ParentEntityType = NULL,
-											@UserCreated=1,
+											@UserLoginID=1,
 											@MethodName= ''
 
 CHANGE HISTORY:
@@ -24,7 +24,7 @@ CREATE OR ALTER PROCEDURE dbo.GetUniverseList
 @EntityType VARCHAR(100) = NULL,
 @ParentEntityID INT = NULL,
 @ParentEntityType VARCHAR(100) = NULL,
-@UserCreated INT,
+@UserLoginID INT,
 @MethodName VARCHAR(100),
 @LogRequest BIT = 1
 AS
@@ -46,12 +46,12 @@ BEGIN
 
 			DECLARE @Params VARCHAR(MAX)
 			SET @Params = CONCAT('@EntityID=',@vEntityID,',@EntityType=',CHAR(39),@EntityType,CHAR(39),',@ParentEntityID=',@vParentEntityID)
-			SET @Params = CONCAT(@Params,',@ParentEntityType=', CHAR(39),@ParentEntityType, CHAR(39),',@UserCreated=',@UserCreated,',@MethodName=',CHAR(39),@MethodName, CHAR(39))
+			SET @Params = CONCAT(@Params,',@ParentEntityType=', CHAR(39),@ParentEntityType, CHAR(39),',@UserLoginID=',@UserLoginID,',@MethodName=',CHAR(39),@MethodName, CHAR(39))
 			SET @Params = CONCAT(@Params,',@LogRequest=1')
 			--PRINT @PARAMS
 			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
 									 @Params = @Params,
-									 @UserCreated = @UserCreated
+									 @UserLoginID = @UserLoginID
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 END

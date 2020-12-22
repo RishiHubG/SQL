@@ -210,7 +210,7 @@ DECLARE @inputJSON VARCHAR(MAX) ='{
     }
 }'
 
-EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON, @UserCreated=100
+EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON, @UserLoginID=100
 
 /*
 SELECT * FROM dbo.Registers

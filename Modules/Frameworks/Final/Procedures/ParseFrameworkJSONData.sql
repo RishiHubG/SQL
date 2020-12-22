@@ -18,7 +18,7 @@ DESCRIPTION:		NOTES:
 										  IT CAN HAVE MULTIPLE DOTS IN BETWEEN BUT TEXT BEFORE THE 1ST DOT IS ALWAYS A STEP NAME, TEXT AFTER THE LAST DOT IS ALWAYS A STEP ITEM (FOR _DATA COLUMNS)
 										  SO THE FIRST PART IS STEPNAME, THE LAST PART IS THE NAME OF THE COLUMN FOR _DATA TABLE, THE STEPITEM NAME IS THE ONE WITH "LABEL"
 USAGE:          	EXEC dbo.ParseFrameworkJSONData  @Name = 'TAB',
-													 @UserCreated=100,
+													 @UserLoginID=100,
 													 @inputJSON=  ''
 
 CHANGE HISTORY:
@@ -28,7 +28,7 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.ParseFrameworkJSONData
 @Name VARCHAR(100),
 @InputJSON VARCHAR(MAX),
-@UserCreated INT,
+@UserLoginID INT,
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -219,7 +219,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			SELECT  @FrameworkID,
 					@Name,	
 					@inputJSON,		
-					@UserCreated,
+					@UserLoginID,
 					GETUTCDATE(),
 					@VersionNum
 
@@ -315,7 +315,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				SET IDENTITY_INSERT dbo.FrameworkSteps ON;
 				
 				INSERT INTO dbo.FrameworkSteps (StepID,FrameworkID,StepName,DateCreated,UserCreated,VersionNum)
-					SELECT @StepID,@FrameworkID,@StepName,GETUTCDATE(),@UserCreated,@VersionNum	
+					SELECT @StepID,@FrameworkID,@StepName,GETUTCDATE(),@UserLoginID,@VersionNum	
 			
 				--SET @StepID = SCOPE_IDENTITY()
 				SET IDENTITY_INSERT dbo.FrameworkSteps OFF;
@@ -400,7 +400,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								@StepItemType,
 								@StepItemKey,
 								(SELECT SequenceNo FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
-								GETUTCDATE(),@UserCreated,@VersionNum	
+								GETUTCDATE(),@UserLoginID,@VersionNum	
 
 					--SET @StepItemID = SCOPE_IDENTITY()
 					SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;				
@@ -487,7 +487,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					--GET THE STEPITEM ATTRIBUTES					 				
 					INSERT INTO dbo.FrameworkAttributes(AttributeID,FrameworkID,StepItemID,AttributeValue,AttributeKey,OrderBy,DateCreated,UserCreated,VersionNum)							
 						SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @AttributeID,
-							   @FrameworkID,@StepItemID,StringValue,KeyName,SequenceNo,GETUTCDATE(),@UserCreated ,@VersionNum
+							   @FrameworkID,@StepItemID,StringValue,KeyName,SequenceNo,GETUTCDATE(),@UserLoginID ,@VersionNum
 							FROM #TMP T
 							WHERE (Parent_ID = @ID
 								 OR
@@ -533,7 +533,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						
 						 INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
 							SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
-								   @FrameworkID,@StepItemID,@LookupValues,@StepItemName,1,GETUTCDATE(),@UserCreated,@VersionNum						
+								   @FrameworkID,@StepItemID,@LookupValues,@StepItemName,1,GETUTCDATE(),@UserLoginID,@VersionNum						
 				END
 				ELSE		
 				IF @StepItemType = 'select'
@@ -569,7 +569,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										   LookupType,	 		  
 											Parent_ID,
 											GETUTCDATE(),
-											@UserCreated,
+											@UserLoginID,
 											@VersionNum	
 									FROM #TMP_Lookups T
 									--WHERE NOT EXISTS (SELECT 1 
@@ -590,7 +590,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										   KeyName,
 										   SequenceNo,
 										   GETUTCDATE(),
-										   @UserCreated,
+										   @UserLoginID,
 										   @VersionNum
 									FROM #TMP T
 									WHERE Parent_ID <> @ID
@@ -651,7 +651,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SELECT  @FrameworkID,
 				@Name,	
 				@inputJSON,		
-				@UserCreated,
+				@UserLoginID,
 				GETUTCDATE(),
 				@VersionNum,
 				@PeriodIdentifierID
@@ -731,11 +731,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		IF @LogRequest = 1
 		BEGIN
 			DECLARE @Params VARCHAR(MAX)
-			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated,',@LogRequest=1')
+			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			--PRINT @PARAMS
 			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
 									 @Params = @Params,
-									 @UserCreated = @UserCreated
+									 @UserLoginID = @UserLoginID
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 END

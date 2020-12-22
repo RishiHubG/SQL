@@ -145,7 +145,7 @@ USAGE:
 						}
 					}'
 
-					EXEC dbo.ParseUniverseJSON @UniverseName ='ABC',@inputJSON = @inputJSON,@UserCreated = 100,@UserModified=NULL
+					EXEC dbo.ParseUniverseJSON @UniverseName ='ABC',@inputJSON = @inputJSON,@UserLoginID = 100,@UserModified=NULL
 
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
@@ -154,7 +154,7 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.ParseUniverseJSON
 @UniverseName VARCHAR(500),
 @inputJSON VARCHAR(MAX),
-@UserCreated INT,
+@UserLoginID INT,
 @UserModified INT = NULL,
 @LogRequest BIT = 1
 AS
@@ -269,7 +269,7 @@ BEGIN
 			SET @VersionNum = 1
 
 			INSERT INTO dbo.Universe(Name,UserCreated,VersionNum)
-				SELECT @UniverseName, @UserCreated, @VersionNum
+				SELECT @UniverseName, @UserLoginID, @VersionNum
 
 			SET @UniverseID =SCOPE_IDENTITY()
 		END
@@ -294,7 +294,7 @@ BEGIN
 				--CHECK FOR DATA TYPE COMPATIBILITY-----------------------------------------------------------------------------------------------
 				DROP TABLE IF EXISTS #TMP_DataTypeMismatch
 
-				SELECT @UniverseID AS UniverseID, @UserCreated AS UserCreated, @VersionNum AS VersionNum,TA.StringValue,TA.JSONType AS New_JSONType,
+				SELECT @UniverseID AS UniverseID, @UserLoginID AS UserCreated, @VersionNum AS VersionNum,TA.StringValue,TA.JSONType AS New_JSONType,
 					  TA.DataType AS New_DataType,RP.JsonType AS Old_JSONType,DT.CompatibleTypes AS Old_CompatibleTypes
 					 ,CHARINDEX(TA.DataType,DT.CompatibleTypes,1) AS Flag
 					INTO #TMP_DataTypeMismatch
@@ -359,7 +359,7 @@ BEGIN
 			--INSERT NEW PROPERTIES (IF ANY)
 			INSERT INTO dbo.UniverseProperties(UniverseID,UserCreated,VersionNum,PropertyName,JSONType)
 				OUTPUT INSERTED.UniversePropertyID, inserted.UniverseID,INSERTED.PropertyName INTO #TMP_NewUniverseProperties(UniversePropertyID,UniverseID,PropertyName)
-			SELECT @UniverseID, @UserCreated, @VersionNum,StringValue,JSONType
+			SELECT @UniverseID, @UserLoginID, @VersionNum,StringValue,JSONType
 			FROM #TMP_Assessments TA
 			WHERE NOT EXISTS(SELECT 1 FROM dbo.UniverseProperties WHERE UniverseID = @UniverseID AND PropertyName = TA.StringValue)-- AND VersionNum = @VersionNum) 
 			      AND KeyName ='Label'
@@ -399,7 +399,7 @@ BEGIN
 					 AND RPX.IsActive = 0	
 			
 			INSERT INTO dbo.UniversePropertiesXref(UniversePropertyID,UniverseID,UserCreated,VersionNum,PropertyName,IsActive)
-				SELECT UniversePropertyID, UniverseID,@UserCreated,@VersionNum,PropertyName,1
+				SELECT UniversePropertyID, UniverseID,@UserLoginID,@VersionNum,PropertyName,1
 				FROM #TMP_NewUniverseProperties --#TMP_NewUniverseProperties TR
 				--WHERE NOT EXISTS(SELECT 1 FROM dbo.UniversePropertiesXref WHERE UniversePropertyID= TR.UniversePropertyID AND UniverseID = @UniverseID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
 			
@@ -570,11 +570,11 @@ BEGIN
 		 IF @LogRequest = 1
 		BEGIN
 			DECLARE @Params VARCHAR(MAX)
-			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated,',@LogRequest=1')
+			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			--PRINT @PARAMS
 			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
 									 @Params = @Params,
-									 @UserCreated = @UserCreated
+									 @UserLoginID = @UserLoginID
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 END

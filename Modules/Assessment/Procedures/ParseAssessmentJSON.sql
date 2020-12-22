@@ -145,7 +145,7 @@ USAGE:
 						}
 					}'
 
-					EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON,@UserCreated = 100,@UserModified=NULL
+					EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON,@UserLoginID = 100,@UserModified=NULL
 
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
@@ -154,7 +154,7 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.ParseAssessmentJSON
 @RegisterName VARCHAR(500),
 @inputJSON VARCHAR(MAX),
-@UserCreated INT,
+@UserLoginID INT,
 @UserModified INT = NULL,
 @LogRequest BIT = 1
 AS
@@ -269,7 +269,7 @@ BEGIN
 			SET @VersionNum = 1
 
 			INSERT INTO dbo.Registers(Name,UserCreated,VersionNum)
-				SELECT @RegisterName, @UserCreated, @VersionNum
+				SELECT @RegisterName, @UserLoginID, @VersionNum
 
 			SET @RegisterID =SCOPE_IDENTITY()
 		END
@@ -294,7 +294,7 @@ BEGIN
 				--CHECK FOR DATA TYPE COMPATIBILITY-----------------------------------------------------------------------------------------------
 				DROP TABLE IF EXISTS #TMP_DataTypeMismatch
 
-				SELECT @RegisterID AS RegisterID, @UserCreated AS UserCreated, @VersionNum AS VersionNum,TA.StringValue,TA.JSONType AS New_JSONType,
+				SELECT @RegisterID AS RegisterID, @UserLoginID AS UserCreated, @VersionNum AS VersionNum,TA.StringValue,TA.JSONType AS New_JSONType,
 					  TA.DataType AS New_DataType,RP.JsonType AS Old_JSONType,DT.CompatibleTypes AS Old_CompatibleTypes
 					 ,CHARINDEX(TA.DataType,DT.CompatibleTypes,1) AS Flag
 					INTO #TMP_DataTypeMismatch
@@ -359,7 +359,7 @@ BEGIN
 			--INSERT NEW PROPERTIES (IF ANY)
 			INSERT INTO dbo.RegisterProperties(RegisterID,UserCreated,VersionNum,PropertyName,JSONType)
 				OUTPUT INSERTED.RegisterPropertyID, inserted.RegisterID,INSERTED.PropertyName INTO #TMP_NewRegisterProperties(RegisterPropertyID,RegisterID,PropertyName)
-			SELECT @RegisterID, @UserCreated, @VersionNum,StringValue,JSONType
+			SELECT @RegisterID, @UserLoginID, @VersionNum,StringValue,JSONType
 			FROM #TMP_Assessments TA
 			WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterProperties WHERE RegisterID = @RegisterID AND PropertyName = TA.StringValue)-- AND VersionNum = @VersionNum) 
 			      AND KeyName ='Label'
@@ -399,7 +399,7 @@ BEGIN
 					 AND RPX.IsActive = 0	
 			
 			INSERT INTO dbo.RegisterPropertiesXref(RegisterPropertyID,RegisterID,UserCreated,VersionNum,PropertyName,IsActive)
-				SELECT RegisterPropertyID, RegisterID,@UserCreated,@VersionNum,PropertyName,1
+				SELECT RegisterPropertyID, RegisterID,@UserLoginID,@VersionNum,PropertyName,1
 				FROM #TMP_NewRegisterProperties --#TMP_NewRegisterProperties TR
 				--WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterPropertiesXref WHERE RegisterPropertyID= TR.RegisterPropertyID AND RegisterID = @RegisterID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
 			
@@ -570,11 +570,11 @@ BEGIN
 		IF @LogRequest = 1
 		BEGIN
 			DECLARE @Params VARCHAR(MAX)
-			SET @Params = CONCAT('@RegisterName=', CHAR(39),@RegisterName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserCreated=',@UserCreated,',@LogRequest=1')
+			SET @Params = CONCAT('@RegisterName=', CHAR(39),@RegisterName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			--PRINT @PARAMS
 			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
 									 @Params = @Params,
-									 @UserCreated = @UserCreated
+									 @UserLoginID = @UserLoginID
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 END
