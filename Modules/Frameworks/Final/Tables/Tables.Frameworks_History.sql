@@ -18,6 +18,7 @@ CREATE TABLE dbo.Frameworks_history
 	OperationType VARCHAR(50),
 	UserActionID INT,
 	FrameworkID INT,
+	FullSchemaJSON VARCHAR(MAX),
 	[Name] VARCHAR(500) NOT NULL,
 	FrameworkFile VARCHAR(MAX) NOT NULL,
 	[Namespace]	VARCHAR(100),

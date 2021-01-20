@@ -154,6 +154,7 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.ParseAssessmentJSON
 @RegisterName VARCHAR(500),
 @inputJSON VARCHAR(MAX),
+@FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
 @UserModified INT = NULL,
 @LogRequest BIT = 1
@@ -268,8 +269,8 @@ BEGIN
 		BEGIN
 			SET @VersionNum = 1
 
-			INSERT INTO dbo.Registers(Name,UserCreated,VersionNum)
-				SELECT @RegisterName, @UserLoginID, @VersionNum
+			INSERT INTO dbo.Registers(Name,UserCreated,VersionNum,FullSchemaJSON)
+				SELECT @RegisterName, @UserLoginID, @VersionNum,@FullSchemaJSON
 
 			SET @RegisterID =SCOPE_IDENTITY()
 		END

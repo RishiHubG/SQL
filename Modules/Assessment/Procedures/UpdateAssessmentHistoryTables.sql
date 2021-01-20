@@ -36,6 +36,7 @@ BEGIN
 				   ,[OperationType]
 				   ,[UserActionID]
 				   ,[RegisterID]
+				   ,FullSchemaJSON
 				   ,[Name]
 				   ,[FrameworkID]
 				   ,[UniverseID]
@@ -53,6 +54,7 @@ BEGIN
 				   ,NULL
 				   ,NULL
 				   ,[RegisterID]
+				   ,FullSchemaJSON
 				   ,[Name]
 				   ,[FrameworkID]
 				   ,[UniverseID]

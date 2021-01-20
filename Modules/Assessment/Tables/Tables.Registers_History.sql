@@ -16,6 +16,7 @@ CREATE TABLE dbo.Registers_history
 	OperationType VARCHAR(50),
 	UserActionID INT,
 	RegisterID INT,
+	FullSchemaJSON VARCHAR(MAX),
 	Name VARCHAR(500) NOT NULL,
 	FrameworkID	INT,
 	UniverseID INT,

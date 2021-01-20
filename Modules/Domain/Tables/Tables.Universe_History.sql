@@ -16,6 +16,7 @@ CREATE TABLE dbo.Universe_history
 	OperationType VARCHAR(50),
 	UserActionID INT,
 	UniverseID INT,
+	FullSchemaJSON VARCHAR(MAX),
 	Name VARCHAR(500) NOT NULL,
 	FrameworkID	INT,
 	ParentID INT NULL,

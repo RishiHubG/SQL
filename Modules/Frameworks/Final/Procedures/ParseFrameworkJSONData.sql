@@ -28,6 +28,7 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.ParseFrameworkJSONData
 @Name VARCHAR(100),
 @InputJSON VARCHAR(MAX),
+@FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
 @LogRequest BIT = 1
 AS
@@ -215,13 +216,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	BEGIN
 		SET IDENTITY_INSERT dbo.Frameworks ON;
 
-		INSERT INTO dbo.Frameworks (FrameworkID,Name,FrameworkFile,UserCreated,DateCreated,VersionNum)
+		INSERT INTO dbo.Frameworks (FrameworkID,Name,FrameworkFile,UserCreated,DateCreated,VersionNum,FullSchemaJSON)
 			SELECT  @FrameworkID,
 					@Name,	
 					@inputJSON,		
 					@UserLoginID,
 					GETUTCDATE(),
-					@VersionNum
+					@VersionNum,
+					@FullSchemaJSON
 
 		--SET @FrameworkID = SCOPE_IDENTITY()	
 		SET IDENTITY_INSERT dbo.Frameworks OFF;
@@ -647,15 +649,17 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[UserCreated]
 				   ,[DateCreated]				   
 				   ,[VersionNum],
-				   PeriodIdentifierID)
+				   PeriodIdentifierID,
+				   FullSchemaJSON)
 		SELECT  @FrameworkID,
 				@Name,	
 				@inputJSON,		
 				@UserLoginID,
 				GETUTCDATE(),
 				@VersionNum,
-				@PeriodIdentifierID
-		
+				@PeriodIdentifierID,
+				@FullSchemaJSON
+
 		INSERT INTO [dbo].[FrameworkAttributes_history]
 				   (FrameworkID,
 					AttributeID,

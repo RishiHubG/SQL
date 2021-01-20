@@ -154,6 +154,7 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.ParseUniverseJSON
 @UniverseName VARCHAR(500),
 @inputJSON VARCHAR(MAX),
+@FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
 @UserModified INT = NULL,
 @LogRequest BIT = 1
@@ -268,8 +269,8 @@ BEGIN
 		BEGIN
 			SET @VersionNum = 1
 
-			INSERT INTO dbo.Universe(Name,UserCreated,VersionNum)
-				SELECT @UniverseName, @UserLoginID, @VersionNum
+			INSERT INTO dbo.Universe(Name,UserCreated,VersionNum,FullSchemaJSON)
+				SELECT @UniverseName, @UserLoginID, @VersionNum,@FullSchemaJSON
 
 			SET @UniverseID =SCOPE_IDENTITY()
 		END

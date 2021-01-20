@@ -14,6 +14,7 @@ CREATE TABLE dbo.Frameworks
 	UserModified INT,
 	DateModified DATETIME2(0),
 	VersionNum INT NOT NULL,
+	FullSchemaJSON VARCHAR(MAX),
 	Name VARCHAR(500) NOT NULL,
 	FrameworkFile VARCHAR(MAX) NOT NULL,
 	[Namespace]	VARCHAR(100),	
