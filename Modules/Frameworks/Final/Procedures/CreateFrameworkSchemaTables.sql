@@ -18,6 +18,7 @@ CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
  CREATE OR ALTER PROCEDURE dbo.CreateFrameworkSchemaTables
+@NewTableName VARCHAR(100),
 @FrameworkID INT,
 @VersionNum INT
 AS
@@ -41,7 +42,7 @@ drop table IF EXISTS TAB_FrameworkSteps_history
 --DROP TABLE IF EXISTS TAB_Frameworks_history
 */
 
-DECLARE @NewTableName VARCHAR(100)='TAB'
+--DECLARE @NewTableName VARCHAR(100)='TAB'
 DECLARE @TableInitial VARCHAR(100) = @NewTableName
 DECLARE @TBL TABLE(ID INT IDENTITY(1,1),NewTableName VARCHAR(500),Item VARCHAR(MAX))
 DECLARE @ID INT, @TemplateTableName VARCHAR(100),@ParentTableName VARCHAR(100), @SQL NVARCHAR(MAX) = ''
