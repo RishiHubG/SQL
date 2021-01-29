@@ -161,9 +161,9 @@ CREATE OR ALTER PROCEDURE dbo.ParseUniverseJSON
 AS
 BEGIN
 	SET NOCOUNT ON; 
+	SET XACT_ABORT ON;
 	BEGIN TRY
-	BEGIN TRAN
-
+	
 	DECLARE @ID INT,			
 			@VersionNum INT,
 			@UniverseID INT,
@@ -264,7 +264,9 @@ BEGIN
 			   @UniverseID = UniverseID
 		FROM dbo.Universe 
 		WHERE Name=@UniverseName
-				 
+	
+	BEGIN TRAN
+
 		IF @UniverseID IS NULL
 		BEGIN
 			SET @VersionNum = 1
@@ -549,12 +551,46 @@ BEGIN
 			END
 			------------------------------------------------
 		
+		DECLARE @Params VARCHAR(MAX)
+		DECLARE @ObjectName VARCHAR(100)
+
+
+		 --INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
+		 IF @LogRequest = 1
+		BEGIN
+			 
+			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
+			--PRINT @PARAMS
+			SET @ObjectName = OBJECT_NAME(@@PROCID)
+
+			EXEC dbo.InsertObjectLog @ObjectName = @ObjectName,
+									 @Params = @Params,
+									 @UserLoginID = @UserLoginID			
+		END
+		------------------------------------------------------------------------------------------------------------------------------------------
+		
 		 COMMIT
+		 
+		 SELECT NULL AS ErrorMessage
+
 	END TRY
 	BEGIN CATCH
-		SELECT ERROR_MESSAGE()
+		
 		IF @@TRANCOUNT = 1 AND XACT_STATE() <> 0
 			ROLLBACK
+
+			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
+			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
+			
+			SET @ObjectName = OBJECT_NAME(@@PROCID)
+
+			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
+									 @Params = @Params,
+									 @UserLoginID = @UserLoginID,
+									 @ErrorMessage = @ErrorMessage
+			
+			SELECT @ErrorMessage AS ErrorMessage
+
 	END CATCH	
 	
 		--DROP TEMP TABLES--------------------------------------
@@ -567,15 +603,4 @@ BEGIN
 		 DROP TABLE IF EXISTS #TMP_UniverseProperties
 		 --------------------------------------------------------
 
-		 --INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
-		 IF @LogRequest = 1
-		BEGIN
-			DECLARE @Params VARCHAR(MAX)
-			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			--PRINT @PARAMS
-			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
-									 @Params = @Params,
-									 @UserLoginID = @UserLoginID
-		END
-		------------------------------------------------------------------------------------------------------------------------------------------
 END

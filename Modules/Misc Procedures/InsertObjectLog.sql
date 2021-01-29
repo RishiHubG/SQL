@@ -15,19 +15,18 @@ SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
 CREATE OR ALTER PROCEDURE dbo.InsertObjectLog
- @ObjectID INT,	
+ @ObjectName VARCHAR(8000),	
  @Params VARCHAR(MAX),
- @UserLoginID INT
+ @UserLoginID INT,
+ @ErrorMessage VARCHAR(MAX) = NULL
 AS
 BEGIN
 	SET NOCOUNT ON;
-	
-	DECLARE @ObjectName VARCHAR(MAX) = OBJECT_NAME(@ObjectID)
 
 	SET @ObjectName = CONCAT('EXEC dbo.',@ObjectName,' ',@Params)
 		
-	INSERT INTO dbo.ObjectLog(ObjectNameWithParam,UserCreated, DateExecuted)
-		SELECT @ObjectName,@UserLoginID, GETUTCDATE()
+	INSERT INTO dbo.ObjectLog(ObjectNameWithParam,ErrorMessage, UserCreated, DateExecuted)
+		SELECT @ObjectName, @ErrorMessage, @UserLoginID, GETUTCDATE()
 		
 
 END

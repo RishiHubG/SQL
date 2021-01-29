@@ -33,8 +33,11 @@ CREATE OR ALTER PROCEDURE dbo.ParseFrameworkJSONData
 @LogRequest BIT = 1
 AS
 BEGIN
-	SET NOCOUNT ON;
+BEGIN TRY
 
+	SET NOCOUNT ON;
+	SET XACT_ABORT ON;
+	 
 --EMPTY THE TEMPLATE TABLES----------------------
 TRUNCATE TABLE dbo.FrameworkLookups_history
 TRUNCATE TABLE dbo.FrameworkAttributes_history
@@ -211,6 +214,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	IF @VersionNum IS NULL
 		SET @VersionNum = 1
 
+	BEGIN TRAN
+	
 	--INSERT NEW JSONKEY(NAME) IF IT DOES NOT EXIST=====================================================================================		
 	IF @IsAvailable IS NULL OR @IsAvailable = 0	
 	BEGIN
@@ -731,15 +736,53 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			 
 		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
 
+		DECLARE @Params VARCHAR(MAX)
+		DECLARE @ObjectName VARCHAR(100)
+
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
-		BEGIN
-			DECLARE @Params VARCHAR(MAX)
+		BEGIN			
 			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			--PRINT @PARAMS
-			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
+			
+			SET @ObjectName = OBJECT_NAME(@@PROCID)
+
+			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
 									 @Params = @Params,
 									 @UserLoginID = @UserLoginID
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
+
+		COMMIT
+
+		SELECT NULL AS ErrorMessage
+
+END TRY
+BEGIN CATCH
+	
+		IF @@TRANCOUNT = 1 AND XACT_STATE() <> 0
+			ROLLBACK;
+
+			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
+			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
+			
+			SET @ObjectName = OBJECT_NAME(@@PROCID)
+
+			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
+									 @Params = @Params,
+									 @UserLoginID = @UserLoginID,
+									 @ErrorMessage = @ErrorMessage
+			
+			SELECT @ErrorMessage AS ErrorMessage
+END CATCH
+
+		--DROP TEMP TABLES--------------------------------------
+		 DROP TABLE IF EXISTS #TMP_Objects
+		 DROP TABLE IF EXISTS #TMP_ALLSTEPS
+		 DROP TABLE IF EXISTS #TMP_DATA
+		 DROP TABLE IF EXISTS #TMP_DATA_DAY
+		 DROP TABLE IF EXISTS #TMP_DATA_DOT 
+		 DROP TABLE IF EXISTS #TMP
+		 DROP TABLE IF EXISTS #TMP_Lookups
+		 --------------------------------------------------------
 END
