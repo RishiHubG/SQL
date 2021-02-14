@@ -26,6 +26,7 @@ CREATE OR ALTER PROCEDURE dbo.SaveFrameworkJSONData
 @EntityTypeID INT=NULL,
 @ParentEntityID INT=NULL,
 @ParentEntityTypeID INT=NULL,
+@VersionNum INT = 1,
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -34,7 +35,7 @@ BEGIN TRY
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON;
 
-	DECLARE @TableName VARCHAR(500) = (SELECT Name FROM dbo.Frameworks WHERE FrameworkID = @FrameworkID)
+	DECLARE @TableName VARCHAR(500) = (SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @FrameworkID)
 
 	IF @TableName IS NULL
 		RETURN
@@ -56,7 +57,7 @@ BEGIN TRY
 				ROW_NUMBER()OVER(PARTITION BY T.Element_ID,T.Name ORDER BY TAB.pos DESC) AS RowNum
 		 FROM #TMP_ALLSTEPS T
 			  CROSS APPLY dbo.[FindPatternLocation](T.Name,'.')TAB	 
-		WHERE Parent_ID = 0
+		 WHERE Parent_ID = 0
 		)
 		
 		SELECT *
@@ -76,13 +77,12 @@ BEGIN TRY
 
 		--SELECT * FROM #TMP_DATA_KEYNAME
 		--RETURN
+		--SELECT * FROM #TMP_ALLSTEPS
 
-
-		 --GET THE SELECTBOXES (THESE WILL HAVE A PRENT OF TYPE "Object")
+		 --GET THE SELECTBOXES (THESE WILL HAVE A PARENT OF TYPE "Object")
 		 -------------------------------------------------------------------------------------------------------
-
 		DECLARE @TBL TABLE(Name VARCHAR(100))
-		INSERT INTO @TBL (Name) VALUES ('Name'),('Value'),('Description'),('Color')
+		INSERT INTO @TBL (Name) VALUES ('Name')--,('Value'),('Description'),('Color')
 
 		 SELECT Element_ID,SequenceNo,Parent_ID,[Object_ID] AS ObjectID,Name,StringValue,ValueType,TAB.MultiKeyName 
 			INTO #TMP_Objects
@@ -104,20 +104,36 @@ BEGIN TRY
 		FROM #TMP_DATA_MultiKeyName TD 
 			 INNER JOIN #TMP_Objects T ON T.Element_ID = TD.Element_ID
 		WHERE Pos > 0	
+
+			SELECT DISTINCT TDM.Element_ID,
+				   CONCAT(TDM.KeyName,'_',TAB.MultiKeyName) AS ColumnName,
+				   STUFF(
+							(SELECT CONCAT(', ',TA.[Name])
+							FROM #TMP_ALLSTEPS TA
+							WHERE TA.Parent_ID =TDM.Element_ID
+								  AND TA.StringValue = 'True'
+							FOR XML PATH(''))	
+						,1,1,''	
+						)  AS StringValue
+				INTO #TMP_MULTI
+			FROM #TMP_DATA_MultiKeyName TDM
+				 INNER JOIN #TMP_Objects TAB ON TAB.Element_ID =TDM.Element_ID
+				 INNER JOIN #TMP_ALLSTEPS TAS ON TAS.Parent_ID =TDM.Element_ID
+			WHERE TAS.StringValue = 'True'
+				
+		--SELECT * FROM #TMP_DATA_MultiKeyName
+		--SELECT * FROM #TMP_Objects
 		 -------------------------------------------------------------------------------------------------------
 		
 		 --BUILD THE COLUMN LIST
 		 -------------------------------------------------------------------------------------------------------
 
 		 --FOR SELECTBOXES
-		 SELECT TDM.Element_ID,
-			   CONCAT(TDM.KeyName,'_',TAB.MultiKeyName) AS ColumnName,
-			   TA.StringValue
+		SELECT Element_ID,
+		        ColumnName,
+			    StringValue			 
 			INTO #TMP_INSERT
-		FROM #TMP_DATA_MultiKeyName TDM
-			 INNER JOIN #TMP_Objects TAB ON TAB.Element_ID =TDM.Element_ID
-			 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID =TDM.Element_ID
-		WHERE TA.StringValue = 'True'
+		FROM #TMP_MULTI
 
 		UNION
 				
@@ -127,21 +143,38 @@ BEGIN TRY
 		FROM #TMP_DATA_KEYNAME
 		WHERE Parent_ID = 0
 			  AND OBJECTID IS NULL
+			  AND StringValue <> ''
 		 
- 	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX)
+		--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
+		INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+			SELECT 'VersionNum',@VersionNum
+			UNION
+			SELECT 'UserCreated',@UserLoginID
+
+ 	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
+
 	 	SET @ColumnNames = STUFF
 								((SELECT CONCAT(', ',ColumnName)
 								FROM #TMP_INSERT 								
 								ORDER BY Element_ID
 								FOR XML PATH ('')								
 								),1,1,'')
-	SELECT @ColumnNames
-	SELECT * FROM #TMP_INSERT
-	RETURN
+	
+		SET @ColumnValues = STUFF
+								((SELECT CONCAT(', ',CHAR(39),StringValue,CHAR(39))
+								FROM #TMP_INSERT 								
+								ORDER BY Element_ID
+								FOR XML PATH ('')								
+								),1,1,'')
+
+	
 	BEGIN TRAN
 		
-		SET @SQL = CONCAT('INSERT INTO dbo.',@TableName,'(',@ColumnNames,')')
-			   
+		SET @SQL = CONCAT('INSERT INTO dbo.',@TableName,'(',@ColumnNames,') VALUES(',@ColumnValues,')')
+		PRINT @SQL
+		
+		EXEC sp_executesql @SQL	
+		
 		DECLARE @Params VARCHAR(MAX)
 		DECLARE @ObjectName VARCHAR(100)
 
@@ -187,5 +220,6 @@ END CATCH
 		 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME
 		 DROP TABLE IF EXISTS  #TMP_INSERT
 		 DROP TABLE IF EXISTS #TMP_DATA_MultiKeyName
+		 DROP TABLE IF EXISTS #TMP_MULTI
 		 --------------------------------------------------------
 END

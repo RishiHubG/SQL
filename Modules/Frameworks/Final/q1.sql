@@ -24,7 +24,7 @@ GO
   "inherentRatings1.rnonFinancialImpactRationale": "",
   "inherentRatings.financialImpactRationale": "",
   "inherentRatings.inherentRatingOverall": "",
-  "inherentRatings.likelihoodImpact": null,
+  "inherentRatings.likelihoodImpact": 1,
   "inherentRatings.likelihoodRationale": "",
   "inherentRatings.localCurrency": "",
   "inherentRatings.nonFinancialImpactBusiness": "",
@@ -33,7 +33,7 @@ GO
   "inherentRatings.nonFinancialImpactReputational": "",
   
   "inherentRatings.whichPartiesAreEffected.businessContinuity": {
-    "": false
+    "test": true
   },
   "inherentRatings.whichPartiesAreEffected.licenseToOperate": {
     "": false
@@ -57,7 +57,7 @@ GO
   "riskDetail.causalSubCategory": "",
   "riskDetail.causalSubCategory2": "",
   "riskDetail.causalSubCategory3": "",
-  "riskDetail.regulatoryComplianceRequirements": false,
+  "riskDetail.regulatoryComplianceRequirements": 0,
   "riskDetail.riskCategory1": "",
   "riskDetail.riskCategory2": "",
   "riskDetail.riskCategory3": "",
@@ -94,6 +94,8 @@ GO
 
 		SELECT * FROM dbo.TAB_Framework_Attributes_history WHERE VersionNum=4
 		EXEC dbo.UpdateHistoryOperationType @FrameworkID=1, @TableInitial ='TAB',@VersionNum=4
+
+		SELECT * FROM ObjectLog
 		
 */
 /*
