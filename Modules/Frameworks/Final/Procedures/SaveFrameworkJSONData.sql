@@ -81,7 +81,7 @@ BEGIN TRY
 		 --GET THE SELECTBOXES (THESE WILL HAVE A PRENT OF TYPE "Object")
 		 -------------------------------------------------------------------------------------------------------
 
-		 DECLARE @TBL TABLE(Name VARCHAR(100))
+		DECLARE @TBL TABLE(Name VARCHAR(100))
 		INSERT INTO @TBL (Name) VALUES ('Name'),('Value'),('Description'),('Color')
 
 		 SELECT Element_ID,SequenceNo,Parent_ID,[Object_ID] AS ObjectID,Name,StringValue,ValueType,TAB.MultiKeyName 
@@ -92,25 +92,20 @@ BEGIN TRY
 			   AND Parent_ID = 0 --ONLY ROOT ELEMENTS			   
 			   AND Name NOT IN ('userCreated','dateCreated','userModified','dateModified','submit')
 			  
-		SELECT * FROM #TMP_Objects
-		
+			
 		SELECT T.Element_ID,T.Name, MAX(TAB.pos) AS Pos,CAST(NULL AS VARCHAR(100)) AS KeyName	    
 			INTO #TMP_DATA_MultiKeyName
 		 FROM #TMP_Objects T
 			  CROSS APPLY dbo.[FindPatternLocation](T.Name,'.')TAB			  
-		GROUP BY T.Element_ID,T.Name
-		
+		GROUP BY T.Element_ID,T.Name		
 
 		UPDATE TD
 			SET KeyName = SUBSTRING(TD.Name,Pos+1,len(TD.Name))
 		FROM #TMP_DATA_MultiKeyName TD 
 			 INNER JOIN #TMP_Objects T ON T.Element_ID = TD.Element_ID
-		WHERE Pos > 0
-
-		SELECT * FROM #TMP_DATA_MultiKeyName
+		WHERE Pos > 0	
 		 -------------------------------------------------------------------------------------------------------
-		 SELECT * FROM #TMP_ALLSTEPS
-
+		
 		 --BUILD THE COLUMN LIST
 		 -------------------------------------------------------------------------------------------------------
 
@@ -118,7 +113,7 @@ BEGIN TRY
 		 SELECT TDM.Element_ID,
 			   CONCAT(TDM.KeyName,'_',TAB.MultiKeyName) AS ColumnName,
 			   TA.StringValue
-			--INTO #TMP_INSERT
+			INTO #TMP_INSERT
 		FROM #TMP_DATA_MultiKeyName TDM
 			 INNER JOIN #TMP_Objects TAB ON TAB.Element_ID =TDM.Element_ID
 			 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID =TDM.Element_ID
@@ -133,34 +128,22 @@ BEGIN TRY
 		WHERE Parent_ID = 0
 			  AND OBJECTID IS NULL
 		 
- RETURN
-	 	DECLARE @ID INT,		
-			@StepID INT,
-			@StepName VARCHAR(500), --='XYZ',
-			@StepItemType VARCHAR(500),		 
-			@StepItemName VARCHAR(500),
-			@LookupValues VARCHAR(1000),
-			@StepItemID INT,			
-			@VersionNum INT,
-			@StepItemKey VARCHAR(100),
-			--@Name VARCHAR(100) = 'TAB',
-			@SQL NVARCHAR(MAX),		 
-			@IsAvailable BIT,
-			@TemplateTableName SYSNAME,
-			@Counter INT = 1,
-			@AttributeID INT, @LookupID INT,
-			@ColumnNames VARCHAR(MAX)
-	 	 
+ 	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX)
+	 	SET @ColumnNames = STUFF
+								((SELECT CONCAT(', ',ColumnName)
+								FROM #TMP_INSERT 								
+								ORDER BY Element_ID
+								FOR XML PATH ('')								
+								),1,1,'')
+	SELECT @ColumnNames
+	SELECT * FROM #TMP_INSERT
+	RETURN
 	BEGIN TRAN
-	 
+		
+		SET @SQL = CONCAT('INSERT INTO dbo.',@TableName,'(',@ColumnNames,')')
+			   
 		DECLARE @Params VARCHAR(MAX)
 		DECLARE @ObjectName VARCHAR(100)
-		 
-
-		SET @SQL = CONCAT('INSERT INTO dbo.',@TableName,'(',@ColumnNames,'')
-
-
-
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
@@ -199,14 +182,9 @@ BEGIN CATCH
 			SELECT @ErrorMessage AS ErrorMessage
 END CATCH
 
-		--DROP TEMP TABLES--------------------------------------
-		 DROP TABLE IF EXISTS #TMP_Objects
-		 DROP TABLE IF EXISTS #TMP_ALLSTEPS
-		 DROP TABLE IF EXISTS #TMP_DATA
-		 DROP TABLE IF EXISTS #TMP_DATA_DAY
-		 DROP TABLE IF EXISTS #TMP_DATA_DOT 
-		 DROP TABLE IF EXISTS #TMP
-		 DROP TABLE IF EXISTS #TMP_Lookups
+		--DROP TEMP TABLES--------------------------------------	
+		 DROP TABLE IF EXISTS #TMP_INSERT
+		 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME
 		 DROP TABLE IF EXISTS  #TMP_INSERT
 		 DROP TABLE IF EXISTS #TMP_DATA_MultiKeyName
 		 --------------------------------------------------------
