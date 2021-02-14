@@ -2293,8 +2293,8 @@ drop table IF EXISTS TAB_Frameworksteps_history
 
 /*
 IF "type": "selectboxes", THEN CREATED 4 ADDITIONAL COLUMNS IN _DATA:
-Repu_Name
-Repu_Value
-Repu_Description
-Repu_Color
+reputational_Name
+reputational_Value
+reputational_Description
+reputational_Color
 */

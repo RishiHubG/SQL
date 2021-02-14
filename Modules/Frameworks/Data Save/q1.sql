@@ -4,6 +4,7 @@ GO
 ----ROLLBACK
 --BEGIN TRAN;
  EXEC dbo.SaveFrameworkJSONData 
+ @FrameworkID=1,
  @UserLoginID=100,
  @inputJSON =
 '{
@@ -30,23 +31,7 @@ GO
   "inherentRatings.nonFinancialImpactLicense": "",
   "inherentRatings.nonFinancialImpactRationale": "",
   "inherentRatings.nonFinancialImpactReputational": "",
-  "inherentRatings.whichPartiesAreEffected": {
-    "reputational": {
-      "1": false,
-      "": false,
-      "investors": false,
-      "society": false,
-      "shareholders": false,
-      "employees": false,
-      "suppliers": false
-    },
-    "licenseToOperate": {
-      "": false
-    },
-    "businessContinuity": {
-      "": false
-    }
-  },
+  
   "inherentRatings.whichPartiesAreEffected.businessContinuity": {
     "": false
   },
@@ -61,8 +46,7 @@ GO
     "shareholders": false,
     "employees": false,
     "suppliers": false
-  },
-  "inherentRatings.whichPartiesElementsAreImpacted": "Which parties/elements are impacted?",
+  }, 
   "riskContact.riskCoordinatorFreeText": "",
   "riskContact.riskOwnerFreeText": "",
   "riskDetail.causalCategory1": "",
@@ -79,7 +63,7 @@ GO
   "riskDetail.riskCategory3": "",
   "riskDetail.riskProgressForReporting": ""
 }'
-
+ 
 /*
 		SELECT * from dbo.Frameworks
 		SELECT * from dbo.Frameworks_history

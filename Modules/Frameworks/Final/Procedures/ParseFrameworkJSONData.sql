@@ -176,10 +176,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	-----------------------------------------------------------------------------------
 	
 	/*IF "type": "selectboxes", THEN CREATED 4 ADDITIONAL COLUMNS IN _DATA:
-			Repu_Name
-			Repu_Value
-			Repu_Description
-			Repu_Color
+			reputational_Name
+			reputational_Value
+			reputational_Description
+			reputational_Color
 	*/
 	------------------------------------------------------------------------------------
 		INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType,DataTypeLength)
@@ -641,13 +641,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SELECT @StepID = NULL, @StepItemID = NULL, @IsAvailable = NULL, @SQL = NULL, @TemplateTableName = NULL,
 			   @AttributeID = NULL, @LookupID = NULL
 		
- END
-
-		--SELECT * from dbo.Frameworks
-		--SELECT * from dbo.FrameworkSteps
-		--SELECT * from dbo.FrameworkStepItems
-		--SELECT * from dbo.FrameworkAttributes
-		--SELECT * from dbo.FrameworkLookups
+ END		
 
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
 		--DECLARE @PeriodIdentifierID INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_history WHERE Name = @Name)
