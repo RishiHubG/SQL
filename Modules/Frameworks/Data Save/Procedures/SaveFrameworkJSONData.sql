@@ -1,5 +1,3 @@
---https://www.red-gate.com/simple-talk/blogs/consuming-hierarchical-json-documents-sql-server-using-openjson/
---CreateTables_v1.sql and ParseJSON_v2.sql
 USE junk
 GO
 
@@ -9,15 +7,11 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /***************************************************************************************************
-OBJECT NAME:        dbo.ParseFrameworkJSONData
-CREATION DATE:      2020-11-27
+OBJECT NAME:        dbo.SaveFrameworkJSONData
+CREATION DATE:      2021-02-13
 AUTHOR:             Rishi Nayar
-DESCRIPTION:		NOTES:
-					Steps: ASSUMPTION: 1. STEPS VERSIONING CAN ONLY BE LIMITED TO INSERT OR DELETE (i.e. A STEP(A TAB) CAN BE ADDED OR REMOVED ONLY)
-									   2. STEPNAME/STEPITEM (FOR _DATA COLUMNS) WILL BE IN FORMAT: STEPNAME.STEPITEM 
-										  IT CAN HAVE MULTIPLE DOTS IN BETWEEN BUT TEXT BEFORE THE 1ST DOT IS ALWAYS A STEP NAME, TEXT AFTER THE LAST DOT IS ALWAYS A STEP ITEM (FOR _DATA COLUMNS)
-										  SO THE FIRST PART IS STEPNAME, THE LAST PART IS THE NAME OF THE COLUMN FOR _DATA TABLE, THE STEPITEM NAME IS THE ONE WITH "LABEL"
-USAGE:          	EXEC dbo.ParseFrameworkJSONData  @Name = 'TAB',
+DESCRIPTION:		
+USAGE:          	EXEC dbo.SaveFrameworkJSONData  @Name = 'TAB',
 													 @UserLoginID=100,
 													 @inputJSON=  ''
 
@@ -25,11 +19,13 @@ CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
-CREATE OR ALTER PROCEDURE dbo.ParseFrameworkJSONData
-@Name VARCHAR(100),
+CREATE OR ALTER PROCEDURE dbo.SaveFrameworkJSONData
 @InputJSON VARCHAR(MAX),
-@FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
+@EntityID INT,
+@EntityTypeID INT,
+@ParentEntityID INT,
+@ParentEntityTypeID INT,
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -174,21 +170,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		 INNER JOIN #TMP_DATA_DOT TDD ON TD.Element_ID=TDD.Element_ID
 	WHERE TD.StringValue <> @DayString
 	-----------------------------------------------------------------------------------
-	
-	/*IF "type": "selectboxes", THEN CREATED 4 ADDITIONAL COLUMNS IN _DATA:
-			Repu_Name
-			Repu_Value
-			Repu_Description
-			Repu_Color
-	*/
-	------------------------------------------------------------------------------------
-		INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType,DataTypeLength)
-			SELECT Element_ID, CONCAT(NAME,'_',TAB.TName),'selectboxes_DELETE',DataType,DataTypeLength
-			FROM #TMP_DATA
-				 CROSS APPLY (SELECT 'Name' UNION SELECT 'Value' UNION SELECT 'Description' UNION SELECT 'Color')TAB(TName)
-			WHERE StringValue = 'selectboxes'			
-	------------------------------------------------------------------------------------
-
+				
 	 DECLARE @DataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(
 					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
@@ -203,11 +185,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	PRINT @SQL
 	
 	EXEC sp_executesql @SQL	
-
-	--CLEANUP THESE ROWS AS THEY ARE NO LONGER NEEDED
-	DELETE FROM #TMP_DATA WHERE StringValue = 'selectboxes_DELETE'
 	--===========================================================================================================================
-	
+
 			
 	DECLARE @TableName SYSNAME = 'dbo.Frameworks'
 	SET @SQL = ''

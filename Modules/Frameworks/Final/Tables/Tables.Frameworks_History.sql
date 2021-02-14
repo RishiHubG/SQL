@@ -92,8 +92,8 @@ UserActionID INT,
 FrameworkID INT,
 AttributeID INT,
 StepItemID INT NOT NULL,
-AttributeKey NVARCHAR(100) NOT NULL,	
-AttributeValue NVARCHAR(100) NOT NULL,
+AttributeKey NVARCHAR(1000) NOT NULL,	
+AttributeValue NVARCHAR(MAX) NOT NULL,
 OrderBy INT, 
 CONSTRAINT PK_FrameworkAttributes_historys_history_HistoryID PRIMARY KEY(HistoryID)
 )

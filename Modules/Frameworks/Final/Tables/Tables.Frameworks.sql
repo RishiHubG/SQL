@@ -81,8 +81,8 @@ DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
 FrameworkID INT,
 StepItemID INT NOT NULL,
-AttributeKey NVARCHAR(100) NOT NULL,	
-AttributeValue NVARCHAR(100) NOT NULL,
+AttributeKey NVARCHAR(1000) NOT NULL,	
+AttributeValue NVARCHAR(MAX) NOT NULL,
 OrderBy INT,
 CONSTRAINT PK_FrameworkAttributes_AttributeID PRIMARY KEY(AttributeID)
 )
