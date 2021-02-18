@@ -196,7 +196,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					 FOR XML PATH('')
 					 )
 					 --,1,1,'')
-	PRINT @DataCols	
+
+	SET @DataCols = CONCAT(',FrameworkID INT',@DataCols)
+	PRINT @DataCols
 
 	SET @DataCols = CONCAT(@SQL_ID,@DataCols,CHAR(10),',',@StaticCols)
 	SET @SQL = CONCAT(N' CREATE TABLE dbo.', @Name ,'_data',CHAR(10), '(', @DataCols, ') ',CHAR(10))

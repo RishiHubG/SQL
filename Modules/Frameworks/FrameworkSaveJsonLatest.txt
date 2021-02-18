@@ -1,18 +1,9 @@
-USE JUNK
-GO	
---COMMIT
-----ROLLBACK
---BEGIN TRAN;
- EXEC dbo.SaveFrameworkJSONData 
- @EntityID=1,
- @UserLoginID=100,
- @inputJSON =
-'{
+{
   "general.name": "",
   "general.reference": "",
   "general.description": "",
   "riskDetail.riskProgressForReporting": "",
-  "riskDetail.regulatoryComplianceRequirements": 0,
+  "riskDetail.regulatoryComplianceRequirements": false,
   "riskDetail.riskCategory1": "",
   "riskDetail.riskCategory2": "",
   "riskDetail.riskCategory3": "",
@@ -33,7 +24,7 @@ GO
   "inherentRatings.likelihoodRationale": "",
   "inherentRatings.financialImpactRationale": "",
   "inherentRatings.nonFinancialImpactRationale": "",
-  "inherentRatings.likelihoodImpact": 1,
+  "inherentRatings.likelihoodImpact": null,
   "inherentRatings.inherentRatingOverall": "",
   "inherentRatings.whichPartiesAreEffected.reputational": {
     "1": false,
@@ -61,46 +52,4 @@ GO
   "inherentRatings1.rfinancialImpactRationale": "",
   "inherentRatings1.rnonFinancialImpactRationale": "",
   "inherentRatings1.rinherentRatingOverall": ""
-}'
- 
-/*
-		SELECT * from dbo.Frameworks
-		SELECT * from dbo.Frameworks_history
-		SELECT * from dbo.FrameworkSteps_history
-		SELECT * from dbo.FrameworkStepItems_history
-		SELECT * from dbo.FrameworkAttributes_history
-		SELECT * from dbo.FrameworkLookups_history
-
-		SELECT * FROM TAB_DATA	 
-		SELECT * FROM  TAB_FrameworkSteps
-
-		SELECT * FROM  TAB_FrameworkStepItems
-		SELECT * FROM TAB_FrameworkAttributes		
-		SELECT * FROM TAB_FrameworkLookups
-		
-	
-		SELECT * FROM FrameworkLookups
-		SELECT * FROM FrameworkAttributes
-		SELECT * FROM  FrameworkStepItems
-		SELECT * FROM  FrameworkSteps
-		SELECT * FROM  FrameworkSteps_history
-
-		
-		SELECT * FROM  TAB_FrameworkSteps_history
-		SELECT * FROM  TAB_FrameworkStepItems_history
-		SELECT * FROM TAB_FrameworkAttributes_history		
-		SELECT * FROM TAB_FrameworkLookups_history
-
-		SELECT * FROM dbo.TAB_Framework_Attributes_history WHERE VersionNum=4
-		EXEC dbo.UpdateHistoryOperationType @FrameworkID=1, @TableInitial ='TAB',@VersionNum=4
-
-		SELECT * FROM ObjectLog
-		
-*/
-/*
-IF "type": "selectboxes", THEN CREATED 4 ADDITIONAL COLUMNS IN _DATA:
-reputational_Name
-reputational_Value
-reputational_Description
-reputational_Color
-*/
+}

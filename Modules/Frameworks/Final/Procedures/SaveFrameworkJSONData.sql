@@ -19,10 +19,9 @@ SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
 CREATE OR ALTER PROCEDURE dbo.SaveFrameworkJSONData
-@FrameworkID INT,
 @InputJSON VARCHAR(MAX),
 @UserLoginID INT,
-@EntityID INT=NULL,
+@EntityID INT,
 @EntityTypeID INT=NULL,
 @ParentEntityID INT=NULL,
 @ParentEntityTypeID INT=NULL,
@@ -35,7 +34,7 @@ BEGIN TRY
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON;
 
-	DECLARE @TableName VARCHAR(500) = (SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @FrameworkID)
+	DECLARE @TableName VARCHAR(500) = (SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @EntityID)
 
 	IF @TableName IS NULL
 		RETURN
@@ -159,7 +158,9 @@ BEGIN TRY
 								ORDER BY Element_ID
 								FOR XML PATH ('')								
 								),1,1,'')
-	
+		
+		SET @ColumnNames = CONCAT('FrameworkID',',',@ColumnNames)
+
 		SET @ColumnValues = STUFF
 								((SELECT CONCAT(', ',CHAR(39),StringValue,CHAR(39))
 								FROM #TMP_INSERT 								
@@ -167,7 +168,8 @@ BEGIN TRY
 								FOR XML PATH ('')								
 								),1,1,'')
 
-	
+		SET @ColumnValues = CONCAT(CHAR(39),@EntityID,CHAR(39),',',@ColumnValues)
+
 	BEGIN TRAN
 		
 		SET @SQL = CONCAT('INSERT INTO dbo.',@TableName,'(',@ColumnNames,') VALUES(',@ColumnValues,')')
@@ -181,7 +183,7 @@ BEGIN TRY
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
 		BEGIN			
-			SET @Params = CONCAT('@FrameworkID=', CHAR(39),@FrameworkID, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
+			SET @Params = CONCAT('@FrameworkID=', CHAR(39),@EntityID, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			--PRINT @PARAMS
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -203,7 +205,7 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-			SET @Params = CONCAT('@FrameworkID=', CHAR(39),@FrameworkID, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
+			SET @Params = CONCAT('@FrameworkID=', CHAR(39),@EntityID, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
