@@ -560,7 +560,7 @@ BEGIN
 		BEGIN
 			 
 			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			--PRINT @PARAMS
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
 			EXEC dbo.InsertObjectLog @ObjectName = @ObjectName,
@@ -581,7 +581,7 @@ BEGIN
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
 			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,

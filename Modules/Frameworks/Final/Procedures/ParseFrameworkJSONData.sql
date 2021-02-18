@@ -756,7 +756,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		IF @LogRequest = 1
 		BEGIN			
 			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			--PRINT @PARAMS
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
@@ -778,7 +778,7 @@ BEGIN CATCH
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
 			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,

@@ -560,8 +560,12 @@ BEGIN
 		BEGIN
 			 
 			SET @Params = CONCAT('@RegisterName=', CHAR(39),@RegisterName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
+
+			SET @ObjectName = OBJECT_NAME(@@PROCID)
+
 			--PRINT @PARAMS
-			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
+			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
 									 @Params = @Params,
 									 @UserLoginID = @UserLoginID
 		END
@@ -579,9 +583,10 @@ BEGIN
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 			SET @Params = CONCAT('@RegisterName=', CHAR(39),@RegisterName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			
-			SET @ObjectName = OBJECT_NAME(@@PROCID)
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 
+			SET @ObjectName = OBJECT_NAME(@@PROCID)
+		 
 			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
 									 @Params = @Params,
 									 @UserLoginID = @UserLoginID,
