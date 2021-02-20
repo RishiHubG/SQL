@@ -103,7 +103,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 DateCreated DATETIME2(0) NOT NULL DEFAULT GETDATE(), 
 	 UserModified INT,
 	 DateModified DATETIME2(0),
-	 VersionNum INT NOT NULL'
+	 VersionNum INT NOT NULL,
+	 PeriodIdentifier INT NOT NULL'
 	 
 	 DROP TABLE IF EXISTS #TMP_DATA
      DROP TABLE IF EXISTS #TMP_DATA_DAY
@@ -200,7 +201,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	SET @DataCols = CONCAT(',FrameworkID INT',@DataCols)
 	PRINT @DataCols
 
-	SET @DataCols = CONCAT(@SQL_ID,@DataCols,CHAR(10),',',@StaticCols)
+	SET @DataCols = CONCAT(@SQL_ID,',',CHAR(10),@StaticCols,CHAR(10),@DataCols)
 	SET @SQL = CONCAT(N' CREATE TABLE dbo.', @Name ,'_data',CHAR(10), '(', @DataCols, ') ',CHAR(10))
 	PRINT @SQL
 	
