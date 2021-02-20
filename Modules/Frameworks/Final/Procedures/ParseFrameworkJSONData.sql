@@ -94,17 +94,16 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@AttributeID INT, @LookupID INT
 	 	
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
-	 DROP TABLE IF EXISTS TAB_DATA -- REMOVE THIS LATER, NOT REQUIRED
-
+	 
 	 DECLARE @DayString VARCHAR(20)='day'
 	 DECLARE @SQL_ID VARCHAR(MAX)='ID INT IDENTITY(1,1)'
+	 DECLARE @SQL_HistoryID VARCHAR(MAX)='HistoryID INT IDENTITY(1,1)'
 	 DECLARE @StaticCols VARCHAR(MAX) =	 
 	 'UserCreated INT NOT NULL, 
 	 DateCreated DATETIME2(0) NOT NULL DEFAULT GETDATE(), 
 	 UserModified INT,
 	 DateModified DATETIME2(0),
-	 VersionNum INT NOT NULL,
-	 PeriodIdentifier INT NOT NULL'
+	 VersionNum INT NOT NULL'
 	 
 	 DROP TABLE IF EXISTS #TMP_DATA
      DROP TABLE IF EXISTS #TMP_DATA_DAY
@@ -190,7 +189,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			WHERE StringValue = 'selectboxes'			
 	------------------------------------------------------------------------------------
 
-	 DECLARE @DataCols VARCHAR(MAX) 
+	 DECLARE @DataCols VARCHAR(MAX), @HistDataCols VARCHAR(MAX), @MainDataCols VARCHAR(MAX), @NewDataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(
 					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
 					 FROM #TMP_DATA
@@ -201,8 +200,38 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	SET @DataCols = CONCAT(',FrameworkID INT',@DataCols)
 	PRINT @DataCols
 
-	SET @DataCols = CONCAT(@SQL_ID,',',CHAR(10),@StaticCols,CHAR(10),@DataCols)
-	SET @SQL = CONCAT(N' CREATE TABLE dbo.', @Name ,'_data',CHAR(10), '(', @DataCols, ') ',CHAR(10))
+	--CHECK IF TABLE IS ALREADY AVAILABLE, THEN GET ANY NEW COLUMNS THAT ARE PART OF THE SCHEMA
+	SET @SQL = CONCAT(N'SELECT @NewDataCols = STUFF(
+						(SELECT CONCAT('', ['',[Name],''] ['', DataType,''] '', DataTypeLength)
+						FROM #TMP_DATA TA								  
+						WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.Name AND C.object_id =OBJECT_ID(',CHAR(39),@Name,'_data',CHAR(39),'))
+						FOR XML PATH('''')
+						)
+						,1,1,'''')'
+						)
+	--print @SQL	
+	--EXEC sp_executesql @SQL,N'@NewDataCols VARCHAR(MAX) OUTPUT',@NewDataCols OUTPUT
+	--SELECT @NewDataCols
+	--RETURN
+
+	SET @MainDataCols = CONCAT(@SQL_ID,',',CHAR(10),@StaticCols,CHAR(10),@DataCols)
+	SET @StaticCols = CONCAT(@StaticCols,',PeriodIdentifier INT')
+	SET @HistDataCols = CONCAT(@SQL_HistoryID,',',CHAR(10),@StaticCols,CHAR(10),@DataCols)
+	
+	--PRINT @HistDataCols
+
+	SET @SQL = ''
+	SET @SQL = CONCAT(N'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME=',CHAR(39),@Name,'_data',CHAR(39),')', CHAR(10))
+	SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))
+	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @Name ,'_data',CHAR(10), '(', @MainDataCols, ') ;',CHAR(10))
+	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @Name ,'_data_history',CHAR(10), '(', @HistDataCols, ') ;',CHAR(10))	
+	SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
+	--SET @SQL = CONCAT(@SQL,N' ELSE ') --_DATA TABLE ALREADY EXISTS
+	--SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))
+	
+	
+	--SET @SQL = CONCAT(@SQL,N' ALTER TABLE dbo.', @Name ,'_data_history ADD ', CHAR(10), @NewDataCols, ' NULL ',CHAR(10))
+	--SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
 	PRINT @SQL
 	
 	EXEC sp_executesql @SQL	

@@ -20,7 +20,9 @@ drop table IF EXISTS TAB_FrameworkAttributes_history
 drop table IF EXISTS TAB_FrameworkStepItems_history
 drop table IF EXISTS TAB_Frameworksteps_history
 
+	DROP TABLE TAB_DATA
 	SELECT * FROM TAB_DATA
+	SELECT * FROM TAB_data_history
 	SELECT * from dbo.TAB_FrameworkAttributes_history
 	SELECT * FROM Frameworks
 

@@ -60,6 +60,10 @@ SELECT * FROM UniversePropertyXerf_Data_history
  
 --rollback
 DECLARE @inputJSON VARCHAR(MAX) ='{
+"new": {		
+        "label": "newCol",
+		"type":"number"		
+		},
 "test6": {		
         "label": "test6",
 		"type":"number"		

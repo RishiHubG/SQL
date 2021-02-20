@@ -71,7 +71,9 @@ GO
 		SELECT * from dbo.FrameworkAttributes_history
 		SELECT * from dbo.FrameworkLookups_history
 
-		SELECT * FROM TAB_DATA	 
+		DROP TABLE TAB_DATA, TAB_DATA_HISTORY
+		SELECT * FROM TAB_DATA
+		SELECT * FROM TAB_DATA_HISTORY
 		SELECT * FROM  TAB_FrameworkSteps
 
 		SELECT * FROM  TAB_FrameworkStepItems
