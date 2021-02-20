@@ -477,14 +477,19 @@ BEGIN
 
 					SET @SQL = CONCAT(@SQL,N' dbo.RegisterPropertyXerf_Data_Insert
 									   ON  dbo.RegisterPropertyXerf_Data
-									   AFTER INSERT
+									   AFTER INSERT, UPDATE
 									AS 
 									BEGIN
 										SET NOCOUNT ON;
 
-										INSERT INTO dbo.RegisterPropertyXerf_Data_history(<ColumnList>)
-											SELECT <columnList>
-											FROM INSERTED
+										IF EXISTS(SELECT 1 FROM INSERTED) AND  NOT EXISTS(SELECT 1 FROM DELETED) --INSERT
+											INSERT INTO dbo.RegisterPropertyXerf_Data_history(<ColumnList>)
+												SELECT <columnList>
+												FROM INSERTED
+										ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
+											INSERT INTO dbo.RegisterPropertyXerf_Data_history(<ColumnList>)
+												SELECT <columnList>
+												FROM DELETED
 									END;',CHAR(10))
 					SET @SQL = REPLACE(@SQL,'<columnList>',@cols)
 					PRINT @SQL	

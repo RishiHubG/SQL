@@ -7,18 +7,18 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /***************************************************************************************************
-OBJECT NAME:        dbo.SaveUniverseJSONData
+OBJECT NAME:        dbo.SaveAssessmentJSONData
 CREATION DATE:      2021-02-20
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		
-USAGE:          	EXEC dbo.SaveUniverseJSONData   @UserLoginID=100,
+USAGE:          	EXEC dbo.SaveAssessmentJSONData   @UserLoginID=100,
 													@inputJSON=  ''
 
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
-CREATE OR ALTER PROCEDURE dbo.SaveUniverseJSONData
+CREATE OR ALTER PROCEDURE dbo.SaveAssessmentJSONData
 @InputJSON VARCHAR(MAX),
 @UserLoginID INT,
 @EntityID INT,
@@ -33,26 +33,26 @@ BEGIN TRY
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON; 
 
-	DECLARE @UniverseID INT,
+	DECLARE @RegisterID INT,
 			@PeriodIdentifierID INT = 1,
 			@OperationType VARCHAR(50),
 			@VersionNum INT
 
 	IF @EntityID = -1
 	BEGIN
-		SELECT @UniverseID = 1, @OperationType ='INSERT', @VersionNum = 1
+		SELECT @RegisterID = 1, @OperationType ='INSERT', @VersionNum = 1
 	END
 	ELSE
 	BEGIN
-		SELECT @UniverseID = @EntityID,
+		SELECT @RegisterID = @EntityID,
 			   @VersionNum = MAX(VersionNum) + 1
-		FROM dbo.UniversePropertyXerf_Data
-		WHERE UniverseID = @EntityID
+		FROM dbo.RegisterPropertyXerf_Data
+		WHERE RegisterID = @EntityID
 	
 		SET @OperationType ='UPDATE'
 	END
 	
-	--SELECT @UniverseID, @OperationType,@VersionNum
+	--SELECT @RegisterID, @OperationType,@VersionNum
  --	RETURN
 	 SELECT *
 			INTO #TMP_ALLSTEPS
@@ -124,7 +124,7 @@ BEGIN TRY
 									FOR XML PATH ('')								
 									),1,1,'')
 		
-			SET @ColumnNames = CONCAT('UniverseID',',',@ColumnNames)
+			SET @ColumnNames = CONCAT('RegisterID',',',@ColumnNames)
 
 			SET @ColumnValues = STUFF
 									((SELECT CONCAT(', ',CHAR(39),StringValue,CHAR(39))
@@ -133,7 +133,7 @@ BEGIN TRY
 									FOR XML PATH ('')								
 									),1,1,'')
 
-			SET @ColumnValues = CONCAT(CHAR(39),@UniverseID,CHAR(39),',',@ColumnValues)
+			SET @ColumnValues = CONCAT(CHAR(39),@RegisterID,CHAR(39),',',@ColumnValues)
 		END
 		ELSE
 		BEGIN
@@ -153,13 +153,13 @@ BEGIN TRY
 		
 		IF @EntityID = -1
 		BEGIN
-			SET @SQL = CONCAT('INSERT INTO dbo.UniversePropertyXerf_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
+			SET @SQL = CONCAT('INSERT INTO dbo.RegisterPropertyXerf_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
 			PRINT @SQL
 		END
 		ELSE	--UPDATE
 		BEGIN
-			SET @SQL = CONCAT('UPDATE dbo.UniversePropertyXerf_Data',CHAR(10),' SET ',@UpdStr)
-			SET @SQL = CONCAT(@SQL, ' WHERE UniverseID=', @UniverseID)
+			SET @SQL = CONCAT('UPDATE dbo.RegisterPropertyXerf_Data',CHAR(10),' SET ',@UpdStr)
+			SET @SQL = CONCAT(@SQL, ' WHERE RegisterID=', @RegisterID)
 			PRINT @SQL
 		END
 		 
@@ -168,28 +168,28 @@ BEGIN TRY
 
 		--UPDATE _HISTORY TABLE-----------------------------------------
 		
-		DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM UniversePropertyXerf_Data_history WHERE UniverseID = @UniverseID)
+		DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM RegisterPropertyXerf_Data_history WHERE RegisterID = @RegisterID)
 
 		--UPDATE VERSION NO.
-		UPDATE dbo.UniversePropertyXerf_Data_history
+		UPDATE dbo.RegisterPropertyXerf_Data_history
 			SET VersionNum = @VersionNum
 		WHERE HistoryID = @HistoryID			 
 
 		--RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
-		UPDATE dbo.UniversePropertyXerf_Data_history
+		UPDATE dbo.RegisterPropertyXerf_Data_history
 			SET PeriodIdentifierID = 0,
 				UserModified = @UserLoginID,
 				DateModified = GETUTCDATE()
-		WHERE UniverseID = @UniverseID
+		WHERE RegisterID = @RegisterID
 			  AND VersionNum < @VersionNum
 		
 		--UPDATE OTHER COLUMNS FOR CURRENT VERSION
-		UPDATE dbo.UniversePropertyXerf_Data_history
+		UPDATE dbo.RegisterPropertyXerf_Data_history
 			SET PeriodIdentifierID = @PeriodIdentifierID,
 				UserModified = @UserLoginID,
 				DateModified = GETUTCDATE(),
 				OperationType = @OperationType
-		WHERE UniverseID = @UniverseID
+		WHERE RegisterID = @RegisterID
 			  AND VersionNum = @VersionNum
 		-----------------------------------------------------------------
 
@@ -199,7 +199,7 @@ BEGIN TRY
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
 		BEGIN			
-				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
 				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
 			--PRINT @PARAMS
 			
@@ -222,7 +222,7 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
 				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -235,8 +235,8 @@ BEGIN CATCH
 			SELECT @ErrorMessage AS ErrorMessage
 END CATCH
 
-		--DROP TEMP TABLES--------------------------------------	
-		 DROP TABLE IF EXISTS #TMP_INSERT
-		 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME		 
+		--DROP TEMP TABLES--------------------------------------			
+		 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME
+		 DROP TABLE IF EXISTS  #TMP_INSERT		  
 		 --------------------------------------------------------
 END

@@ -4,12 +4,12 @@ GO
 ----ROLLBACK
 --BEGIN TRAN;
  EXEC dbo.SaveUniverseJSONData 
- @EntityID=-1,
+ @EntityID=1,
  @UserLoginID=100,
  @inputJSON =
 '{
-  "general.Assessment Contact": "abc",
-  "general.Level of Operation": "xyz",
+  "general.Assessment Contact": "abc3",
+  "general.Level of Operation": "xyz3",
   "general.Currency": "$1002",
   "riskDetail.Description": "this is a test",
   "riskDetail.Name": "hello my name is",

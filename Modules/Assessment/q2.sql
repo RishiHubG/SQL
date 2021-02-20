@@ -215,12 +215,12 @@ EXEC dbo.ParseAssessmentJSON @RegisterName ='ABC',@inputJSON = @inputJSON, @User
 /*
 SELECT * FROM dbo.Registers
 SELECT * FROM dbo.RegisterProperties
-SELECT * FROM dbo.RegistersPropertiesXref
+SELECT * FROM dbo.RegisterPropertiesXref
 SELECT * FROM RegisterPropertyXerf_Data
 
 SELECT * FROM dbo.Registers_history
 SELECT * FROM dbo.RegisterProperties_history
-SELECT * FROM dbo.RegistersPropertiesXref_history
+SELECT * FROM dbo.RegisterPropertiesXref_history
 SELECT * FROM RegisterPropertyXerf_Data_history
 
 */
