@@ -14,13 +14,16 @@ CREATE TABLE dbo.Universe
 	VersionNum INT NOT NULL,
 	FullSchemaJSON VARCHAR(MAX),
 	Name VARCHAR(500) NOT NULL,	
+	Description VARCHAR(MAX) NULL,
 	FrameworkID	INT,
 	ParentID INT NULL,
 	Height INT NULL,
 	Depth INT NULL,
 	--UniverseID INT,
 	AccessControlID	INT,
-	WorkFlowACID INT,	
+	ParentAccessControlID INT,
+	WorkFlowACID INT,
+	IsInherited BIT,
 	PropagatedAccessControlID INT,
 	PropagatedWFAccessControlID INT,
 	HasExtendedProperties BIT,
@@ -84,8 +87,8 @@ DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
-CONSTRAINT PK_UniversePropertyXerf_Data_UniverseID PRIMARY KEY(UniverseID)
+CONSTRAINT PK_UniversePropertyXerf_Data_UniversePropertyXerf_DataID PRIMARY KEY(UniversePropertyXerf_DataID)
 )
  		ALTER TABLE [dbo].UniversePropertyXerf_Data ADD CONSTRAINT DF_UniversePropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-		ALTER TABLE [dbo].UniversePropertyXerf_Data ADD CONSTRAINT FK_UniversePropertyXerf_Data_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.Universe(UniverseID)
+
 GO

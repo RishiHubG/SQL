@@ -14,10 +14,13 @@ CREATE TABLE dbo.Registers
 	VersionNum INT NOT NULL,
 	FullSchemaJSON VARCHAR(MAX),
 	Name VARCHAR(500) NOT NULL,
+	Description VARCHAR(MAX) NULL,
 	FrameworkID	INT,
 	UniverseID INT,
 	AccessControlID	INT,
-	WorkFlowACID INT,	
+	ParentAccessControlID INT,
+	WorkFlowACID INT,
+	IsInherited BIT,
 	PropagatedAccessControlID INT,
 	PropagatedWFAccessControlID INT,
 	HasExtendedProperties BIT,
@@ -81,8 +84,8 @@ DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
-CONSTRAINT PK_RegisterPropertyXerf_Data_RegisterID PRIMARY KEY(RegisterID)
+CONSTRAINT PK_RegisterPropertyXerf_Data_RegisterPropertyXerf_DataID PRIMARY KEY(RegisterPropertyXerf_DataID)
 )
  		ALTER TABLE [dbo].RegisterPropertyXerf_Data ADD CONSTRAINT DF_RegisterPropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-		ALTER TABLE [dbo].RegisterPropertyXerf_Data ADD CONSTRAINT FK_RegisterPropertyXerf_Data_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
+
 GO

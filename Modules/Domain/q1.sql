@@ -211,7 +211,7 @@ DECLARE @inputJSON VARCHAR(MAX) ='{
     }
 }'
 
-EXEC dbo.ParseUniverseJSON @UniverseName ='ABC',@inputJSON = @inputJSON, @UserLoginID=100
+EXEC dbo.ParseUniverseJSON @UniverseName ='ABC',@inputJSON = @inputJSON, @UserLoginID=100,@FullSchemaJSON = @inputJSON
 
 /*
 SELECT * FROM dbo.Universe
@@ -224,5 +224,10 @@ SELECT * FROM dbo.UniverseProperties_history
 SELECT * FROM dbo.UniversePropertiesXref_history
 SELECT * FROM UniversePropertyXerf_Data_history
 
+SELECT * FROM UniversePropertyXerf_Data
+SELECT * FROM UniversePropertyXerf_Data_history
+
+TRUNCATE TABLE UniversePropertyXerf_Data_history
+TRUNCATE TABLE UniversePropertyXerf_Data
 */
 --ALTER TABLE UniversePropertyXerf_Data ADD [Assessment Contact] [NVARCHAR] (MAX), [Level of Operation] [NVARCHAR] (MAX), [Currency] [NVARCHAR] (MAX), [Description] [NVARCHAR] (MAX), [Name] [NVARCHAR] (MAX)

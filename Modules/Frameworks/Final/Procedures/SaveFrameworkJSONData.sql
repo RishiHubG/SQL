@@ -153,7 +153,7 @@ BEGIN TRY
  	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 
 	 	SET @ColumnNames = STUFF
-								((SELECT CONCAT(', ',ColumnName)
+								((SELECT CONCAT(', ',QUOTENAME(ColumnName))
 								FROM #TMP_INSERT 								
 								ORDER BY Element_ID
 								FOR XML PATH ('')								
