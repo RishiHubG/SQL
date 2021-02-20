@@ -209,8 +209,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						)
 						,1,1,'''')'
 						)
-	--print @SQL	
-	--EXEC sp_executesql @SQL,N'@NewDataCols VARCHAR(MAX) OUTPUT',@NewDataCols OUTPUT
+	EXEC sp_executesql @SQL,N'@NewDataCols VARCHAR(MAX) OUTPUT',@NewDataCols OUTPUT
 	--SELECT @NewDataCols
 	--RETURN
 
@@ -226,12 +225,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @Name ,'_data',CHAR(10), '(', @MainDataCols, ') ;',CHAR(10))
 	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @Name ,'_data_history',CHAR(10), '(', @HistDataCols, ') ;',CHAR(10))	
 	SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
-	--SET @SQL = CONCAT(@SQL,N' ELSE ') --_DATA TABLE ALREADY EXISTS
-	--SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))
-	
-	
-	--SET @SQL = CONCAT(@SQL,N' ALTER TABLE dbo.', @Name ,'_data_history ADD ', CHAR(10), @NewDataCols, ' NULL ',CHAR(10))
-	--SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
+	IF @NewDataCols IS NOT NULL	--_DATA TABLE ALREADY EXISTS
+	BEGIN
+		SET @SQL = CONCAT(@SQL,N' ELSE ',CHAR(10)) 
+		SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))	
+		SET @SQL = CONCAT(@SQL,N' ALTER TABLE dbo.', @Name ,'_data ADD ', CHAR(10), @NewDataCols, CHAR(10),';')
+		SET @SQL = CONCAT(@SQL,N' ALTER TABLE dbo.', @Name ,'_data_history ADD ', CHAR(10), @NewDataCols, CHAR(10),';')
+		SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
+	END
 	PRINT @SQL
 	
 	EXEC sp_executesql @SQL	
