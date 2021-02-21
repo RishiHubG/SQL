@@ -4,7 +4,7 @@ GO
 ----ROLLBACK
 --BEGIN TRAN;
  EXEC dbo.SaveFrameworkJSONData 
- @EntityID=1,
+ @EntityID=-1,
  @UserLoginID=100,
  @inputJSON =
 '{

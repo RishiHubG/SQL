@@ -168,7 +168,7 @@ BEGIN TRY
 
 		--UPDATE _HISTORY TABLE-----------------------------------------
 		
-		DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM RegisterPropertyXerf_Data_history WHERE RegisterID = @RegisterID)
+		DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.RegisterPropertyXerf_Data_history WHERE RegisterID = @RegisterID)
 
 		--UPDATE VERSION NO.
 		UPDATE dbo.RegisterPropertyXerf_Data_history
@@ -199,8 +199,8 @@ BEGIN TRY
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
 		BEGIN			
-				SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
+				SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@LogRequest=',@LogRequest)
 			--PRINT @PARAMS
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -222,8 +222,8 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
+				SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@LogRequest=',@LogRequest)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 

@@ -168,7 +168,7 @@ BEGIN TRY
 
 		--UPDATE _HISTORY TABLE-----------------------------------------
 		
-		DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM UniversePropertyXerf_Data_history WHERE UniverseID = @UniverseID)
+		DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertyXerf_Data_history WHERE UniverseID = @UniverseID)
 
 		--UPDATE VERSION NO.
 		UPDATE dbo.UniversePropertyXerf_Data_history
@@ -222,8 +222,8 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
+				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@LogRequest=',@LogRequest)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 

@@ -96,7 +96,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
 	 
 	 DECLARE @DayString VARCHAR(20)='day'
-	 DECLARE @SQL_ID VARCHAR(MAX)='ID INT IDENTITY(1,1)'
+	 DECLARE @SQL_ID VARCHAR(MAX)='ID INT'
 	 DECLARE @SQL_HistoryID VARCHAR(MAX)='HistoryID INT IDENTITY(1,1)'
 	 DECLARE @StaticCols VARCHAR(MAX) =	 
 	 'UserCreated INT NOT NULL, 
@@ -213,9 +213,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	--SELECT @NewDataCols
 	--RETURN
 
-	SET @MainDataCols = CONCAT(@SQL_ID,',',CHAR(10),@StaticCols,CHAR(10),@DataCols)
+	SET @MainDataCols = CONCAT(@SQL_ID,' IDENTITY(1,1),',CHAR(10),@StaticCols,CHAR(10),@DataCols)
 	SET @StaticCols = CONCAT(@StaticCols,',PeriodIdentifier INT')
-	SET @HistDataCols = CONCAT(@SQL_HistoryID,',',CHAR(10),@StaticCols,CHAR(10),@DataCols)
+	SET @HistDataCols = CONCAT(@SQL_HistoryID,',',CHAR(10),@SQL_ID,',', CHAR(10),@StaticCols,CHAR(10),',OperationType VARCHAR(50)',CHAR(10),@DataCols)
 	
 	--PRINT @HistDataCols
 
@@ -239,9 +239,46 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 	--CLEANUP THESE ROWS AS THEY ARE NO LONGER NEEDED
 	DELETE FROM #TMP_DATA WHERE StringValue = 'selectboxes_DELETE'
-	--===========================================================================================================================
-	
-			
+
+		--CREATE TRIGGER
+		DECLARE @cols VARCHAR(MAX) = ''
+
+		SELECT @SQL = CONCAT('SELECT @cols = CONCAT(@cols,N'', ['',name,''] '')
+							  FROM sys.dm_exec_describe_first_result_set(N''SELECT * FROM dbo.',@Name,'_data',''', NULL, 1)')
+					
+		SELECT @SQL = CONCAT(@SQL,CHAR(10),';SET @cols = STUFF(@cols, 1, 1, N'''');')
+		PRINT @SQL
+		EXEC sp_executesql @SQL,N'@cols VARCHAR(MAX) OUTPUT',@cols OUTPUT
+		
+		SET @SQL = ''
+
+		--CREATE INSERT TRIGGER
+		IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME = CONCAT(@Name,'_Data_Insert'))						
+			SET @SQL = N'ALTER TRIGGER '
+		ELSE
+			SET @SQL = N'CREATE TRIGGER '
+
+		SET @SQL = CONCAT(@SQL,N' dbo.', @Name,'_Data_Insert
+							ON  dbo.',@Name,'_Data
+							AFTER INSERT, UPDATE
+						AS 
+						BEGIN
+							SET NOCOUNT ON;
+																				
+							IF EXISTS(SELECT 1 FROM INSERTED) AND  NOT EXISTS(SELECT 1 FROM DELETED) --INSERT
+								INSERT INTO dbo.',@Name,'_Data_history(<ColumnList>)
+									SELECT <columnList>
+									FROM INSERTED
+							ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
+								INSERT INTO dbo.',@Name,'_Data_history(<ColumnList>)
+									SELECT <columnList>
+									FROM DELETED
+						END;',CHAR(10))
+		SET @SQL = REPLACE(@SQL,'<columnList>',@cols)
+		--EXEC [LongPrint] @SQL	
+		EXEC sp_executesql @SQL	
+	--==SCHEMA FOR _DATA ENDS HERE=========================================================================================================================
+				
 	DECLARE @TableName SYSNAME = 'dbo.Frameworks'
 	SET @SQL = ''
 	
