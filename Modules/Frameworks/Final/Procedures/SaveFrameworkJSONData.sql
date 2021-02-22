@@ -38,7 +38,7 @@ BEGIN TRY
 			@OperationType VARCHAR(50),
 			@VersionNum INT
 
-	DECLARE @TableName VARCHAR(500) = (SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @EntityID)
+	DECLARE @TableName VARCHAR(500) = 'TAB_DATA' --(SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @EntityID)
 
 	IF @TableName IS NULL
 		RETURN
@@ -188,7 +188,7 @@ BEGIN TRY
 									FOR XML PATH ('')								
 									),1,1,'')
 
-			SET @ColumnValues = CONCAT(CHAR(39),@EntityID,CHAR(39),',',@ColumnValues)
+			SET @ColumnValues = CONCAT(CHAR(39),@FrameworkID,CHAR(39),',',@ColumnValues)
 		END
 		ELSE
 		BEGIN
@@ -209,16 +209,14 @@ BEGIN TRY
 		IF @EntityID = -1
 		BEGIN
 			SET @SQL = CONCAT('INSERT INTO dbo.',@TableName,'(',@ColumnNames,') VALUES(',@ColumnValues,')')
-			PRINT @SQL
+			PRINT @SQL		 
 		END
 		ELSE	--UPDATE
 		BEGIN
 			SET @SQL = CONCAT('UPDATE dbo.',@TableName,CHAR(10),' SET ',@UpdStr)
 			SET @SQL = CONCAT(@SQL, ' WHERE FrameworkID=', @FrameworkID)
 			PRINT @SQL
-		END
-
-		
+		END		
 		
 		EXEC sp_executesql @SQL	
 		
@@ -226,30 +224,33 @@ BEGIN TRY
 		
 		DECLARE @HistoryID INT 
 		
-		SET @SQL = CONCAT('SELECT @HistoryID = MAX(HistoryID) FROM dbo.',@TableName,'_history WHERE FrameworkID = ',@FrameworkID)
+		SET @SQL = CONCAT(N'SELECT @HistoryID = MAX(HistoryID) FROM dbo.',@TableName,'_history WHERE FrameworkID = ',@FrameworkID)
 		EXEC sp_executesql @SQL,N'@HistoryID INT OUTPUT',@HistoryID OUTPUT
 
 		--UPDATE VERSION NO.
-		UPDATE dbo.TAB_Data_history
-			SET VersionNum = @VersionNum
-		WHERE HistoryID = @HistoryID			 
+		SET @SQL = CONCAT(N'UPDATE dbo.', @TableName,'_history
+			SET VersionNum = ',@VersionNum,'
+		WHERE HistoryID = ',@HistoryID,';', CHAR(10), CHAR(10))			 
 
 		--RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
-		UPDATE dbo.TAB_Data_history
-			SET PeriodIdentifierID = 0,
-				UserModified = @UserLoginID,
+		SET @SQL = CONCAT(@SQL, 'UPDATE dbo.', @TableName,'_history
+			SET PeriodIdentifier = 0,
+				UserModified = ',@UserLoginID,',
 				DateModified = GETUTCDATE()
-		WHERE FrameworkID = @FrameworkID
-			  AND VersionNum < @VersionNum
+		WHERE FrameworkID = ',@FrameworkID,'
+			  AND VersionNum < ',@VersionNum,';', CHAR(10), CHAR(10))
 		
 		--UPDATE OTHER COLUMNS FOR CURRENT VERSION
-		UPDATE dbo.TAB_Data_history
-			SET PeriodIdentifierID = @PeriodIdentifierID,
-				UserModified = @UserLoginID,
+		SET @SQL = CONCAT(@SQL,' UPDATE dbo.', @TableName,'_history
+			SET PeriodIdentifier = ',@PeriodIdentifierID,',
+				UserModified = ',@UserLoginID,',
 				DateModified = GETUTCDATE(),
-				OperationType = @OperationType
-		WHERE FrameworkID = @FrameworkID
-			  AND VersionNum = @VersionNum
+				OperationType = ''',@OperationType,'''
+		WHERE FrameworkID = ',@FrameworkID,'
+			  AND VersionNum = ',@VersionNum,';', CHAR(10), CHAR(10))
+		
+		EXEC LongPrint @SQL
+		EXEC sp_executesql @SQL
 		-----------------------------------------------------------------
 
 		DECLARE @Params VARCHAR(MAX)

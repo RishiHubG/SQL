@@ -80,7 +80,14 @@ GO
 		SELECT * FROM TAB_FrameworkAttributes		
 		SELECT * FROM TAB_FrameworkLookups
 		
-	
+		INSERT INTO dbo.TAB_DATA(FrameworkID, [VersionNum], [UserCreated], [regulatoryComplianceRequirements], [likelihoodImpact]) VALUES('1', '1', '100', '0', '1')
+		DECLARE @HistoryID INT ,@sql varchar(max)
+		
+		SET @SQL = CONCAT('SELECT @HistoryID = MAX(HistoryID) FROM dbo.TAB_DATA_history WHERE FrameworkID = ',1)
+		EXEC sp_executesql @SQL,N'@HistoryID INT OUTPUT',@HistoryID OUTPUT
+		SELECT @HistoryID
+
+
 		SELECT * FROM FrameworkLookups
 		SELECT * FROM FrameworkAttributes
 		SELECT * FROM  FrameworkStepItems
