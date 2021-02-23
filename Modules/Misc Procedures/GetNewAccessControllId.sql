@@ -13,8 +13,8 @@ BEGIN
 	BEGIN
 		CREATE TABLE #USER(USERID INT)
 
-		--INSERT INTO #USER 
-		--EXEC LogRequest @UserLogInId , @MethodName
+		INSERT INTO #USER 
+		EXEC LogRequest @UserLogInId , @MethodName
 			
 		SELECT @UserId = UserID
 		FROM   #USER

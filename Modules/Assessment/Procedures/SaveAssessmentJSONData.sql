@@ -96,10 +96,6 @@ BEGIN TRY
 		--RETURN
 		--SELECT * FROM #TMP_ALLSTEPS
 
-		   ---GENERATE ACCESSCONTROL ID---------------------------------------------------------------------------------				
-			DECLARE @AccessControlId INT
-			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT			
-		-------------------------------------------------------------------------------------------------------------	
 		
 		 --BUILD THE COLUMN LIST
 		 -------------------------------------------------------------------------------------------------------
@@ -117,8 +113,18 @@ BEGIN TRY
 			SELECT 'VersionNum',@VersionNum
 			UNION
 			SELECT 'UserCreated',@UserLoginID
-			UNION
-			SELECT 'AccessControlId',@AccessControlId
+			
+		---GENERATE ACCESSCONTROL ID---------------------------------------------------------------------------------
+		 IF @EntityID = -1
+		 BEGIN
+			DECLARE @AccessControlId INT
+			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT			
+
+			--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
+			INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+				SELECT 'AccessControlId',@AccessControlId
+		 END
+		-------------------------------------------------------------------------------------------------------------
 
  	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 
