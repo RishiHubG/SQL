@@ -6,6 +6,7 @@ GO
  EXEC dbo.SaveUniverseJSONData 
  @EntityID=-1,
  @UserLoginID=100,
+ @MethodName ='SaveUniverseDetail',
  @inputJSON =
 '{
   "general.Assessment Contact": "abc3",

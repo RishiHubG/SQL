@@ -33,29 +33,41 @@ BEGIN TRY
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON;
 
+	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 	DECLARE @FrameworkID INT,
 			@PeriodIdentifierID INT = 1,
 			@OperationType VARCHAR(50),
-			@VersionNum INT
+			@VersionNum INT,
+			@IsAvailable BIT = 0
 
-	DECLARE @TableName VARCHAR(500) = 'TAB_DATA' --(SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @EntityID)
+	DECLARE @TableName VARCHAR(500) = (SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @EntityID)
 
 	IF @TableName IS NULL
 		RETURN
 	
-	IF @EntityID = -1
-	BEGIN
-		SELECT @FrameworkID = 1, @OperationType ='INSERT', @VersionNum = 1
-	END
-	ELSE
-	BEGIN
+	SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM dbo.',@TableName,' WHERE FrameworkID = ',@EntityID,') SET @IsAvailable = 1;' )
+	EXEC sp_executesql @SQL,N'@IsAvailable BIT OUTPUT',@IsAvailable OUTPUT
+
+	IF @IsAvailable = 0
+		SET @OperationType ='INSERT'
+	ELSE IF @IsAvailable = 1
+	    SET @OperationType ='UPDATE'
+
+	--IF @EntityID = -1
+	--BEGIN
+	--	SELECT @FrameworkID = 1, @OperationType ='INSERT', @VersionNum = 1
+	--END
+	--ELSE
+	--BEGIN
 		SELECT @FrameworkID = @EntityID,
 			   @VersionNum = MAX(VersionNum) + 1
 		FROM dbo.TAB_Data
 		WHERE FrameworkID = @EntityID
-	
-		SET @OperationType ='UPDATE'
-	END
+		
+		IF @VersionNum IS NULL	
+			SET @VersionNum = 1
+		
+	--END
 		
 	 SELECT *
 			INTO #TMP_ALLSTEPS
@@ -168,9 +180,8 @@ BEGIN TRY
 			UNION
 			SELECT 'UserCreated',@UserLoginID
 
- 	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
-
-		IF @EntityID = -1
+ 	 	
+		IF @OperationType ='INSERT'
 		BEGIN
 	 		SET @ColumnNames = STUFF
 									((SELECT CONCAT(', ',QUOTENAME(ColumnName))
@@ -190,7 +201,7 @@ BEGIN TRY
 
 			SET @ColumnValues = CONCAT(CHAR(39),@FrameworkID,CHAR(39),',',@ColumnValues)
 		END
-		ELSE
+		ELSE IF @OperationType ='UPDATE'
 		BEGIN
 			DECLARE @UpdStr VARCHAR(MAX)
 
@@ -206,12 +217,12 @@ BEGIN TRY
 
 	BEGIN TRAN
 		
-		IF @EntityID = -1
+		IF @OperationType ='INSERT'
 		BEGIN
 			SET @SQL = CONCAT('INSERT INTO dbo.',@TableName,'(',@ColumnNames,') VALUES(',@ColumnValues,')')
 			PRINT @SQL		 
 		END
-		ELSE	--UPDATE
+		ELSE IF @OperationType ='UPDATE'
 		BEGIN
 			SET @SQL = CONCAT('UPDATE dbo.',@TableName,CHAR(10),' SET ',@UpdStr)
 			SET @SQL = CONCAT(@SQL, ' WHERE FrameworkID=', @FrameworkID)
@@ -234,9 +245,7 @@ BEGIN TRY
 
 		--RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
 		SET @SQL = CONCAT(@SQL, 'UPDATE dbo.', @TableName,'_history
-			SET PeriodIdentifier = 0,
-				UserModified = ',@UserLoginID,',
-				DateModified = GETUTCDATE()
+			SET PeriodIdentifier = 0				
 		WHERE FrameworkID = ',@FrameworkID,'
 			  AND VersionNum < ',@VersionNum,';', CHAR(10), CHAR(10))
 		

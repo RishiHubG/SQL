@@ -4,12 +4,12 @@ GO
 ----ROLLBACK
 --BEGIN TRAN;
  EXEC dbo.SaveFrameworkJSONData 
- @EntityID=-1,
- @UserLoginID=100,
+ @EntityID=1,
+ @UserLoginID=500,
  @inputJSON =
 '{
-  "general.name": "",
-  "general.reference": "",
+  "general.name": "test",
+  "general.reference": "test",
   "general.description": "",
   "riskDetail.riskProgressForReporting": "",
   "riskDetail.regulatoryComplianceRequirements": 0,

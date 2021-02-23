@@ -25,6 +25,7 @@ CREATE OR ALTER PROCEDURE dbo.SaveAssessmentJSONData
 @EntityTypeID INT=NULL,
 @ParentEntityID INT=NULL,
 @ParentEntityTypeID INT=NULL,
+@MethodName NVARCHAR(2000) = NULL,
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -95,7 +96,11 @@ BEGIN TRY
 		--RETURN
 		--SELECT * FROM #TMP_ALLSTEPS
 
-		  		
+		   ---GENERATE ACCESSCONTROL ID---------------------------------------------------------------------------------				
+			DECLARE @AccessControlId INT
+			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT			
+		-------------------------------------------------------------------------------------------------------------	
+		
 		 --BUILD THE COLUMN LIST
 		 -------------------------------------------------------------------------------------------------------
 		SELECT Element_ID,
@@ -112,6 +117,8 @@ BEGIN TRY
 			SELECT 'VersionNum',@VersionNum
 			UNION
 			SELECT 'UserCreated',@UserLoginID
+			UNION
+			SELECT 'AccessControlId',@AccessControlId
 
  	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 
