@@ -1,6 +1,4 @@
 --TEMPLATE TABLES
-USE JUNK
-GO
 
 DROP TABLE  IF EXISTS dbo.FrameworkLookups,FrameworkAttributes,FrameworkStepItems,FrameworkSteps,Frameworks
 

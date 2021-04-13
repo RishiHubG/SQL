@@ -1,6 +1,4 @@
 --TEMPLATE TABLES FOR HISTORY
-USE JUNK
-GO
 
 DROP TABLE  IF EXISTS dbo.FrameworkLookups_history,FrameworkAttributes_history,Framework_history,FrameworkSteps_history,Frameworks_history
 
