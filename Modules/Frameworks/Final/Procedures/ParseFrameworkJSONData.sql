@@ -1,8 +1,5 @@
 --https://www.red-gate.com/simple-talk/blogs/consuming-hierarchical-json-documents-sql-server-using-openjson/
 --CreateTables_v1.sql and ParseJSON_v2.sql
-USE junk
-GO
-
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -38,6 +35,9 @@ BEGIN TRY
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON;
 	 
+	 DECLARE @Params VARCHAR(MAX),
+			 @ObjectName VARCHAR(100)
+
 --EMPTY THE TEMPLATE TABLES----------------------
 TRUNCATE TABLE dbo.FrameworkLookups_history
 TRUNCATE TABLE dbo.FrameworkAttributes_history
@@ -55,6 +55,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  SELECT *
 		INTO #TMP_ALLSTEPS
  FROM dbo.HierarchyFromJSON(@inputJSON)
+
+ SET @Name = REPLACE(@NAME,' ','')
 
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =2
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =20
@@ -816,9 +818,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		PRINT 'ParseJSONData Completed...'
 			 
 		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
-
-		DECLARE @Params VARCHAR(MAX)
-		DECLARE @ObjectName VARCHAR(100)
+				
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1

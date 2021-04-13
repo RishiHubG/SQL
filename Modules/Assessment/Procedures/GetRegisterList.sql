@@ -40,16 +40,20 @@ BEGIN
 		BEGIN		
 			DECLARE @vEntityID VARCHAR(20)='NULL'
 			DECLARE @vParentEntityID VARCHAR(20)='NULL'
+			DECLARE @Params VARCHAR(MAX),
+				    @ObjectName VARCHAR(100)
 
 			IF @EntityID IS NOT NULL SET @vEntityID = @EntityID
 			IF @ParentEntityID IS NOT NULL SET @vParentEntityID = @ParentEntityID
-
-			DECLARE @Params VARCHAR(MAX)
+			 
 			SET @Params = CONCAT('@EntityID=',@vEntityID,',@EntityType=',CHAR(39),@EntityType,CHAR(39),',@ParentEntityID=',@vParentEntityID)
 			SET @Params = CONCAT(@Params,',@ParentEntityType=', CHAR(39),@ParentEntityType, CHAR(39),',@UserLoginID=',@UserLoginID,',@MethodName=',CHAR(39),@MethodName, CHAR(39))
 			SET @Params = CONCAT(@Params,',@LogRequest=1')
+
+			SET @ObjectName = OBJECT_NAME(@@PROCID)
+
 			--PRINT @PARAMS
-			EXEC dbo.InsertObjectLog @ObjectID=@@PROCID,
+			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
 									 @Params = @Params,
 									 @UserLoginID = @UserLoginID
 		END

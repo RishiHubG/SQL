@@ -1,6 +1,3 @@
-USE junk
-GO
- 
 
 SET ANSI_NULLS ON
 GO
@@ -168,7 +165,9 @@ BEGIN
 			@VersionNum INT,
 			@RegisterID INT,
 			@SQL NVARCHAR(MAX),
-			@IsDataTypesCompatible BIT = 1
+			@IsDataTypesCompatible BIT = 1,
+			@Params VARCHAR(MAX),
+			@ObjectName VARCHAR(100)
 			
  DROP TABLE IF EXISTS #TMP_Objects
  DROP TABLE IF EXISTS #TMP_Assessments
@@ -554,11 +553,7 @@ BEGIN
 							)
 	
 			END
-			------------------------------------------------
-		
-		DECLARE @Params VARCHAR(MAX)
-		DECLARE @ObjectName VARCHAR(100)
-
+			------------------------------------------------		
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
