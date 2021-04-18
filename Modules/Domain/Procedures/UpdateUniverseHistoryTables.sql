@@ -1,5 +1,3 @@
- USE JUNK
- GO 
 
 SET ANSI_NULLS ON
 GO
@@ -56,7 +54,7 @@ BEGIN
 				   ,NULL
 				   ,NULL
 				   ,[UniverseID]
-				   ,FullSchemaJSON
+				   ,NULL
 				   ,[Name]
 				   ,[FrameworkID]
 				     ,ParentID

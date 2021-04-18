@@ -35,18 +35,21 @@ BEGIN TRY
 	DECLARE @UniverseID INT,
 			@PeriodIdentifierID INT = 1,
 			@OperationType VARCHAR(50),
-			@VersionNum INT
+			@VersionNum INT,
+			@UniverseName VARCHAR(250) ='ABC' -- TO BE MADE A PARAM
 
 	IF @EntityID = -1
 	BEGIN
-		SELECT @UniverseID = 1, @OperationType ='INSERT', @VersionNum = 1
+		SELECT @OperationType ='INSERT'
+
+			INSERT INTO dbo.Universe(Name,UserCreated)
+				SELECT @UniverseName, @UserLoginID
+		
+			SET @UniverseID = SCOPE_IDENTITY()
 	END
 	ELSE
 	BEGIN
-		SELECT @UniverseID = @EntityID,
-			   @VersionNum = MAX(VersionNum) + 1
-		FROM dbo.UniversePropertyXerf_Data
-		WHERE UniverseID = @EntityID
+		SET @UniverseID = @EntityID
 	
 		SET @OperationType ='UPDATE'
 	END
@@ -56,9 +59,8 @@ BEGIN TRY
 	 SELECT *
 			INTO #TMP_ALLSTEPS
 	 FROM dbo.HierarchyFromJSON(@inputJSON) 
-
-	 --SELECT * FROM #TMP_ALLSTEPS
-	 --RETURN
+	 SELECT * FROM #TMP_ALLSTEPS
+		
 		;WITH CTE
 		AS
 		(
@@ -104,7 +106,7 @@ BEGIN TRY
 		WHERE Parent_ID = 0
 			  AND OBJECTID IS NULL
 			  AND StringValue <> ''
-		 
+			 
 		--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
 		INSERT INTO #TMP_INSERT(ColumnName,StringValue)
 			SELECT 'VersionNum',@VersionNum

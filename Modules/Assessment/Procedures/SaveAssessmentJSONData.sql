@@ -37,18 +37,19 @@ BEGIN TRY
 	DECLARE @RegisterID INT,
 			@PeriodIdentifierID INT = 1,
 			@OperationType VARCHAR(50),
-			@VersionNum INT
+			@VersionNum INT,
+			@RegisterName VARCHAR(250) ='ABC' -- TO BE MADE A PARAM
 
 	IF @EntityID = -1
 	BEGIN
 		SELECT @RegisterID = 1, @OperationType ='INSERT', @VersionNum = 1
+
+			INSERT INTO dbo.Registers(Name,UserCreated)
+				SELECT @RegisterName, @UserLoginID
 	END
 	ELSE
 	BEGIN
-		SELECT @RegisterID = @EntityID,
-			   @VersionNum = MAX(VersionNum) + 1
-		FROM dbo.RegisterPropertyXerf_Data
-		WHERE RegisterID = @EntityID
+		SET @RegisterID = @EntityID
 	
 		SET @OperationType ='UPDATE'
 	END

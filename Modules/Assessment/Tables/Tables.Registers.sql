@@ -9,7 +9,7 @@ CREATE TABLE dbo.Registers
 	DateCreated DATETIME2(0) NOT NULL,
 	UserModified INT,
 	DateModified DATETIME2(0),
-	VersionNum INT NOT NULL,
+	VersionNum INT NULL,
 	FullSchemaJSON VARCHAR(MAX),
 	Name VARCHAR(500) NOT NULL,
 	Description VARCHAR(MAX) NULL,
@@ -81,7 +81,6 @@ UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
-VersionNum INT NOT NULL,
 CONSTRAINT PK_RegisterPropertyXerf_Data_RegisterPropertyXerf_DataID PRIMARY KEY(RegisterPropertyXerf_DataID)
 )
  		ALTER TABLE [dbo].RegisterPropertyXerf_Data ADD CONSTRAINT DF_RegisterPropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 

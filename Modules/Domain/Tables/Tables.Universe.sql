@@ -10,8 +10,8 @@ CREATE TABLE dbo.Universe
 	DateCreated DATETIME2(0) NOT NULL,
 	UserModified INT,
 	DateModified DATETIME2(0),
-	VersionNum INT NOT NULL,
-	FullSchemaJSON VARCHAR(MAX),
+	VersionNum INT NULL,
+	--FullSchemaJSON VARCHAR(MAX),
 	Name VARCHAR(500) NOT NULL,	
 	Description VARCHAR(MAX) NULL,
 	FrameworkID	INT,
@@ -85,7 +85,6 @@ UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
-VersionNum INT NOT NULL,
 CONSTRAINT PK_UniversePropertyXerf_Data_UniversePropertyXerf_DataID PRIMARY KEY(UniversePropertyXerf_DataID)
 )
  		ALTER TABLE [dbo].UniversePropertyXerf_Data ADD CONSTRAINT DF_UniversePropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 

@@ -376,7 +376,10 @@ SELECT * FROM Universe
 SELECT * FROM UniverseProperties
 SELECT * FROM UniversePropertiesXref
 SELECT * FROM UniversePropertyXerf_Data
- 
+ DELETE FROM  UniversePropertyXerf_Data
+ DELETE FROM  UniversePropertiesXref
+   DELETE FROM  UniverseProperties
+      DELETE FROM  Universe
 --ROLLBACK
 
 --select * from AdminForms
