@@ -149,7 +149,6 @@ SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
 CREATE OR ALTER PROCEDURE dbo.ParseUniverseJSON
-@UniverseName VARCHAR(500),
 @inputJSON VARCHAR(MAX),
 @FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
@@ -259,22 +258,29 @@ BEGIN
 
 		--SELECT * FROM #TMP_Assessments
 		--RETURN
-		SELECT @VersionNum = VersionNum + 1,
-			   @UniverseID = UniverseID
-		FROM dbo.Universe 
-		WHERE Name=@UniverseName
-	
+		--SELECT @VersionNum = VersionNum + 1,
+		--	   @UniverseID = UniverseID
+		--FROM dbo.Universe 
+		--WHERE Name=@UniverseName
+
+		SET @UniverseID = 2
+
+		SELECT @VersionNum = VersionNum + 1			    
+		FROM EntityAdminForm
+		WHERE EntitytypeId = @UniverseID		
+
 	BEGIN TRAN
 
-		IF @UniverseID IS NULL
-		BEGIN
-			SET @VersionNum = 1
+		--IF @UniverseID IS NULL
+		--BEGIN
+		--	SET @VersionNum = 1
 
-			INSERT INTO dbo.Universe(Name,UserCreated,VersionNum,FullSchemaJSON)
-				SELECT @UniverseName, @UserLoginID, @VersionNum,@FullSchemaJSON
+		--	INSERT INTO dbo.Universe(Name,UserCreated,VersionNum,FullSchemaJSON)
+		--		SELECT @UniverseName, @UserLoginID, @VersionNum,@FullSchemaJSON
 
-			SET @UniverseID =SCOPE_IDENTITY()
-		END
+		--	SET @UniverseID =SCOPE_IDENTITY()
+		--END
+		
 		--ELSE
 		--BEGIN
 		--	 --POPULATE THE HISTORY TABLES PRIOR TO ANY OPERATION
@@ -592,7 +598,7 @@ BEGIN
 		 IF @LogRequest = 1
 		BEGIN
 			 
-			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
+			SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
@@ -602,6 +608,10 @@ BEGIN
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 		
+		UPDATE dbo.EntityAdminForm
+			SET VersionNum = @VersionNum
+		WHERE EntitytypeId = 2
+
 		 COMMIT
 		 
 		 SELECT NULL AS ErrorMessage
@@ -613,7 +623,7 @@ BEGIN
 			ROLLBACK
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-			SET @Params = CONCAT('@UniverseName=', CHAR(39),@UniverseName, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
+			SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 

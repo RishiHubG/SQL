@@ -1,5 +1,4 @@
-USE JUNK
-GO
+
 
 DROP TABLE  IF EXISTS UniversePropertiesXref,UniversePropertyXerf_Data,UniverseProperties,dbo.Universe
 
@@ -49,7 +48,7 @@ CREATE TABLE dbo.UniverseProperties
 	)
 
 	ALTER TABLE dbo.UniverseProperties ADD CONSTRAINT FK_UniverseProperties_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-	ALTER TABLE [dbo].Universe ADD CONSTRAINT FK_UniverseProperties_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.Universe(UniverseID)
+	ALTER TABLE [dbo].Universe ADD CONSTRAINT FK_UniverseProperties_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.EntityAdminForm(EntityTypeID)
 GO
 
 DROP TABLE  IF EXISTS dbo.UniversePropertiesXref
@@ -69,7 +68,7 @@ IsActive BIT,
 CONSTRAINT PK_UniversePropertiesXref_UniverseID_UniversePropertyID PRIMARY KEY(UniversePropertiesXrefID,UniversePropertyID,UniverseID)
 )
  		ALTER TABLE [dbo].UniversePropertiesXref ADD CONSTRAINT DF_UniversePropertiesXref_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-		ALTER TABLE [dbo].UniversePropertiesXref ADD CONSTRAINT FK_UniversePropertiesXref_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.Universe(UniverseID)
+		ALTER TABLE [dbo].Universe ADD CONSTRAINT FK_UniverseProperties_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.EntityAdminForm(EntityTypeID)
 		ALTER TABLE [dbo].UniversePropertiesXref ADD CONSTRAINT FK_UniversePropertiesXref_UniversePropertyID FOREIGN KEY(UniversePropertyID) REFERENCES dbo.UniverseProperties(UniversePropertyID)
 GO
 
@@ -90,5 +89,5 @@ VersionNum INT NOT NULL,
 CONSTRAINT PK_UniversePropertyXerf_Data_UniversePropertyXerf_DataID PRIMARY KEY(UniversePropertyXerf_DataID)
 )
  		ALTER TABLE [dbo].UniversePropertyXerf_Data ADD CONSTRAINT DF_UniversePropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-
+		ALTER TABLE [dbo].UniversePropertyXerf_Data ADD CONSTRAINT FK_UniversePropertyXerf_Data_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.Universe(UniverseID)
 GO

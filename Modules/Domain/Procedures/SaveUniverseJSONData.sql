@@ -1,5 +1,3 @@
-USE junk
-GO
 
 SET ANSI_NULLS ON
 GO
