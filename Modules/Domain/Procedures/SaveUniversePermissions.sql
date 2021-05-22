@@ -86,7 +86,7 @@ BEGIN TRY
 		FROM #TMP
 		WHERE ColumnName = 'userid'
 
-		--SELECT * FROM #TMP_Users
+		SELECT * FROM #TMP_Users
 
 		--BUILD THE COLUMNS
 		SELECT 
@@ -156,7 +156,8 @@ BEGIN TRY
 		EXEC (@SQL)
 
 		--CHECK FOR USERGROUPS & INSERT FOR OTHER USERS
-		SELECT REPLACE(TableInsert,'<USERID>',UG_Child.UserID) AS TableInsert		
+		SELECT UG_Child.UserID,
+			   REPLACE(TableInsert,'<USERID>',UG_Child.UserID) AS TableInsert		
 			INTO #TMP_UG_Users
 		FROM #TMP_AccessControlledResource TMP
 			 INNER JOIN dbo.AUser AU ON TMP.UserID = AU.UserID
@@ -172,6 +173,12 @@ BEGIN TRY
 		 
 		PRINT @SQL
 		EXEC (@SQL)
+
+		--SET Customized TO FALSE FOR OTHER USERS
+		UPDATE AU
+			SET Customized = 0
+		FROM dbo.AUser AU
+			 INNER JOIN #TMP_UG_Users TMP ON TMP.UserID = AU.UserID
 
 		--RETURN					   
 		 
