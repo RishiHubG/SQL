@@ -1,5 +1,6 @@
 USE JUNK
 GO
+SELECT * FROM universe
 
 /*
 --CREATE TABLES
@@ -235,3 +236,72 @@ TRUNCATE TABLE UniversePropertyXerf_Data_history
 TRUNCATE TABLE UniversePropertyXerf_Data
 */
 --ALTER TABLE UniversePropertyXerf_Data ADD [Assessment Contact] [NVARCHAR] (MAX), [Level of Operation] [NVARCHAR] (MAX), [Currency] [NVARCHAR] (MAX), [Description] [NVARCHAR] (MAX), [Name] [NVARCHAR] (MAX)
+
+SELECT * FROM AccessControlledResource
+
+SELECT * FROM aUSER
+AUTHTYPE=2=UG
+IF UG THEN ALL USERS UNDER THIS GRP. THEN PROVIDE SAME PERMISSIONS TO THESE USERS AS WELL
+AccessControlledResource.Customized=0 for THESE USERS
+
+SELECT * FROM USERGROUP
+
+
+NEW TABLE: WFAccessControlledResource
+SAME COLS. AS IN AccessControlledResource UPTO Modify
+WorkFlowID,WorkFlowName,StepID,StepName,StepItemID,StepItemName
+
+
+IF ENTITYID IS -1 THEN CREATE NEW ACCESS CONTROL ID: EXISTING PROC.
+IF ENTITYID IS -1 THEN CREATE NEW WORKFLOW ID: EXISTING PROC.
+IF ENTITYID IS not -1 THEN ACCESS CONTROL ID OF THE ENTITYID(UNIVERSEID)
+AccessControlledResource.Customized=1
+
+IF domianinherentpermissions IS TRUE AND PARENTID IS NOT NULL THEN 
+BEGIN
+1. PARENTID''S ACCESSCONTROLID=ParentAccessControlID
+2. ACCESSCONTROLID WILL HAVE SAME PERMISSIONS AS OF PARENTID i.e. FIND AccessControlID(parentID) in AccessControlledResource and replicate for AccessControlID
+3. FIRST REMOVE EXISTING PERMISSIONS FOR ACCESSCONTROLID THAT WE POPULATE IN STEP# 2 ABOVE AND THEN CREATE NEW PERMISSIONS IN AccessControlledResource
+END
+
+IF PARENT IS NULL THEN ROOT HT/DEPTH
+
+SELECT * FROM Universe
+ADD NEW COLUMN: PAREntWORKflowACID ,IsinheritedWORKflowACID 
+
+IF WFinheritpermissions IS TRUE AND WorkFlowACID IS NOT NULL THEN 
+BEGIN
+1. PARENTID''S WorkFlowACID =PAREntWORKflowACID
+2. ACCESSCONTROLID WILL HAVE SAME PERMISSIONS AS OF PARENTID i.e. FIND AccessControlID(parentID) in AccessControlledResource and replicate for AccessControlID
+3. FIRST REMOVE EXISTING PERMISSIONS FOR ACCESSCONTROLID THAT WE POPULATE IN STEP# 2 ABOVE AND THEN CREATE NEW PERMISSIONS IN NEW TABLE WFAccessControlledResource
+END
+
+
+AccessControlledResource: audit trail???
+
+
+AccessControlid --> PAREntAccessControlid --> Isinherited --> PropagatedAccessControlid
+WORKflowACID --> PAREntWORKflowACID --> IsinheritedWORKflowACID --> PropagatedWFAccessControlid
+
+Domain 1
+	Domain 2
+		Domain 3 is inherit
+
+NEw table -
+DOMAINFRAMEWORKMAPPING: UniverseID, FrameWorkID, 4 standard cols.
+UniverseID=EntityID,Frameworkid=fetch frameworkID based on name in FrameworkList node
+ 
+ALTER TABLE Universe ALTER COLUMN VersionNum INT NULL
+SELECT * FROM UNIVERSE
+-- 
+DELETE FROM Universe WHERE UniverseID>1
+exec SaveUniverseJSONData 
+@EntityId=-1,
+@EntitytypeId=2,
+@ParentEntityID=112,
+@ParentEntityTypeID=2,
+@UniverseName=N'Domain3',
+@Description=N'Domain1 description',
+@InputJSON=N'{"attributes":{"currency":"usd","exchangeRate":1.1},"domainpermissiona":[{"userUserGroup":"testname","userid":2, "read":false,"modify":true,"write":true,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false},{"userUserGroup":"test8","userid":3,"modify":true,"write":true,"cut":true,"copy":true,"delete":false,"administrate":false,"adhoc":false}],"domianinherentpermissions":false,"workflowpermissions":[{"userUserGroup":"test8","userid":3,"read":false,"modify":true,"write":false,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false,"workflowname":"control1","stepstepItem":"step","stepname":"controlDetail","view":true},{"userUserGroup":"test9","userid":3,"workflowname":"control1","stepstepItem":"stepItem","stepname":"controlDetail","view":true,"modify":true}],"WFinheritpermissions":false,"frameworklist":{"control":true,"control2":true}}',
+@MethodName=NULL,@UserLoginID=3202
+

@@ -24,6 +24,8 @@ CREATE OR ALTER PROCEDURE dbo.SaveUniverseJSONData
 @ParentEntityID INT=NULL,
 @ParentEntityTypeID INT=NULL,
 @MethodName NVARCHAR(2000) = NULL,
+@UniverseName NVARCHAR(MAX) = NULL,
+@Description NVARCHAR(MAX) = NULL,
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -35,32 +37,68 @@ BEGIN TRY
 	DECLARE @UniverseID INT,
 			@PeriodIdentifierID INT = 1,
 			@OperationType VARCHAR(50),
-			@VersionNum INT,
-			@UniverseName VARCHAR(250) ='ABC' -- TO BE MADE A PARAM
+			@VersionNum INT,			
+		    @AccessControlID INT,
+			@WorkflowID INT
 
 	IF @EntityID = -1
 	BEGIN
-		SELECT @OperationType ='INSERT'
+			SELECT @OperationType ='INSERT'
+			
+			---GENERATE ACCESSCONTROL & WF ID
+			--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT
+			--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @WorkflowID OUTPUT
 
-			INSERT INTO dbo.Universe(Name,UserCreated)
-				SELECT @UniverseName, @UserLoginID
+			SELECT @AccessControlId = 100, 
+				   @WorkflowID = 100
+
+			INSERT INTO dbo.Universe([Name],[Description],AccessControlId,WorkFlowACID,UserCreated)
+				SELECT @UniverseName, @Description,@AccessControlId,@WorkflowID,@UserLoginID
 		
 			SET @UniverseID = SCOPE_IDENTITY()
 	END
 	ELSE
-	BEGIN
-		SET @UniverseID = @EntityID
+	BEGIN		
 	
-		SET @OperationType ='UPDATE'
+		SELECT @OperationType ='UPDATE',
+			   @UniverseID = @EntityID
+
+			SELECT @AccessControlID = UniverseID FROM  dbo.Universe WHERE UniverseID = @UniverseID
+			SELECT @WorkflowID = WorkFlowACID FROM  dbo.Universe WHERE UniverseID = @UniverseID
 	END
 	
-	--SELECT @UniverseID, @OperationType,@VersionNum
- --	RETURN
+		--	 ---GENERATE ACCESSCONTROL & WF ID---------------------------------------------------------------------------------
+		-- IF @EntityID = -1
+		-- BEGIN
+		 
+		--	--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT			
+		--	SET @AccessControlId = 1
+			
+		--	--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
+		--	INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+		--		SELECT 'AccessControlId',@AccessControlId
+
+		--	--GENERATE WF ID
+		--	--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT			
+		--	SET @WorkflowID = 1
+		--	--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
+		--	INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+		--		SELECT 'WorkFlowACIDID',@WorkflowID
+		-- END
+		-- ELSE
+		-- BEGIN
+		--	SELECT @AccessControlID = UniverseID FROM  dbo.Universe WHERE UniverseID = @EntityID
+		--	SELECT @WorkflowID = WorkFlowACID FROM  dbo.Universe WHERE UniverseID = @EntityID
+		-- END				
+		---------------------------------------------------------------------------------------------------------------	
+
 	 SELECT *
 			INTO #TMP_ALLSTEPS
 	 FROM dbo.HierarchyFromJSON(@inputJSON) 
-	 SELECT * FROM #TMP_ALLSTEPS
-		
+	
+	--SELECT * FROM #TMP_ALLSTEPS
+
+		--RETURN
 		;WITH CTE
 		AS
 		(
@@ -73,7 +111,7 @@ BEGIN TRY
 			   CAST(NULL AS VARCHAR(500)) AS KeyName,			   
 				ROW_NUMBER()OVER(PARTITION BY T.Element_ID,T.Name ORDER BY TAB.pos DESC) AS RowNum
 		 FROM #TMP_ALLSTEPS T
-			  CROSS APPLY dbo.[FindPatternLocation](T.Name,'.')TAB	 
+			  OUTER APPLY dbo.[FindPatternLocation](T.Name,'.')TAB	 
 		 WHERE Parent_ID = 0
 		)
 		
@@ -98,33 +136,24 @@ BEGIN TRY
 
 		 --BUILD THE COLUMN LIST
 		 -------------------------------------------------------------------------------------------------------
-		SELECT Element_ID,
-			   KeyName AS ColumnName,
-			   StringValue
+				
+		SELECT TA.Element_ID,
+			   TA.Name AS ColumnName,
+			   TA.StringValue
 			INTO #TMP_INSERT
-		FROM #TMP_DATA_KEYNAME
-		WHERE Parent_ID = 0
-			  AND OBJECTID IS NULL
-			  AND StringValue <> ''
-			 
+		FROM #TMP_DATA_KEYNAME TD
+			 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TD.ObjectID
+		WHERE TD.Name ='attributes'			  
+
 		--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
 		INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-			SELECT 'VersionNum',@VersionNum
-			UNION
+			--SELECT 'VersionNum',@VersionNum
+			--UNION
 			SELECT 'UserCreated',@UserLoginID
+			
 
-		 ---GENERATE ACCESSCONTROL ID---------------------------------------------------------------------------------
-		 IF @EntityID = -1
-		 BEGIN
-			DECLARE @AccessControlId INT
-			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT			
-
-			--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
-			INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-				SELECT 'AccessControlId',@AccessControlId
-		 END
-		-------------------------------------------------------------------------------------------------------------	
-							
+				 --SELECT * FROM #TMP_INSERT
+			   --RETURN			
 
  	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 
@@ -163,7 +192,7 @@ BEGIN TRY
 		END
 		 		
 
-	BEGIN TRAN
+	--BEGIN TRAN
 		
 		IF @EntityID = -1
 		BEGIN
@@ -176,35 +205,40 @@ BEGIN TRY
 			SET @SQL = CONCAT(@SQL, ' WHERE UniverseID=', @UniverseID)
 			PRINT @SQL
 		END
-		 
-		EXEC sp_executesql @SQL	
 		
+		-- RETURN
+		--EXEC sp_executesql @SQL	
+
+		--CALL DOMAIN PERMISSIONS HERE
+		EXEC dbo.SaveUniversePermissions @InputJSON = @InputJSON,
+										 @UserLoginID=@UserLoginID,
+										 @AccessControlID = @AccessControlID
 
 		--UPDATE _HISTORY TABLE-----------------------------------------
 		
-		DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertyXerf_Data_history WHERE UniverseID = @UniverseID)
+		--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertyXerf_Data_history WHERE UniverseID = @UniverseID)
 
-		--UPDATE VERSION NO.
-		UPDATE dbo.UniversePropertyXerf_Data_history
-			SET VersionNum = @VersionNum
-		WHERE HistoryID = @HistoryID			 
+		----UPDATE VERSION NO.
+		--UPDATE dbo.UniversePropertyXerf_Data_history
+		--	SET VersionNum = @VersionNum
+		--WHERE HistoryID = @HistoryID			 
 
-		--RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
-		UPDATE dbo.UniversePropertyXerf_Data_history
-			SET PeriodIdentifierID = 0,
-				UserModified = @UserLoginID,
-				DateModified = GETUTCDATE()
-		WHERE UniverseID = @UniverseID
-			  AND VersionNum < @VersionNum
+		----RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
+		--UPDATE dbo.UniversePropertyXerf_Data_history
+		--	SET PeriodIdentifierID = 0,
+		--		UserModified = @UserLoginID,
+		--		DateModified = GETUTCDATE()
+		--WHERE UniverseID = @UniverseID
+		--	  AND VersionNum < @VersionNum
 		
-		--UPDATE OTHER COLUMNS FOR CURRENT VERSION
-		UPDATE dbo.UniversePropertyXerf_Data_history
-			SET PeriodIdentifierID = @PeriodIdentifierID,
-				UserModified = @UserLoginID,
-				DateModified = GETUTCDATE(),
-				OperationType = @OperationType
-		WHERE UniverseID = @UniverseID
-			  AND VersionNum = @VersionNum
+		----UPDATE OTHER COLUMNS FOR CURRENT VERSION
+		--UPDATE dbo.UniversePropertyXerf_Data_history
+		--	SET PeriodIdentifierID = @PeriodIdentifierID,
+		--		UserModified = @UserLoginID,
+		--		DateModified = GETUTCDATE(),
+		--		OperationType = @OperationType
+		--WHERE UniverseID = @UniverseID
+		--	  AND VersionNum = @VersionNum
 		-----------------------------------------------------------------
 
 		DECLARE @Params VARCHAR(MAX)
@@ -225,9 +259,14 @@ BEGIN TRY
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
 
-		COMMIT
+	--	COMMIT
+		
+		--DROP TEMP TABLES--------------------------------------	
+		 DROP TABLE IF EXISTS #TMP_INSERT
+		 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME		 
+		 --------------------------------------------------------
 
-		SELECT NULL AS ErrorMessage
+		 SELECT NULL AS ErrorMessage
 
 END TRY
 BEGIN CATCH
@@ -248,9 +287,4 @@ BEGIN CATCH
 			
 			SELECT @ErrorMessage AS ErrorMessage
 END CATCH
-
-		--DROP TEMP TABLES--------------------------------------	
-		 DROP TABLE IF EXISTS #TMP_INSERT
-		 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME		 
-		 --------------------------------------------------------
 END
