@@ -211,8 +211,6 @@ BEGIN TRY
 		 DROP TABLE IF EXISTS #TMP_UG_Users
 		 --------------------------------------------------------
 
-		SELECT NULL AS ErrorMessage
-
 END TRY
 BEGIN CATCH
 	
