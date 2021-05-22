@@ -46,8 +46,8 @@ BEGIN TRY
 			SELECT @OperationType ='INSERT'
 			
 			---GENERATE ACCESSCONTROL & WF ID
-			--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT
-			--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @WorkflowID OUTPUT
+			--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
+			--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
 
 			SELECT @AccessControlId = 100, 
 				   @WorkflowID = 100

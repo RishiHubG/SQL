@@ -305,3 +305,6 @@ exec SaveUniverseJSONData
 @InputJSON=N'{"attributes":{"currency":"usd","exchangeRate":1.1},"domainpermissiona":[{"userUserGroup":"testname","userid":2, "read":false,"modify":true,"write":true,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false},{"userUserGroup":"test8","userid":3,"modify":true,"write":true,"cut":true,"copy":true,"delete":false,"administrate":false,"adhoc":false}],"domianinherentpermissions":false,"workflowpermissions":[{"userUserGroup":"test8","userid":3,"read":false,"modify":true,"write":false,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false,"workflowname":"control1","stepstepItem":"step","stepname":"controlDetail","view":true},{"userUserGroup":"test9","userid":3,"workflowname":"control1","stepstepItem":"stepItem","stepname":"controlDetail","view":true,"modify":true}],"WFinheritpermissions":false,"frameworklist":{"control":true,"control2":true}}',
 @MethodName=NULL,@UserLoginID=3202
 
+Qs:
+1.What will be ParentId if entityID=-1??
+2. column "view" is not available in AccessControlledResource??
