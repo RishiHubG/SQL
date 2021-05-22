@@ -175,10 +175,10 @@ BEGIN TRY
 		EXEC (@SQL)
 
 		--SET Customized TO FALSE FOR OTHER USERS
-		UPDATE AU
-			SET Customized = 0
-		FROM dbo.AUser AU
-			 INNER JOIN #TMP_UG_Users TMP ON TMP.UserID = AU.UserID
+		UPDATE ACR
+			SET Customised = 0
+		FROM dbo.AccessControlledResource ACR
+			 INNER JOIN #TMP_UG_Users TMP ON TMP.UserID = ACR.UserID
 
 		--RETURN					   
 		 
