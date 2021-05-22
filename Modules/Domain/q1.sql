@@ -247,6 +247,8 @@ AccessControlledResource.Customized=0 for THESE USERS
 SELECT * FROM USERGROUP
 
 
+Put a check for this, RETURN FROM PROC.: @EntityTypeid <> 2 OR @ParentEntityTypeid <> 2 : 
+
 NEW TABLE: WFAccessControlledResource
 SAME COLS. AS IN AccessControlledResource UPTO Modify
 WorkFlowID,WorkFlowName,StepID,StepName,StepItemID,StepItemName
@@ -254,10 +256,11 @@ WorkFlowID,WorkFlowName,StepID,StepName,StepItemID,StepItemName
 
 IF ENTITYID IS -1 THEN CREATE NEW ACCESS CONTROL ID: EXISTING PROC.
 IF ENTITYID IS -1 THEN CREATE NEW WORKFLOW ID: EXISTING PROC.
+IF ENTITYID IS -1 , EntityTypeid=2, ParentEntityTypeid=2 , ParentEntityID=some no., SAY 100, THEN THIS IS THE CHILD OF UNNIVERSEID 100
 IF ENTITYID IS not -1 THEN ACCESS CONTROL ID OF THE ENTITYID(UNIVERSEID)
 AccessControlledResource.Customized=1
 
-IF domianinherentpermissions IS TRUE AND PARENTID IS NOT NULL THEN 
+IF domianinherentpermissions IS TRUE AND @ParentEntityID IS NOT NULL THEN 
 BEGIN
 1. PARENTID''S ACCESSCONTROLID=ParentAccessControlID
 2. ACCESSCONTROLID WILL HAVE SAME PERMISSIONS AS OF PARENTID i.e. FIND AccessControlID(parentID) in AccessControlledResource and replicate for AccessControlID
@@ -269,7 +272,7 @@ IF PARENT IS NULL THEN ROOT HT/DEPTH
 SELECT * FROM Universe
 ADD NEW COLUMN: PAREntWORKflowACID ,IsinheritedWORKflowACID 
 
-IF WFinheritpermissions IS TRUE AND WorkFlowACID IS NOT NULL THEN 
+IF WFinheritpermissions IS TRUE AND WorkFlowACIDID IS NOT NULL THEN --@WorkFlowID WILL BE AVAILABLE IN WF PERMISSION JSON
 BEGIN
 1. PARENTID''S WorkFlowACID =PAREntWORKflowACID
 2. ACCESSCONTROLID WILL HAVE SAME PERMISSIONS AS OF PARENTID i.e. FIND AccessControlID(parentID) in AccessControlledResource and replicate for AccessControlID
@@ -308,3 +311,4 @@ exec SaveUniverseJSONData
 Qs:
 1.What will be ParentId if entityID=-1??
 2. column "view" is not available in AccessControlledResource??
+3. GetNewAccessControllId - AccessControlId not returned from the proc??

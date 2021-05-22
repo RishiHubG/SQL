@@ -34,64 +34,67 @@ BEGIN TRY
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON; 
 
+	IF @EntityTypeid <> 2 OR @ParentEntityTypeid <> 2
+	BEGIN
+		PRINT 'UNAUTHORIZED ACCESS!!!!'
+		RETURN
+	END	
+
 	DECLARE @UniverseID INT,
 			@PeriodIdentifierID INT = 1,
 			@OperationType VARCHAR(50),
 			@VersionNum INT,			
 		    @AccessControlID INT,
-			@WorkflowID INT
+			@WorkflowID INT,
+			@CurrentDate DATETIME2(3) =  GETUTCDATE()
+			
 
-	IF @EntityID = -1
+	IF @EntityID = -1 AND @ParentEntityID IS NULL
 	BEGIN
 			SELECT @OperationType ='INSERT'
 			
 			---GENERATE ACCESSCONTROL & WF ID
-			--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
-			--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
+			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
+			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
 
 			SELECT @AccessControlId = 100, 
 				   @WorkflowID = 100
 
-			INSERT INTO dbo.Universe([Name],[Description],AccessControlId,WorkFlowACID,UserCreated)
-				SELECT @UniverseName, @Description,@AccessControlId,@WorkflowID,@UserLoginID
+			INSERT INTO dbo.Universe([Name],[Description],AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
+				SELECT @UniverseName, @Description,@AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
 		
 			SET @UniverseID = SCOPE_IDENTITY()
+
+			EXEC [dbo].[CalculateUniverseHeightAndDepth]
 	END
-	ELSE
+	ELSE IF @EntityID = -1 AND @ParentEntityID IS NOT NULL
+	BEGIN
+			SELECT @OperationType ='INSERT'
+			
+			---GENERATE ACCESSCONTROL & WF ID
+			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
+			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
+
+			SELECT @AccessControlId = 100, 
+				   @WorkflowID = 100
+
+			INSERT INTO dbo.Universe([Name],[Description],ParentID,AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
+				SELECT @UniverseName, @Description,@ParentEntityID, @AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
+		
+			SET @UniverseID = SCOPE_IDENTITY()
+
+			EXEC [dbo].[CalculateUniverseHeightAndDepth]
+	END
+	ELSE IF @EntityID > 0
 	BEGIN		
 	
 		SELECT @OperationType ='UPDATE',
 			   @UniverseID = @EntityID
 
 			SELECT @AccessControlID = UniverseID FROM  dbo.Universe WHERE UniverseID = @UniverseID
-			SELECT @WorkflowID = WorkFlowACID FROM  dbo.Universe WHERE UniverseID = @UniverseID
+			SELECT @WorkflowID = WorkFlowACID FROM  dbo.Universe WHERE UniverseID = @UniverseID			
 	END
 	
-		--	 ---GENERATE ACCESSCONTROL & WF ID---------------------------------------------------------------------------------
-		-- IF @EntityID = -1
-		-- BEGIN
-		 
-		--	--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT			
-		--	SET @AccessControlId = 1
-			
-		--	--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
-		--	INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-		--		SELECT 'AccessControlId',@AccessControlId
-
-		--	--GENERATE WF ID
-		--	--EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @AccessControlId OUTPUT			
-		--	SET @WorkflowID = 1
-		--	--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
-		--	INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-		--		SELECT 'WorkFlowACIDID',@WorkflowID
-		-- END
-		-- ELSE
-		-- BEGIN
-		--	SELECT @AccessControlID = UniverseID FROM  dbo.Universe WHERE UniverseID = @EntityID
-		--	SELECT @WorkflowID = WorkFlowACID FROM  dbo.Universe WHERE UniverseID = @EntityID
-		-- END				
-		---------------------------------------------------------------------------------------------------------------	
-
 	 SELECT *
 			INTO #TMP_ALLSTEPS
 	 FROM dbo.HierarchyFromJSON(@inputJSON) 
