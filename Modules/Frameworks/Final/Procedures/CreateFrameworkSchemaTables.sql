@@ -1,7 +1,5 @@
 --CreateTables_v1.sql and ParseJSON_v2.sql
-USE JUNK
-GO
- 
+
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -20,20 +18,10 @@ SNo.	Modification Date		Modified By				Comments
  CREATE OR ALTER PROCEDURE dbo.CreateFrameworkSchemaTables
 @NewTableName VARCHAR(100),
 @FrameworkID INT,
-@VersionNum INT,
-@MethodName NVARCHAR(200)=NULL
+@VersionNum INT
 AS
 BEGIN
-	SET NOCOUNT ON;
-
-	DECLARE @UserID INT
-
-	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
-								 @MethodName = @MethodName,
-								 @UserID = @UserID	OUTPUT						     
-
-	IF @UserID IS NOT NULL
-	BEGIN
+	SET NOCOUNT ON; 
 
 	PRINT 'STARTING CreateSchemaTables...'
 
@@ -217,7 +205,7 @@ END
 		
 		--UPDATE OPERATION TYPE FLAG IN FRAMEWORK HISTORY TABLES==============================================
 		IF @VersionNum > 1
-			EXEC dbo.UpdateFrameworkHistoryOperationType @FrameworkID = @FrameworkID, @TableInitial = @TableInitial, @VersionNum = @VersionNum, @MethodName = @MethodName	
+			EXEC dbo.UpdateFrameworkHistoryOperationType @FrameworkID = @FrameworkID, @TableInitial = @TableInitial, @VersionNum = @VersionNum	
 		--====================================================================================================
 
 		 --SELECT * FROM @TBL		 	 
@@ -262,9 +250,5 @@ END
 */
 		
 		PRINT 'CreateSchemaTables Completed...'
-
-	END		--END OF USER PERMISSION CHECK
-		 ELSE IF @UserID IS NULL
-			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
-
+	
 END		

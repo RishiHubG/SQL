@@ -1,6 +1,4 @@
 --ASSUMPTION: SCRIPT WILL RUN ONLY IF VERSIONNUM > 1
-USE JUNK
-GO
 
 SET ANSI_NULLS ON
 GO
@@ -23,20 +21,12 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.UpdateFrameworkHistoryOperationType
 @FrameworkID INT,
 @TableInitial VARCHAR(100),
-@VersionNum INT,
-@MethodName NVARCHAR(200)=NULL
+@VersionNum INT
 AS
 BEGIN
 	SET NOCOUNT ON;
 		
-	DECLARE @UserID INT
-
-	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
-								 @MethodName = @MethodName,
-								 @UserID = @UserID	OUTPUT						     
-
-	IF @UserID IS NOT NULL
-	BEGIN
+	
 
 		/*
 		DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500),KeyColName VARCHAR(100), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX),TableType VARCHAR(100))
@@ -266,8 +256,6 @@ BEGIN
 		END	--IF @VersionNum > 1
 
 
-		END		--END OF USER PERMISSION CHECK
-		 ELSE IF @UserID IS NULL
-			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
+		
 END
  

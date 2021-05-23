@@ -828,7 +828,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
 		PRINT 'ParseJSONData Completed...'
 			 
-		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum, @MethodName = @MethodName
+		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
 				
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------

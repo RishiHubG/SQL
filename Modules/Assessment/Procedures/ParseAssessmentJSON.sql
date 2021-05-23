@@ -153,6 +153,7 @@ CREATE OR ALTER PROCEDURE dbo.ParseAssessmentJSON
 @FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
 @UserModified INT = NULL,
+@MethodName NVARCHAR(2000) = NULL,
 @LogRequest BIT = 1
 AS
 BEGIN

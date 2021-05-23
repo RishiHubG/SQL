@@ -153,12 +153,14 @@ CREATE OR ALTER PROCEDURE dbo.ParseUniverseJSON
 @FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
 @UserModified INT = NULL,
+@MethodName NVARCHAR(2000) = NULL,
 @LogRequest BIT = 1
 AS
 BEGIN
 	SET NOCOUNT ON; 
 	SET XACT_ABORT ON;
 	BEGIN TRY
+
 	DECLARE @UserID INT
 
 	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
@@ -624,6 +626,20 @@ BEGIN
 		 
 		 SELECT NULL AS ErrorMessage
 
+		 END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
+		
+		--DROP TEMP TABLES--------------------------------------
+		 DROP TABLE IF EXISTS #TMP_Objects
+		 DROP TABLE IF EXISTS #TMP_Assessments
+		 DROP TABLE IF EXISTS #TMP_NewUniverseProperties
+		 DROP TABLE IF EXISTS #TMP_AssessmentData
+		 DROP TABLE IF EXISTS #TMP_ALLSTEPS 
+		 DROP TABLE IF EXISTS #TMP_UniversePropertiesXref
+		 DROP TABLE IF EXISTS #TMP_UniverseProperties
+		 --------------------------------------------------------	
+
 	END TRY
 	BEGIN CATCH
 		
@@ -643,18 +659,5 @@ BEGIN
 			SELECT @ErrorMessage AS ErrorMessage
 
 	END CATCH	
-	
-		--DROP TEMP TABLES--------------------------------------
-		 DROP TABLE IF EXISTS #TMP_Objects
-		 DROP TABLE IF EXISTS #TMP_Assessments
-		 DROP TABLE IF EXISTS #TMP_NewUniverseProperties
-		 DROP TABLE IF EXISTS #TMP_AssessmentData
-		 DROP TABLE IF EXISTS #TMP_ALLSTEPS 
-		 DROP TABLE IF EXISTS #TMP_UniversePropertiesXref
-		 DROP TABLE IF EXISTS #TMP_UniverseProperties
-		 --------------------------------------------------------
 		
-		END		--END OF USER PERMISSION CHECK
-		 ELSE IF @UserID IS NULL
-			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 END

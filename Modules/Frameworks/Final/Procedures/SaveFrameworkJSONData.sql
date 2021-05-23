@@ -1,5 +1,4 @@
-USE junk
-GO
+
 
 SET ANSI_NULLS ON
 GO
@@ -268,7 +267,7 @@ BEGIN TRY
 		WHERE FrameworkID = ',@FrameworkID,'
 			  AND VersionNum = ',@VersionNum,';', CHAR(10), CHAR(10))
 		
-		EXEC LongPrint @SQL
+		--EXEC LongPrint @SQL
 		EXEC sp_executesql @SQL
 		-----------------------------------------------------------------
 
