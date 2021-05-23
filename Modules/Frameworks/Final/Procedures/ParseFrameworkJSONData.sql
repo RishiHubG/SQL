@@ -27,6 +27,7 @@ CREATE OR ALTER PROCEDURE dbo.ParseFrameworkJSONData
 @InputJSON VARCHAR(MAX),
 @FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
+@MethodName NVARCHAR(200)=NULL, 
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -34,6 +35,16 @@ BEGIN TRY
 
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON;
+
+	DECLARE @UserID INT
+
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT							     
+
+	IF @UserID IS NOT NULL
+	BEGIN
+
 	 
 	 DECLARE @Params VARCHAR(MAX),
 			 @ObjectName VARCHAR(100)
@@ -817,7 +828,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
 		PRINT 'ParseJSONData Completed...'
 			 
-		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
+		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum, @MethodName = @MethodName
 				
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
@@ -838,6 +849,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 		SELECT NULL AS ErrorMessage
 
+		END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 END TRY
 BEGIN CATCH
 	

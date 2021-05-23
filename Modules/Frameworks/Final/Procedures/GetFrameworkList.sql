@@ -25,12 +25,21 @@ CREATE OR ALTER PROCEDURE dbo.GetFrameworkList
 @ParentEntityID INT = NULL,
 @ParentEntityType VARCHAR(100) = NULL,
 @UserLoginID INT,
-@MethodName VARCHAR(100),
+@MethodName NVARCHAR(200)=NULL, 
 @LogRequest BIT = 1
 AS
 BEGIN
 	SET NOCOUNT ON;
-	 
+	
+	DECLARE @UserID INT
+
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT							     
+
+	IF @UserID IS NOT NULL
+	BEGIN
+
 	SELECT * 
 	FROM dbo.Frameworks
 	WHERE FrameworkID = ISNULL(@EntityID,FrameworkID)
@@ -58,4 +67,8 @@ BEGIN
 									 @UserLoginID = @UserLoginID
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
+
+		END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 END

@@ -31,6 +31,15 @@ AS
 BEGIN
 	SET NOCOUNT ON;	
 	
+	DECLARE @UserID INT
+
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT							     
+
+	IF @UserID IS NOT NULL
+	BEGIN
+
 	SELECT * 
 	FROM dbo.Universe
 	WHERE UniverseID = ISNULL(@EntityID,UniverseID)
@@ -58,4 +67,8 @@ BEGIN
 									 @UserLoginID = @UserLoginID
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
+
+	END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 END

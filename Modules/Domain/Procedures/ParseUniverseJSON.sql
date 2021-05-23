@@ -159,7 +159,15 @@ BEGIN
 	SET NOCOUNT ON; 
 	SET XACT_ABORT ON;
 	BEGIN TRY
-	
+	DECLARE @UserID INT
+
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT						     
+
+	IF @UserID IS NOT NULL
+	BEGIN
+
 	DECLARE @ID INT,			
 			@VersionNum INT,
 			@UniverseID INT,
@@ -645,5 +653,8 @@ BEGIN
 		 DROP TABLE IF EXISTS #TMP_UniversePropertiesXref
 		 DROP TABLE IF EXISTS #TMP_UniverseProperties
 		 --------------------------------------------------------
-
+		
+		END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 END

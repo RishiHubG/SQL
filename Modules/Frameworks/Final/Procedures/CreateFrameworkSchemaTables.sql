@@ -20,10 +20,21 @@ SNo.	Modification Date		Modified By				Comments
  CREATE OR ALTER PROCEDURE dbo.CreateFrameworkSchemaTables
 @NewTableName VARCHAR(100),
 @FrameworkID INT,
-@VersionNum INT
+@VersionNum INT,
+@MethodName NVARCHAR(200)=NULL
 AS
 BEGIN
 	SET NOCOUNT ON;
+
+	DECLARE @UserID INT
+
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT						     
+
+	IF @UserID IS NOT NULL
+	BEGIN
+
 	PRINT 'STARTING CreateSchemaTables...'
 
 --DROP TABLE IF EXISTS TAB_FrameworkLookups
@@ -206,7 +217,7 @@ END
 		
 		--UPDATE OPERATION TYPE FLAG IN FRAMEWORK HISTORY TABLES==============================================
 		IF @VersionNum > 1
-			EXEC dbo.UpdateFrameworkHistoryOperationType @FrameworkID = @FrameworkID, @TableInitial = @TableInitial, @VersionNum = @VersionNum		
+			EXEC dbo.UpdateFrameworkHistoryOperationType @FrameworkID = @FrameworkID, @TableInitial = @TableInitial, @VersionNum = @VersionNum, @MethodName = @MethodName	
 		--====================================================================================================
 
 		 --SELECT * FROM @TBL		 	 
@@ -251,4 +262,9 @@ END
 */
 		
 		PRINT 'CreateSchemaTables Completed...'
+
+	END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
+
 END		

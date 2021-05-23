@@ -160,6 +160,15 @@ BEGIN
 	SET XACT_ABORT ON;
 	BEGIN TRY
 	
+	DECLARE @UserID INT
+
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT							     
+
+	IF @UserID IS NOT NULL
+	BEGIN
+
 	DECLARE @ID INT,			
 			@VersionNum INT,
 			@RegisterID INT,
@@ -583,6 +592,10 @@ BEGIN
 		 COMMIT
 		 
 		 SELECT NULL AS ErrorMessage
+	
+	END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 
 	END TRY
 	BEGIN CATCH

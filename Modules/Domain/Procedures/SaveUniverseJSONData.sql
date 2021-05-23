@@ -34,242 +34,256 @@ BEGIN TRY
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON; 
 
-	IF @EntityTypeid <> 2 OR @ParentEntityTypeid <> 2
-	BEGIN
-		PRINT 'UNAUTHORIZED ACCESS!!!!'
-		RETURN
-	END	
+	DECLARE @UserID INT
 
-	DECLARE @UniverseID INT,
-			@PeriodIdentifierID INT = 1,
-			@OperationType VARCHAR(50),
-			@VersionNum INT,			
-		    @AccessControlID INT,
-			@WorkflowID INT,
-			@CurrentDate DATETIME2(3) =  GETUTCDATE()
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT							     
+
+	IF @UserID IS NOT NULL
+	BEGIN
+
+			IF @EntityTypeid <> 2 OR @ParentEntityTypeid <> 2
+			BEGIN
+				PRINT 'UNAUTHORIZED ACCESS!!!!'
+				RETURN
+			END	
+
+			DECLARE @UniverseID INT,
+					@PeriodIdentifierID INT = 1,
+					@OperationType VARCHAR(50),
+					@VersionNum INT,			
+					@AccessControlID INT,
+					@WorkflowID INT,
+					@CurrentDate DATETIME2(3) =  GETUTCDATE()
 			
 
-	IF @EntityID = -1 AND @ParentEntityID IS NULL
-	BEGIN
-			SELECT @OperationType ='INSERT'
+			IF @EntityID = -1 AND @ParentEntityID IS NULL
+			BEGIN
+					SELECT @OperationType ='INSERT'
 			
-			---GENERATE ACCESSCONTROL & WF ID
-			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
-			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
+					---GENERATE ACCESSCONTROL & WF ID
+					EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
+					EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
 
-			SELECT @AccessControlId = 100, 
-				   @WorkflowID = 100
+					SELECT @AccessControlId = 100, 
+						   @WorkflowID = 100
 
-			INSERT INTO dbo.Universe([Name],[Description],AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
-				SELECT @UniverseName, @Description,@AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
+					INSERT INTO dbo.Universe([Name],[Description],AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
+						SELECT @UniverseName, @Description,@AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
 		
-			SET @UniverseID = SCOPE_IDENTITY()
+					SET @UniverseID = SCOPE_IDENTITY()
 
-			EXEC [dbo].[CalculateUniverseHeightAndDepth]
-	END
-	ELSE IF @EntityID = -1 AND @ParentEntityID IS NOT NULL
-	BEGIN
-			SELECT @OperationType ='INSERT'
+					EXEC [dbo].[CalculateUniverseHeightAndDepth]
+			END
+			ELSE IF @EntityID = -1 AND @ParentEntityID IS NOT NULL
+			BEGIN
+					SELECT @OperationType ='INSERT'
 			
-			---GENERATE ACCESSCONTROL & WF ID
-			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
-			EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
+					---GENERATE ACCESSCONTROL & WF ID
+					EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
+					EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
 
-			SELECT @AccessControlId = 100, 
-				   @WorkflowID = 100
+					SELECT @AccessControlId = 100, 
+						   @WorkflowID = 100
 
-			INSERT INTO dbo.Universe([Name],[Description],ParentID,AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
-				SELECT @UniverseName, @Description,@ParentEntityID, @AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
+					INSERT INTO dbo.Universe([Name],[Description],ParentID,AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
+						SELECT @UniverseName, @Description,@ParentEntityID, @AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
 		
-			SET @UniverseID = SCOPE_IDENTITY()
+					SET @UniverseID = SCOPE_IDENTITY()
 
-			EXEC [dbo].[CalculateUniverseHeightAndDepth]
-	END
-	ELSE IF @EntityID > 0
-	BEGIN		
+					EXEC [dbo].[CalculateUniverseHeightAndDepth]
+			END
+			ELSE IF @EntityID > 0
+			BEGIN		
 	
-		SELECT @OperationType ='UPDATE',
-			   @UniverseID = @EntityID
+				SELECT @OperationType ='UPDATE',
+					   @UniverseID = @EntityID
 
-			SELECT @AccessControlID = UniverseID FROM  dbo.Universe WHERE UniverseID = @UniverseID
-			SELECT @WorkflowID = WorkFlowACID FROM  dbo.Universe WHERE UniverseID = @UniverseID			
-	END
+					SELECT @AccessControlID = UniverseID FROM  dbo.Universe WHERE UniverseID = @UniverseID
+					SELECT @WorkflowID = WorkFlowACID FROM  dbo.Universe WHERE UniverseID = @UniverseID			
+			END
 	
-	 SELECT *
-			INTO #TMP_ALLSTEPS
-	 FROM dbo.HierarchyFromJSON(@inputJSON) 
+			 SELECT *
+					INTO #TMP_ALLSTEPS
+			 FROM dbo.HierarchyFromJSON(@inputJSON) 
 	
-	--SELECT * FROM #TMP_ALLSTEPS
+			--SELECT * FROM #TMP_ALLSTEPS
 
-		--RETURN
-		;WITH CTE
-		AS
-		(
-		SELECT T.Element_ID,
-			   T.Name, 
-			   T.Parent_ID,
-			   T.OBJECT_ID AS ObjectID,
-			   TAB.pos,
-			   T.StringValue,	
-			   CAST(NULL AS VARCHAR(500)) AS KeyName,			   
-				ROW_NUMBER()OVER(PARTITION BY T.Element_ID,T.Name ORDER BY TAB.pos DESC) AS RowNum
-		 FROM #TMP_ALLSTEPS T
-			  OUTER APPLY dbo.[FindPatternLocation](T.Name,'.')TAB	 
-		 WHERE Parent_ID = 0
-		)
+				--RETURN
+				;WITH CTE
+				AS
+				(
+				SELECT T.Element_ID,
+					   T.Name, 
+					   T.Parent_ID,
+					   T.OBJECT_ID AS ObjectID,
+					   TAB.pos,
+					   T.StringValue,	
+					   CAST(NULL AS VARCHAR(500)) AS KeyName,			   
+						ROW_NUMBER()OVER(PARTITION BY T.Element_ID,T.Name ORDER BY TAB.pos DESC) AS RowNum
+				 FROM #TMP_ALLSTEPS T
+					  OUTER APPLY dbo.[FindPatternLocation](T.Name,'.')TAB	 
+				 WHERE Parent_ID = 0
+				)
 		
-		SELECT *
-			INTO #TMP_DATA_KEYNAME
-		FROM CTE
-		WHERE RowNum = 1
+				SELECT *
+					INTO #TMP_DATA_KEYNAME
+				FROM CTE
+				WHERE RowNum = 1
 
-		UPDATE #TMP_DATA_KEYNAME
-			SET KeyName = SUBSTRING(Name,Pos+1,len(Name))
-		WHERE Pos > 0
+				UPDATE #TMP_DATA_KEYNAME
+					SET KeyName = SUBSTRING(Name,Pos+1,len(Name))
+				WHERE Pos > 0
 
-		--UPDATE T
-		--	SET StringValue = TA.StringValue
-		--FROM #TMP_DATA_KEYNAME T
-		--	 INNER JOIN #TMP_ALLSTEPS TA ON T.Element_ID = TA.Element_ID
-		--WHERE TA.Pos > 0
+				--UPDATE T
+				--	SET StringValue = TA.StringValue
+				--FROM #TMP_DATA_KEYNAME T
+				--	 INNER JOIN #TMP_ALLSTEPS TA ON T.Element_ID = TA.Element_ID
+				--WHERE TA.Pos > 0
 
-		--SELECT * FROM #TMP_DATA_KEYNAME
-		--RETURN
-		--SELECT * FROM #TMP_ALLSTEPS
+				--SELECT * FROM #TMP_DATA_KEYNAME
+				--RETURN
+				--SELECT * FROM #TMP_ALLSTEPS
 
-		 --BUILD THE COLUMN LIST
-		 -------------------------------------------------------------------------------------------------------
+				 --BUILD THE COLUMN LIST
+				 -------------------------------------------------------------------------------------------------------
 				
-		SELECT TA.Element_ID,
-			   TA.Name AS ColumnName,
-			   TA.StringValue
-			INTO #TMP_INSERT
-		FROM #TMP_DATA_KEYNAME TD
-			 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TD.ObjectID
-		WHERE TD.Name ='attributes'			  
+				SELECT TA.Element_ID,
+					   TA.Name AS ColumnName,
+					   TA.StringValue
+					INTO #TMP_INSERT
+				FROM #TMP_DATA_KEYNAME TD
+					 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TD.ObjectID
+				WHERE TD.Name ='attributes'			  
 
-		--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
-		INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-			--SELECT 'VersionNum',@VersionNum
-			--UNION
-			SELECT 'UserCreated',@UserLoginID
+				--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
+				INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+					--SELECT 'VersionNum',@VersionNum
+					--UNION
+					SELECT 'UserCreated',@UserLoginID
 			
 
-				 --SELECT * FROM #TMP_INSERT
-			   --RETURN			
+						 --SELECT * FROM #TMP_INSERT
+					   --RETURN			
 
- 	 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
+ 	 			DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 
-		IF @EntityID = -1
-		BEGIN
-	 		SET @ColumnNames = STUFF
-									((SELECT CONCAT(', ',QUOTENAME(ColumnName))
-									FROM #TMP_INSERT 								
-									ORDER BY Element_ID
-									FOR XML PATH ('')								
-									),1,1,'')
+				IF @EntityID = -1
+				BEGIN
+	 				SET @ColumnNames = STUFF
+											((SELECT CONCAT(', ',QUOTENAME(ColumnName))
+											FROM #TMP_INSERT 								
+											ORDER BY Element_ID
+											FOR XML PATH ('')								
+											),1,1,'')
 		
-			SET @ColumnNames = CONCAT('UniverseID',',',@ColumnNames)
+					SET @ColumnNames = CONCAT('UniverseID',',',@ColumnNames)
 
-			SET @ColumnValues = STUFF
-									((SELECT CONCAT(', ',CHAR(39),StringValue,CHAR(39))
-									FROM #TMP_INSERT 								
-									ORDER BY Element_ID
-									FOR XML PATH ('')								
-									),1,1,'')
+					SET @ColumnValues = STUFF
+											((SELECT CONCAT(', ',CHAR(39),StringValue,CHAR(39))
+											FROM #TMP_INSERT 								
+											ORDER BY Element_ID
+											FOR XML PATH ('')								
+											),1,1,'')
 
-			SET @ColumnValues = CONCAT(CHAR(39),@UniverseID,CHAR(39),',',@ColumnValues)
-		END
-		ELSE
-		BEGIN
-			DECLARE @UpdStr VARCHAR(MAX)
+					SET @ColumnValues = CONCAT(CHAR(39),@UniverseID,CHAR(39),',',@ColumnValues)
+				END
+				ELSE
+				BEGIN
+					DECLARE @UpdStr VARCHAR(MAX)
 
-			SET  @UpdStr = STUFF(
-								(
-								SELECT CONCAT(', ',QUOTENAME(COLUMNNAME),'=',CHAR(39),StringValue,CHAR(39), CHAR(10))
-								FROM #TMP_INSERT
-								FOR XML PATH('')
-								),
-								1,1,'')
+					SET  @UpdStr = STUFF(
+										(
+										SELECT CONCAT(', ',QUOTENAME(COLUMNNAME),'=',CHAR(39),StringValue,CHAR(39), CHAR(10))
+										FROM #TMP_INSERT
+										FOR XML PATH('')
+										),
+										1,1,'')
 				
-		END
+				END
 		 		
 
-	--BEGIN TRAN
+			--BEGIN TRAN
 		
-		IF @EntityID = -1
-		BEGIN
-			SET @SQL = CONCAT('INSERT INTO dbo.UniversePropertyXerf_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
-			PRINT @SQL
-		END
-		ELSE	--UPDATE
-		BEGIN
-			SET @SQL = CONCAT('UPDATE dbo.UniversePropertyXerf_Data',CHAR(10),' SET ',@UpdStr)
-			SET @SQL = CONCAT(@SQL, ' WHERE UniverseID=', @UniverseID)
-			PRINT @SQL
-		END
+				IF @EntityID = -1
+				BEGIN
+					SET @SQL = CONCAT('INSERT INTO dbo.UniversePropertyXerf_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
+					PRINT @SQL
+				END
+				ELSE	--UPDATE
+				BEGIN
+					SET @SQL = CONCAT('UPDATE dbo.UniversePropertyXerf_Data',CHAR(10),' SET ',@UpdStr)
+					SET @SQL = CONCAT(@SQL, ' WHERE UniverseID=', @UniverseID)
+					PRINT @SQL
+				END
 		
-		-- RETURN
-		--EXEC sp_executesql @SQL	
+				-- RETURN
+				--EXEC sp_executesql @SQL	
 
-		--CALL DOMAIN PERMISSIONS HERE
-		EXEC dbo.SaveUniversePermissions @InputJSON = @InputJSON,
-										 @UserLoginID=@UserLoginID,
-										 @AccessControlID = @AccessControlID
+				--CALL DOMAIN PERMISSIONS HERE
+				EXEC dbo.SaveUniversePermissions @InputJSON = @InputJSON,
+												 @UserLoginID=@UserLoginID,
+												 @MethodName = @MethodName,
+												 @AccessControlID = @AccessControlID
 
-		--UPDATE _HISTORY TABLE-----------------------------------------
+				--UPDATE _HISTORY TABLE-----------------------------------------
 		
-		--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertyXerf_Data_history WHERE UniverseID = @UniverseID)
+				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertyXerf_Data_history WHERE UniverseID = @UniverseID)
 
-		----UPDATE VERSION NO.
-		--UPDATE dbo.UniversePropertyXerf_Data_history
-		--	SET VersionNum = @VersionNum
-		--WHERE HistoryID = @HistoryID			 
+				----UPDATE VERSION NO.
+				--UPDATE dbo.UniversePropertyXerf_Data_history
+				--	SET VersionNum = @VersionNum
+				--WHERE HistoryID = @HistoryID			 
 
-		----RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
-		--UPDATE dbo.UniversePropertyXerf_Data_history
-		--	SET PeriodIdentifierID = 0,
-		--		UserModified = @UserLoginID,
-		--		DateModified = GETUTCDATE()
-		--WHERE UniverseID = @UniverseID
-		--	  AND VersionNum < @VersionNum
+				----RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
+				--UPDATE dbo.UniversePropertyXerf_Data_history
+				--	SET PeriodIdentifierID = 0,
+				--		UserModified = @UserLoginID,
+				--		DateModified = GETUTCDATE()
+				--WHERE UniverseID = @UniverseID
+				--	  AND VersionNum < @VersionNum
 		
-		----UPDATE OTHER COLUMNS FOR CURRENT VERSION
-		--UPDATE dbo.UniversePropertyXerf_Data_history
-		--	SET PeriodIdentifierID = @PeriodIdentifierID,
-		--		UserModified = @UserLoginID,
-		--		DateModified = GETUTCDATE(),
-		--		OperationType = @OperationType
-		--WHERE UniverseID = @UniverseID
-		--	  AND VersionNum = @VersionNum
-		-----------------------------------------------------------------
+				----UPDATE OTHER COLUMNS FOR CURRENT VERSION
+				--UPDATE dbo.UniversePropertyXerf_Data_history
+				--	SET PeriodIdentifierID = @PeriodIdentifierID,
+				--		UserModified = @UserLoginID,
+				--		DateModified = GETUTCDATE(),
+				--		OperationType = @OperationType
+				--WHERE UniverseID = @UniverseID
+				--	  AND VersionNum = @VersionNum
+				-----------------------------------------------------------------
 
-		DECLARE @Params VARCHAR(MAX)
-		DECLARE @ObjectName VARCHAR(100)
+				DECLARE @Params VARCHAR(MAX)
+				DECLARE @ObjectName VARCHAR(100)
 
-		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
-		IF @LogRequest = 1
-		BEGIN			
-				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
-			--PRINT @PARAMS
+				--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
+				IF @LogRequest = 1
+				BEGIN			
+						SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
+					--PRINT @PARAMS
 			
-			SET @ObjectName = OBJECT_NAME(@@PROCID)
+					SET @ObjectName = OBJECT_NAME(@@PROCID)
 
-			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
-									 @Params = @Params,
-									 @UserLoginID = @UserLoginID
-		END
-		------------------------------------------------------------------------------------------------------------------------------------------
+					EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
+											 @Params = @Params,
+											 @UserLoginID = @UserLoginID
+				END
+				------------------------------------------------------------------------------------------------------------------------------------------
 
-	--	COMMIT
+			--	COMMIT
 		
-		--DROP TEMP TABLES--------------------------------------	
-		 DROP TABLE IF EXISTS #TMP_INSERT
-		 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME		 
-		 --------------------------------------------------------
+				--DROP TEMP TABLES--------------------------------------	
+				 DROP TABLE IF EXISTS #TMP_INSERT
+				 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME		 
+				 --------------------------------------------------------
 
-		 SELECT NULL AS ErrorMessage
+				 SELECT NULL AS ErrorMessage
+
+		 END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 
 END TRY
 BEGIN CATCH

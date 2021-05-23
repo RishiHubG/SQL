@@ -19,6 +19,7 @@ SNo.	Modification Date		Modified By				Comments
 CREATE OR ALTER PROCEDURE dbo.SaveUniversePermissions
 @InputJSON VARCHAR(MAX),
 @UserLoginID INT,
+@MethodName NVARCHAR(2000) = NULL,
 @AccessControlID INT,
 @LogRequest BIT = 1
 AS
@@ -27,6 +28,15 @@ BEGIN TRY
 
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON; 	
+
+	DECLARE @UserID INT
+
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT						     
+
+	IF @UserID IS NOT NULL
+	BEGIN
 	
 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 
@@ -210,6 +220,10 @@ BEGIN TRY
 		 DROP TABLE IF EXISTS #TMP_Users
 		 DROP TABLE IF EXISTS #TMP_UG_Users
 		 --------------------------------------------------------
+
+		END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 
 END TRY
 BEGIN CATCH

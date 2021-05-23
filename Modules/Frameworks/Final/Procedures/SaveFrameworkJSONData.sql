@@ -25,6 +25,7 @@ CREATE OR ALTER PROCEDURE dbo.SaveFrameworkJSONData
 @EntityTypeID INT=NULL,
 @ParentEntityID INT=NULL,
 @ParentEntityTypeID INT=NULL, 
+@MethodName NVARCHAR(200)=NULL, 
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -32,6 +33,15 @@ BEGIN TRY
 
 	SET NOCOUNT ON;
 	SET XACT_ABORT ON;
+
+	DECLARE @UserID INT
+
+	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
+								 @MethodName = @MethodName,
+								 @UserID = @UserID	OUTPUT							     
+
+	IF @UserID IS NOT NULL
+	BEGIN
 
 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 	DECLARE @FrameworkID INT,
@@ -285,6 +295,9 @@ BEGIN TRY
 
 		SELECT NULL AS ErrorMessage
 
+		END		--END OF USER PERMISSION CHECK
+		 ELSE IF @UserID IS NULL
+			SELECT 'User Session has expired, Please re-login' AS ErrorMessage
 END TRY
 BEGIN CATCH
 	
