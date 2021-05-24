@@ -619,7 +619,9 @@ BEGIN
 		------------------------------------------------------------------------------------------------------------------------------------------
 		
 		UPDATE dbo.EntityAdminForm
-			SET VersionNum = @VersionNum
+			SET VersionNum = @VersionNum,
+				FormJson= @FullSchemaJSON,
+				DateModified = GETUTCDATE()
 		WHERE EntitytypeId = 2
 
 		 COMMIT

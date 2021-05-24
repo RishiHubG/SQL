@@ -29,7 +29,7 @@ CREATE TABLE dbo.Universe
 	CONSTRAINT PK_Universe_UniverseID PRIMARY KEY(UniverseID),
 	CONSTRAINT UQ_Universe_Name UNIQUE(Name,ParentID),
 	)
-		ALTER TABLE [dbo].Universe ADD CONSTRAINT DF_Universe_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+		ALTER TABLE [dbo].Universe ADD CONSTRAINT DF_Universe_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 		
 GO
 	
 DROP TABLE  IF EXISTS dbo.UniverseProperties
@@ -47,8 +47,10 @@ CREATE TABLE dbo.UniverseProperties
 	CONSTRAINT PK_UniverseProperties_UniversePropertyID PRIMARY KEY(UniversePropertyID)
 	)
 
-	ALTER TABLE dbo.UniverseProperties ADD CONSTRAINT FK_UniverseProperties_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-	ALTER TABLE [dbo].Universe ADD CONSTRAINT FK_UniverseProperties_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.EntityAdminForm(EntityTypeID)
+	ALTER TABLE dbo.UniverseProperties ADD CONSTRAINT FK_UniverseProperties_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 			
+	ALTER TABLE [dbo].UniverseProperties ADD CONSTRAINT FK_UniverseProperties_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.Universe(UniverseID)
+GO
+	
 GO
 
 DROP TABLE  IF EXISTS dbo.UniversePropertiesXref
