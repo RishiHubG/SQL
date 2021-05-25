@@ -94,10 +94,6 @@ BEGIN
 		   [count]
 	FROM #TMP_SubEntityCounts
 	----------------------------------------------------	 
-
-	SELECT *
-	FROM dbo.Registers
-	WHERE UniverseID = @EntityID
 	
 	--userrights
 	SELECT @userid AS userid,ASU.Name AS username,
