@@ -16,7 +16,7 @@ SNo.	Modification Date		Modified By				Comments
 
 CREATE OR ALTER PROCEDURE dbo.GetUniverseDetails
 @EntityID INT,
-@EntityType VARCHAR(100),
+@EntityTypeID VARCHAR(100),
 @ParentEntityID INT = NULL,
 @ParentEntityType VARCHAR(100),
 @UserLoginID INT,
@@ -45,11 +45,11 @@ BEGIN
 	SELECT @AccessControlID = AccessControlID
 	FROM #TMP_Universe
 
-	SELECT Formjson,
-		   @EntityType,
-		   @EntityID AS EntityID
+	SELECT formjson,
+		   @EntityTypeID AS entityid,
+		   @EntityID AS entityid
 	FROM dbo.EntityAdminForm 
-	WHERE EntitytypeId = @EntityType		
+	WHERE EntitytypeId = @EntityTypeID		
 
 	--Universe Details
 	SELECT @UserID AS userid,* 
@@ -128,7 +128,7 @@ BEGIN
 			IF @EntityID IS NOT NULL SET @vEntityID = @EntityID
 			IF @ParentEntityID IS NOT NULL SET @vParentEntityID = @ParentEntityID
 		 
-			SET @Params = CONCAT('@EntityID=',@vEntityID,',@EntityType=',CHAR(39),@EntityType,CHAR(39),',@ParentEntityID=',@vParentEntityID)
+			SET @Params = CONCAT('@EntityID=',@vEntityID,',@EntityTypeID=',CHAR(39),@EntityTypeID,CHAR(39),',@ParentEntityID=',@vParentEntityID)
 			SET @Params = CONCAT(@Params,',@ParentEntityType=', CHAR(39),@ParentEntityType, CHAR(39),',@UserLoginID=',@UserLoginID,',@MethodName=',CHAR(39),@MethodName, CHAR(39))
 			SET @Params = CONCAT(@Params,',@LogRequest=1')
 

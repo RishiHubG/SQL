@@ -4,24 +4,27 @@ DROP TABLE  IF EXISTS RegisterPropertiesXref,RegisterPropertyXerf_Data,RegisterP
 DROP TABLE  IF EXISTS dbo.Registers
 CREATE TABLE dbo.Registers
 	(	
-	RegisterID INT IDENTITY(1,1),
-	UserCreated INT NOT NULL,
-	DateCreated DATETIME2(0) NOT NULL,
-	UserModified INT,
-	DateModified DATETIME2(0),
-	VersionNum INT NULL,
-	FullSchemaJSON VARCHAR(MAX),
-	Name VARCHAR(500) NOT NULL,
-	Description VARCHAR(MAX) NULL,
-	FrameworkID	INT,
-	UniverseID INT,
-	AccessControlID	INT,
-	ParentAccessControlID INT,
-	WorkFlowACID INT,
-	IsInherited BIT,
-	PropagatedAccessControlID INT,
-	PropagatedWFAccessControlID INT,
-	HasExtendedProperties BIT,
+	registerid INT IDENTITY(1,1),
+	usercreated INT NOT NULL,
+	datecreated DATETIME2(0) NOT NULL,
+	usermodified INT,
+	datemodified DATETIME2(0),
+	versionnum INT NULL,
+	fullschemajson VARCHAR(MAX),
+	name VARCHAR(500) NOT NULL,
+	description VARCHAR(MAX) NULL,
+	frameworkid	INT,
+	parentid INT NULL,
+	height INT NULL,
+	depth INT NULL,
+	universeid INT,
+	accesscontrolid	INT,
+	parentaccesscontrolid INT,
+	workflowacid INT,
+	isinherited BIT,
+	propagatedaccesscontrolid INT,
+	propagatedwfaccesscontrolid INT,
+	hasextendedproperties BIT,
 	CONSTRAINT PK_Registers_RegisterID PRIMARY KEY(RegisterID),
 	CONSTRAINT UQ_Registers_Name UNIQUE(Name),
 	)
@@ -31,15 +34,15 @@ GO
 DROP TABLE  IF EXISTS dbo.RegisterProperties
 CREATE TABLE dbo.RegisterProperties
 	(
-	RegisterPropertyID INT IDENTITY(1,1) NOT NULL,
-	RegisterID INT NOT NULL,	
-	UserCreated INT NOT NULL,
-	DateCreated DATETIME2(0) NOT NULL,
-	UserModified INT,
-	DateModified DATETIME2(0),
-	VersionNum INT NOT NULL,
-	PropertyName VARCHAR(100) NOT NULL,
-	JSONType VARCHAR(50) NOT NULL,
+	registerpropertyid INT IDENTITY(1,1) NOT NULL,
+	registerid INT NOT NULL,	
+	usercreated INT NOT NULL,
+	datecreated DATETIME2(0) NOT NULL,
+	usermodified INT,
+	datemodified DATETIME2(0),
+	versionnum INT NOT NULL,
+	propertyname VARCHAR(100) NOT NULL,
+	jsontype VARCHAR(50) NOT NULL,
 	CONSTRAINT PK_RegisterProperties_RegisterPropertyID PRIMARY KEY(RegisterPropertyID)
 	)
 
@@ -50,17 +53,17 @@ GO
 DROP TABLE  IF EXISTS dbo.RegisterPropertiesXref
 CREATE TABLE dbo.RegisterPropertiesXref
 (
-RegisterPropertiesXrefID INT IDENTITY(1,1),
-RegisterPropertyID INT NOT NULL,
-RegisterID INT NOT NULL,
-UserCreated INT NOT NULL,
-DateCreated DATETIME2(0) NOT NULL,
-UserModified INT,
-DateModified DATETIME2(0),
-VersionNum INT NOT NULL,
-PropertyName NVARCHAR(1000),
-IsRequired BIT,
-IsActive BIT, 
+registerpropertiesxrefid INT IDENTITY(1,1),
+registerpropertyid INT NOT NULL,
+registerid INT NOT NULL,
+usercreated INT NOT NULL,
+datecreated DATETIME2(0) NOT NULL,
+usermodified INT,
+datemodified DATETIME2(0),
+versionnum INT NOT NULL,
+propertyname NVARCHAR(1000),
+isrequired BIT,
+isactive BIT, 
 CONSTRAINT PK_RegisterPropertiesXref_RegisterID_RegisterPropertyID PRIMARY KEY(RegisterPropertiesXrefID,RegisterPropertyID,RegisterID)
 )
  		ALTER TABLE [dbo].RegisterPropertiesXref ADD CONSTRAINT DF_RegisterPropertiesXref_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
@@ -76,11 +79,11 @@ DROP TABLE  IF EXISTS dbo.RegisterPropertyXerf_Data
 CREATE TABLE dbo.RegisterPropertyXerf_Data
 (
 RegisterPropertyXerf_DataID INT IDENTITY(1,1),
-RegisterID INT ,
-UserCreated INT NOT NULL,
-DateCreated DATETIME2(0) NOT NULL,
-UserModified INT,
-DateModified DATETIME2(0),
+registerid INT ,
+usercreated INT NOT NULL,
+datecreated DATETIME2(0) NOT NULL,
+usermodified INT,
+datemodified DATETIME2(0),
 CONSTRAINT PK_RegisterPropertyXerf_Data_RegisterPropertyXerf_DataID PRIMARY KEY(RegisterPropertyXerf_DataID)
 )
  		ALTER TABLE [dbo].RegisterPropertyXerf_Data ADD CONSTRAINT DF_RegisterPropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
