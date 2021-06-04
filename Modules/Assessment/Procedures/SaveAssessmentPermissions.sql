@@ -319,6 +319,30 @@ BEGIN TRY
 		
 		UPDATE #TMP_UG_Users
 			SET TableInsert = REPLACE(TableInsert,'AccessControlledResource','UserAccessControlledResource')
+		
+		--TO DO: UNION THE PERMISSIONS
+		/*
+		DECLARE @TBL TABLE(
+						[AccessControlID] [int] NULL,
+						[UserCreated] [int] NULL,
+						[DateCreated] [datetime] NULL,
+						[UserModified] [int] NULL,
+						[DateModified] [datetime] NULL,
+						[UserId] [int] NULL,
+						[Rights] [int] NULL,
+						[Customised] [bit] NULL,
+						[Read] [int] NULL,
+						[Modify] [int] NULL,
+						[Write] [int] NULL,
+						[Administrate] [int] NULL,
+						[Cut] [int] NULL,
+						[Copy] [int] NULL,
+						[Export] [int] NULL,
+						[Delete] [int] NULL,
+						[Report] [int] NULL,
+						[Adhoc] [int] NULL 
+						)
+		*/
 
 		--CONCATENATE THE DELETES
 		SET @SQL = STUFF
