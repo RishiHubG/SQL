@@ -257,7 +257,7 @@ BEGIN TRY
 			ORDER BY Element_ID
 			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
 			,1,2,'') AS ColumnNames
-		-- INTO #TMP_Columns
+		 INTO #TMP_Columns
 		FROM #TMP TMP
 		GROUP BY ParentID
 		
