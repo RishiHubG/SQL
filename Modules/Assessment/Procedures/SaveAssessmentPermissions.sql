@@ -12,12 +12,6 @@ DESCRIPTION:
 USAGE:          	EXEC dbo.SaveAssessmentPermissions   @UserLoginID=100,
 													@inputJSON=  ''
 
-INSERT INTO dbo.AccessControlledResource(
-[AccessControlID], [UserCreated], [DateCreated], [UserModified], [DateModified], [UserId], [Rights], [Customised], [Read], [Modify], [Write], [Administrate], [Cut], [Copy], [Export], [Delete], [Report], [Adhoc]
-)
-SELECT @AccessControlID,@UserID,@UTCDATE,@UserID,@UTCDATE,@UserID,
-1,1,1,1,1,1,1,1,1,1,1,1
-
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
