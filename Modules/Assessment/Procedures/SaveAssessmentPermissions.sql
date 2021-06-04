@@ -46,8 +46,7 @@ BEGIN TRY
 	 SELECT *
 			INTO #TMP_ALLSTEPS
 	 FROM dbo.HierarchyFromJSON(@inputJSON) 
-	-- SELECT * FROM #TMP_ALLSTEPS
-		--RETURN
+	
 		;WITH CTE
 		AS
 		(
@@ -72,11 +71,7 @@ BEGIN TRY
 		UPDATE #TMP_DATA_KEYNAME
 			SET KeyName = SUBSTRING(Name,Pos+1,len(Name))
 		WHERE Pos > 0
-
-		--SELECT * FROM #TMP_DATA_KEYNAME
-		--RETURN
-		--SELECT * FROM #TMP_ALLSTEPS
-
+			
 		SELECT UserID	
 			INTO #TMP_ExistingUsers
 		FROM dbo.AccessControlledResource
@@ -226,7 +221,7 @@ BEGIN TRY
 		--UPDATE STATEMENTS ENDS HERE--------------------------------------------------------------------------------------------------------
 
 		 
-		--RETURN
+		
 		SET @SQL = STUFF
 					((SELECT CONCAT(' ', UpdString,'; ', CHAR(10))
 					FROM #TMP_UpdateStmt 	
@@ -311,10 +306,6 @@ BEGIN TRY
 		END --END OF INSERTS
 
 		
-		--SELECT * FROM #TMP_UpdateStmt
-		--return
-
-
 		--CHECK FOR USERGROUPS & INSERT FOR OTHER USERS
 		SELECT UG_Child.UserID,
 			   REPLACE(TableInsert,'<USERID>',UG_Child.UserID) AS TableInsert,
@@ -356,7 +347,7 @@ BEGIN TRY
 		FROM dbo.UserAccessControlledResource ACR
 			 INNER JOIN #TMP_UG_Users TMP ON TMP.UserID = ACR.UserID
 
-		--RETURN					   
+							   
 		 
 		DECLARE @Params VARCHAR(MAX)
 		DECLARE @ObjectName VARCHAR(100)
