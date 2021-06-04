@@ -44,9 +44,8 @@ TRUNCATE TABLE RegisterPropertyXerf_Data_history
 --DELETE: DONE
 --NEW TABLE UserAccessControlledResource: DONE
 
-IF NOT EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=117 AND UserID=2)
-INSERT INTO dbo.AccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1','117','3261','2021-06-04 07:04:02.267','3261','2021-06-04 07:04:02.267','1'); 
-
+SELECT * FROM dbo.AccessControlledResource
+SELECT * FROM Registers
 
 --ROLLBACK COMMIT
 SET XACT_ABORT ON;

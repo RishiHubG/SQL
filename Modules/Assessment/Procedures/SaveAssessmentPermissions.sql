@@ -307,7 +307,7 @@ BEGIN TRY
 
 		
 		--CHECK FOR USERGROUPS & INSERT FOR OTHER USERS
-		SELECT UG_Child.UserID,
+		SELECT DISTINCT UG_Child.UserID,
 			   REPLACE(TableInsert,'<USERID>',UG_Child.UserID) AS TableInsert,
 			   CONCAT('DELETE FROM dbo.UserAccessControlledResource WHERE AccessControlID=',@AccessControlID,' AND UserID=',UG_Child.UserID) AS TableDelete
 			INTO #TMP_UG_Users
@@ -356,7 +356,7 @@ BEGIN TRY
 		IF @LogRequest = 1
 		BEGIN			
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
-				SET @Params = CONCAT(@Params,'@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,'@MethodName=',CHAR(39),@MethodName,CHAR(39),',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
 			--PRINT @PARAMS
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
