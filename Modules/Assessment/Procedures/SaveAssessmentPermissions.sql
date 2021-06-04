@@ -154,6 +154,8 @@ BEGIN TRY
 			DBCC CHECKIDENT(#TMP_AllCols, RESEED,@MAXID)
 
 			INSERT INTO #TMP_AllCols (ColumnName)
+				SELECT 'UserID' 
+						UNION  	
 				SELECT 'Rights' 
 						UNION  
 				--SELECT	'Customised' 
@@ -179,17 +181,17 @@ BEGIN TRY
 				SELECT	'Adhoc'
 
 			UPDATE #TMP_AllCols SET ParentID = -1
+			UPDATE #TMP_AllCols SET StringValue = 1 WHERE ColumnName= 'UserID'
 
 			INSERT INTO #TMP_AllCols (ColumnName,ParentID)
 				SELECT ColumnName,-2 FROM #TMP_AllCols
 				
 			INSERT INTO #TMP (Element_ID,ColumnName,StringValue,ParentID)
 				SELECT Element_ID,ColumnName,StringValue,ParentID FROM #TMP_AllCols
+
+			UPDATE #TMP_AllCols SET StringValue = 1 WHERE ColumnName= 'UserID' AND ParentID = -2
 	---------------------------------------------------------------------------------------------------------------------------
 	
-		SELECT * 
-		FROM #TMP TMP
-			 INNER  JOIN #TMP_Users Usr ON Usr.ParentID = TMP.ParentID
 		
 		--SELECT * FROM #TMP_Users
 
@@ -229,7 +231,7 @@ BEGIN TRY
 			  INNER JOIN #TMP_Users Usr ON Usr.ParentID = TMP.ParentID
 		--UPDATE STATEMENTS ENDS HERE--------------------------------------------------------------------------------------------------------
 
-		SELECT * FROM #TMP_UpdateStmt
+		 
 		--RETURN
 		SET @SQL = STUFF
 					((SELECT CONCAT(' ', UpdString,'; ', CHAR(10))
@@ -238,13 +240,13 @@ BEGIN TRY
 					),1,1,'')	
 		 
 		PRINT @SQL
-		--EXEC (@SQL)
+		EXEC (@SQL)
 
 
 		END
 		--ELSE   ----INSERT
 		BEGIN
-
+		
 		--BUILD THE COLUMNS
 		SELECT 
 			ParentID,
@@ -255,7 +257,7 @@ BEGIN TRY
 			ORDER BY Element_ID
 			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
 			,1,2,'') AS ColumnNames
-		 INTO #TMP_Columns
+		-- INTO #TMP_Columns
 		FROM #TMP TMP
 		GROUP BY ParentID
 		
@@ -287,7 +289,7 @@ BEGIN TRY
 									   CHAR(39),@UTCDATE,CHAR(39),',',
 									   CHAR(39),@Customized,CHAR(39)
 									   )		 
-		
+			
 		--BUILD THE INSERT
 		SELECT Cols.ParentID,
 			   Usr.UserID, 
@@ -299,8 +301,7 @@ BEGIN TRY
 		FROM #TMP_Columns Cols
 			 INNER JOIN #TMP_ColumnValues Val ON VAL.ParentID = Cols.ParentID
 			 INNER JOIN #TMP_Users Usr ON Usr.ParentID = Cols.ParentID
-		
-
+	
 		UPDATE #TMP_AccessControlledResource
 			SET TableInsert = REPLACE(TableInsert,'<USERID>',UserID)
 
@@ -311,7 +312,7 @@ BEGIN TRY
 					),1,1,'')	
 		 
 		PRINT @SQL
-		--EXEC (@SQL)
+		EXEC (@SQL)
 
 		END --END OF INSERTS
 
@@ -322,14 +323,29 @@ BEGIN TRY
 
 		--CHECK FOR USERGROUPS & INSERT FOR OTHER USERS
 		SELECT UG_Child.UserID,
-			   REPLACE(TableInsert,'<USERID>',UG_Child.UserID) AS TableInsert		
+			   REPLACE(TableInsert,'<USERID>',UG_Child.UserID) AS TableInsert,
+			   CONCAT('DELETE FROM dbo.UserAccessControlledResource WHERE AccessControlID=',@AccessControlID,' AND UserID=',UG_Child.UserID) AS TableDelete
 			INTO #TMP_UG_Users
 		FROM #TMP_AccessControlledResource TMP
 			 INNER JOIN dbo.AUser AU ON TMP.UserID = AU.UserID
 			 INNER JOIN dbo.UserGroup UG ON UG.UserID = TMP.UserID
 			 INNER JOIN dbo.UserGroup UG_Child ON UG_Child.GroupID = UG.GroupID
 		WHERE AU.AuthType = 2 --USERGROUP
-	
+		
+		UPDATE #TMP_UG_Users
+			SET TableInsert = REPLACE(TableInsert,'AccessControlledResource','UserAccessControlledResource')
+
+		--CONCATENATE THE DELETES
+		SET @SQL = STUFF
+					((SELECT CONCAT(' ', TableDelete,'; ', CHAR(10))
+					FROM #TMP_UG_Users 	
+					FOR XML PATH ('')								
+					),1,1,'')	
+		 
+		PRINT @SQL
+		EXEC (@SQL)
+		
+		--CONCATENATE THE INSERTS
 		SET @SQL = STUFF
 					((SELECT CONCAT(' ', TableInsert,'; ', CHAR(10))
 					FROM #TMP_UG_Users 	
@@ -337,12 +353,13 @@ BEGIN TRY
 					),1,1,'')	
 		 
 		PRINT @SQL
-		--EXEC (@SQL)
+		EXEC (@SQL)
 
+		
 		--SET Customized TO FALSE FOR OTHER USERS
 		UPDATE ACR
 			SET Customised = 0
-		FROM dbo.AccessControlledResource ACR
+		FROM dbo.UserAccessControlledResource ACR
 			 INNER JOIN #TMP_UG_Users TMP ON TMP.UserID = ACR.UserID
 
 		--RETURN					   

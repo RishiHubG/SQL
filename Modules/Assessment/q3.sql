@@ -49,6 +49,7 @@ INSERT INTO dbo.AccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut]
 
 
 --ROLLBACK COMMIT
+SET XACT_ABORT ON;
 BEGIN TRAN;
 DELETE FROM Registers --WHERE registerid=1
 exec SaveAssessmentJSONData 
@@ -74,3 +75,7 @@ exec SaveAssessmentJSONData
 	--											)
 	--	SELECT @AccessControlID,@UserID,@UTCDATE,@UserID,@UTCDATE,@UserID,
 	--		   1,1,1,1,1,1,1,1,1,1,1,1
+
+SET XACT_ABORT ON;
+BEGIN TRAN;
+IF NOT EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=127 AND UserID=<USERID>) INSERT INTO dbo.AccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1','127','3261','2021-06-04 07:42:02.047','3261','2021-06-04 07:42:02.047','1')
