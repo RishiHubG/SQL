@@ -106,8 +106,8 @@ BEGIN
 	SELECT @userid AS userid,ASU.Name AS username,
 		   [read],[modify],write,cut,[copy],[delete],administrate,adhoc,export,report,Customised AS iscustomised
 	FROM dbo.AccessControlledResource AC
-	     INNER JOIN dbo.AUser ASU ON ASU.UserId = AC.UserId
-	WHERE AC.AccessControlID = @AccessControlID
+	     INNER JOIN dbo.AUser ASU ON ASU.UserId = AC.UserId		
+	WHERE AC.AccessControlID = @AccessControlID		  
 		  AND AC.Customised = 1
 
 	END		--END OF USER PERMISSION CHECK
