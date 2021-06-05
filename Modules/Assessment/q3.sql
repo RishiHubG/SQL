@@ -75,6 +75,54 @@ exec SaveAssessmentJSONData
 	--	SELECT @AccessControlID,@UserID,@UTCDATE,@UserID,@UTCDATE,@UserID,
 	--		   1,1,1,1,1,1,1,1,1,1,1,1
 
-SET XACT_ABORT ON;
-BEGIN TRAN;
-IF NOT EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=127 AND UserID=<USERID>) INSERT INTO dbo.AccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1','127','3261','2021-06-04 07:42:02.047','3261','2021-06-04 07:42:02.047','1')
+USE [agsqa]
+GO
+
+/****** Object:  Table [dbo].[AccessControlledResource]    Script Date: 04/06/2021 16:45:18 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+DECLARE @TBL TABLE(
+	[AccessControlID] [int] NULL,
+	[UserCreated] [int] NULL,
+	[DateCreated] [datetime] NULL,
+	[UserModified] [int] NULL,
+	[DateModified] [datetime] NULL,
+	[UserId] [int] NULL,
+	[Rights] [int] NULL,
+	[Customised] [bit] NULL,
+	[Read] [int] NULL,
+	[Modify] [int] NULL,
+	[Write] [int] NULL,
+	[Administrate] [int] NULL,
+	[Cut] [int] NULL,
+	[Copy] [int] NULL,
+	[Export] [int] NULL,
+	[Delete] [int] NULL,
+	[Report] [int] NULL,
+	[Adhoc] [int] NULL 
+	)
+
+	INSERT INTO @TBL (USERID,[Read]) VALUES(1,1)
+	INSERT INTO @TBL (USERID,[Read],Write,[Modify]) VALUES(1,1,1,1)
+	INSERT INTO @TBL (USERID,[Modify]) VALUES(1,1)
+	INSERT INTO @TBL (USERID,Write) VALUES(2,1)
+	INSERT INTO @TBL (USERID,[Modify]) VALUES(2,1)
+
+	SELECT userid,SUM([Read]),SUM([Modify]),SUM(Write)
+	FROM @TBL
+	GROUP BY userid
+
+IF NOT EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=153 AND UserID=2)
+INSERT INTO dbo.AccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [UserID], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '2', '1','153','3261','2021-06-05 04:28:22.520','3261','2021-06-05 04:28:22.520','1'); 
+ IF NOT EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=153 AND UserID=1)
+INSERT INTO dbo.AccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [UserID], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1','153','3261','2021-06-05 04:28:22.520','3261','2021-06-05 04:28:22.520','1'); 
+ IF NOT EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=153 AND UserID=2)
+INSERT INTO dbo.AccessControlledResource ([userid], [read], [modify], [write], [cut], [copy], [delete], [administrate], [adhoc],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('2', 'false', 'true', 'true', 'false', 'false', 'false', 'false', 'false','153','3261','2021-06-05 04:28:22.520','3261','2021-06-05 04:28:22.520','1'); 
+ IF NOT EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=153 AND UserID=3)
+INSERT INTO dbo.AccessControlledResource ([userid], [modify], [write], [cut], [copy], [delete], [administrate], [adhoc],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('3', 'true', 'true', 'true', 'true', 'false', 'false', 'false','153','3261','2021-06-05 04:28:22.520','3261','2021-06-05 04:28:22.520','1'); 
+
+ 

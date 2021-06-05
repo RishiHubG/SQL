@@ -190,7 +190,7 @@ BEGIN TRY
 
 		--BUILD THE UPDATE STATEMENTS-------------------------------------------------------------------------------------------------------
 		DECLARE @UpdStmt VARCHAR(MAX) = CONCAT('IF EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=',@AccessControlID,' AND UserID=<USERID>)',CHAR(10),
-												' UPDATE dbo.AccessControlledResource SET UserModified=', @UserID,', DateModified = GETUTCDATE(),', CHAR(10))
+												' UPDATE dbo.AccessControlledResource SET UserModified=', @UserID,', DateModified = GETUTCDATE(),')
 		DECLARE @UpdWhereClauseStmt VARCHAR(MAX) = CONCAT(' WHERE AccessControlID=',@AccessControlID, CHAR(10), ' AND userid=<USERID>')
 		
 		 SELECT 
@@ -201,7 +201,7 @@ BEGIN TRY
 							  ELSE
 							  StringValue
 							  END
-							,'''', CHAR(10))
+							,'''')
 			FROM #TMP 
 			WHERE ParentID = TMP.ParentID
 			ORDER BY Element_ID
@@ -212,7 +212,7 @@ BEGIN TRY
 		GROUP BY ParentID
 		
 		UPDATE #TMP_UpdateStmt 
-			SET UpdString = CONCAT(@UpdStmt, CHAR(10),UpdString, CHAR(10),@UpdWhereClauseStmt)
+			SET UpdString = CONCAT(@UpdStmt,UpdString, CHAR(10),@UpdWhereClauseStmt)
 
 		UPDATE	TMP 
 			SET UpdString = REPLACE(UpdString,'<USERID>',UserID)
@@ -304,31 +304,18 @@ BEGIN TRY
 		EXEC (@SQL)
 
 		END --END OF INSERTS
+		
+		--START: CHECK FOR USERGROUPS & INSERT FOR OTHER USERS***********************************************************************************
 
-		
-		--CHECK FOR USERGROUPS & INSERT FOR OTHER USERS
-		SELECT DISTINCT UG_Child.UserID,
-			   REPLACE(TableInsert,'<USERID>',UG_Child.UserID) AS TableInsert,
-			   CONCAT('DELETE FROM dbo.UserAccessControlledResource WHERE AccessControlID=',@AccessControlID,' AND UserID=',UG_Child.UserID) AS TableDelete
-			INTO #TMP_UG_Users
-		FROM #TMP_AccessControlledResource TMP
-			 INNER JOIN dbo.AUser AU ON TMP.UserID = AU.UserID
-			 INNER JOIN dbo.UserGroup UG ON UG.UserID = TMP.UserID
-			 INNER JOIN dbo.UserGroup UG_Child ON UG_Child.GroupID = UG.GroupID
-		WHERE AU.AuthType = 2 --USERGROUP
-		
-		UPDATE #TMP_UG_Users
-			SET TableInsert = REPLACE(TableInsert,'AccessControlledResource','UserAccessControlledResource')
-		
-		--TO DO: UNION THE PERMISSIONS
-		/*
-		DECLARE @TBL TABLE(
+		DECLARE @TMP_SQL VARCHAR(MAX)
+		CREATE TABLE #TBL(
 						[AccessControlID] [int] NULL,
 						[UserCreated] [int] NULL,
 						[DateCreated] [datetime] NULL,
 						[UserModified] [int] NULL,
 						[DateModified] [datetime] NULL,
 						[UserId] [int] NULL,
+						[ParentID] [int] NULL,
 						[Rights] [int] NULL,
 						[Customised] [bit] NULL,
 						[Read] [int] NULL,
@@ -341,20 +328,61 @@ BEGIN TRY
 						[Delete] [int] NULL,
 						[Report] [int] NULL,
 						[Adhoc] [int] NULL 
-						)
-		*/
+						)		
+								
 
-		--CONCATENATE THE DELETES
+		SELECT DISTINCT UG_Child.UserID,
+			   TMP.ParentID,	
+			   REPLACE(TableInsert,'<USERID>',UG_Child.UserID) AS TableInsert,
+			   CONCAT('DELETE FROM dbo.UserAccessControlledResource WHERE AccessControlID=',@AccessControlID,' AND UserID=',UG_Child.UserID) AS TableDelete
+			INTO #TMP_UG_Users
+		FROM #TMP_AccessControlledResource TMP
+			 INNER JOIN dbo.AUser AU ON TMP.UserID = AU.UserID
+			 INNER JOIN dbo.UserGroup UG ON UG.UserID = TMP.UserID
+			 INNER JOIN dbo.UserGroup UG_Child ON UG_Child.GroupID = UG.GroupID
+		WHERE AU.AuthType = 2 --USERGROUP			  
+		
+		UPDATE #TMP_UG_Users
+			SET TableInsert = REPLACE(TableInsert,'AccessControlledResource','UserAccessControlledResource')
+		
+		--CONCATENATE THE INSERTS
+		SET @TMP_SQL = STUFF
+					((SELECT CONCAT(' ', TableInsert,'; ', CHAR(10))
+					FROM #TMP_UG_Users 	
+					FOR XML PATH ('')								
+					),1,1,'')	
+
+		--INSERT INTO TEMP TABLE
+		SET @TMP_SQL = REPLACE(@TMP_SQL,'dbo.AccessControlledResource','#TBL')
+		PRINT @TMP_SQL
+		EXEC (@TMP_SQL)
+
+		--CHECK FOR USERS BELONGING TO MULTPLE GROUPS
+		SELECT TBL.UserID,
+			   TBL.ParentID,
+			   SUM([Adhoc]) AS [Adhoc], SUM([Administrate]) AS [Administrate], SUM([Copy]) AS [Copy], SUM([Cut]) AS [Cut], SUM([Delete]) AS [Delete], 
+			   SUM([Export]) AS [Export], SUM([Modify]) AS [Modify], SUM([Read]) AS [Read], SUM([Report]) AS [Report], 
+			   SUM([Rights]) AS [Rights], SUM([Write]) AS [Write]
+			INTO #TMP_Permissions	
+		FROM #TBL TBL
+			 INNER JOIN #TMP_UG_Users TUG ON TUG.ParentID = TBL.ParentID
+		GROUP BY TBL.UserID,TBL.ParentID
+		HAVING COUNT(*)>1
+
+		--REMOVE DUPLICATE USERS FROM THE MAIN TEMP TABLE
+		DELETE TG FROM #TMP_UG_Users TG WHERE EXISTS(SELECT 1 FROM #TMP_Permissions WHERE UserID = TG.UserID)
+
+		--CONCATENATE THE DELETES FOR USERS BELONGING TO ONLY ONE UG
 		SET @SQL = STUFF
 					((SELECT CONCAT(' ', TableDelete,'; ', CHAR(10))
 					FROM #TMP_UG_Users 	
 					FOR XML PATH ('')								
 					),1,1,'')	
-		 
+		
 		PRINT @SQL
 		EXEC (@SQL)
 		
-		--CONCATENATE THE INSERTS
+		--CONCATENATE THE INSERTS FOR USERS BELONGING TO ONLY ONE UG
 		SET @SQL = STUFF
 					((SELECT CONCAT(' ', TableInsert,'; ', CHAR(10))
 					FROM #TMP_UG_Users 	
@@ -362,16 +390,50 @@ BEGIN TRY
 					),1,1,'')	
 		 
 		PRINT @SQL
-		EXEC (@SQL)
+		EXEC (@SQL)		
 
-		
+		 --START: UNION THE PERMISSIONS FOR USERS BELONGING TO MULTIPLE UG*************************************************************************************************		
+				
+		UPDATE #TMP_Permissions
+			SET [Adhoc] = CASE WHEN [Adhoc] > 1 THEN 1 ELSE 0 END,
+				[Administrate] = CASE WHEN [Administrate] > 1 THEN 1 ELSE 0 END,
+				[Copy] = CASE WHEN [Copy] > 1 THEN 1 ELSE 0 END,
+				[Cut] = CASE WHEN [Cut] > 1 THEN 1 ELSE 0 END,
+				[Delete] = CASE WHEN [Delete] > 1 THEN 1 ELSE 0 END,
+				[Export] = CASE WHEN [Read] > 1 THEN 1 ELSE 0 END,
+				[Modify] = CASE WHEN [Report] > 1 THEN 1 ELSE 0 END,
+				[Read] = CASE WHEN [Write] > 1 THEN 1 ELSE 0 END,
+				[Report] = CASE WHEN [Adhoc] > 1 THEN 1 ELSE 0 END,
+				[Rights] = CASE WHEN [Adhoc] > 1 THEN 1 ELSE 0 END,		---CHECK WITH NITIN????
+				[Write] = CASE WHEN [Write] > 1 THEN 1 ELSE 0 END		
+
+		SET @SQL = STUFF
+					((SELECT CONCAT('; ', 
+										'INSERT INTO dbo.UserAccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [UserID], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)',
+										[Adhoc],',', [Administrate],',', [Copy],',', [Cut],',', [Delete],',', [Export],',', [Modify],',', [Read],',', [Report],',', [Rights],',', [UserID],',', [Write],',',@AccessControlID,',',@UserLoginID,',', CHAR(39),@UTCDATE,CHAR(39),',',@UserLoginID,',', CHAR(39),@UTCDATE,CHAR(39),',0',
+									CHAR(10))
+					FROM #TMP_Permissions 	
+					FOR XML PATH ('')								
+					),1,1,'')	
+		 
+		PRINT @SQL
+		EXEC (@SQL)	
+
+		--SELECT @SQL = CONCAT('INSERT INTO dbo.AccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [UserID], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)',
+		--						[Adhoc],',', [Administrate],',', [Copy],',', [Cut],',', [Delete],',', [Export],',', [Modify],',', [Read],',', [Report],',', [Rights],',', [UserID],',', [Write],',',@AccessControlID,',',@UserLoginID,',', CHAR(39),@UTCDATE,CHAR(39),',',@UserLoginID,',', CHAR(39),@UTCDATE,CHAR(39),',0'		
+		--				  )
+		--FROM #TMP_Permissions;
+
+
+		---END: UNION OF UG USERS PERMISSIONS IF USERS BELONGS TO MORE THAN ONE UG ENDS HERE*********************************************************************
+
 		--SET Customized TO FALSE FOR OTHER USERS
 		UPDATE ACR
 			SET Customised = 0
 		FROM dbo.UserAccessControlledResource ACR
 			 INNER JOIN #TMP_UG_Users TMP ON TMP.UserID = ACR.UserID
 
-							   
+		--END: CHECK FOR USERGROUPS & INSERT FOR OTHER USERS***********************************************************************************					   
 		 
 		DECLARE @Params VARCHAR(MAX)
 		DECLARE @ObjectName VARCHAR(100)
