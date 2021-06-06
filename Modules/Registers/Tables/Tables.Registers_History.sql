@@ -1,6 +1,6 @@
 
 
-DROP TABLE  IF EXISTS dbo.Registers_history,RegisterProperties_history,RegisterPropertiesXref_history,RegisterPropertyXerf_Data_history
+DROP TABLE  IF EXISTS dbo.Registers_history,RegisterProperties_history,RegisterPropertiesXref_history,RegisterPropertyXref_Data_history
 
 DROP TABLE  IF EXISTS dbo.Registers_history
 CREATE TABLE dbo.Registers_history
@@ -84,8 +84,8 @@ GO
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
 --COLUMNS WILL BE ADDED TO THIS TABLE; NO REMOVAL OF COLUMNS
-DROP TABLE  IF EXISTS dbo.RegisterPropertyXerf_Data_history
-CREATE TABLE dbo.RegisterPropertyXerf_Data_history
+DROP TABLE  IF EXISTS dbo.RegisterPropertyXref_Data_history
+CREATE TABLE dbo.RegisterPropertyXref_Data_history
 (
 historyid INT IDENTITY(1,1),
 usercreated INT NOT NULL,
@@ -96,7 +96,7 @@ versionnum INT NULL,
 periodidentifierid INT NOT NULL,
 operationtype NVARCHAR(50),
 useractionid INT,
-registerpropertyxerf_dataid INT,
+RegisterPropertyXref_Dataid INT,
 registerid INT
 )
  		 

@@ -126,3 +126,21 @@ INSERT INTO dbo.AccessControlledResource ([userid], [read], [modify], [write], [
 INSERT INTO dbo.AccessControlledResource ([userid], [modify], [write], [cut], [copy], [delete], [administrate], [adhoc],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('3', 'true', 'true', 'true', 'true', 'false', 'false', 'false','153','3261','2021-06-05 04:28:22.520','3261','2021-06-05 04:28:22.520','1'); 
 
  
+
+ --ROLLBACK COMMIT
+SET XACT_ABORT ON;
+BEGIN TRAN;
+DELETE FROM Registers --WHERE registerid=1
+exec SaveRegisterJSONData 
+@EntityId=-1,
+@EntitytypeId=3,
+@ParentEntityID=16,
+@ParentEntityTypeID=2,
+@Name=N'Domain3',
+@Description=N'Domain1 description',
+@InputJSON=N'{"attributes":{"currency":"usd","exchangeRate":1.1},"domainpermissiona":[{"userUserGroup":"testname","userid":2, "read":false,"modify":true,"write":true,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false},{"userUserGroup":"test8","userid":3,"modify":true,"write":true,"cut":true,"copy":true,"delete":false,"administrate":false,"adhoc":false}],"domianinherentpermissions":false,"workflowpermissions":[{"userUserGroup":"test8","userid":3,"read":false,"modify":true,"write":false,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false,"workflowname":"control1","stepstepItem":"step","stepname":"controlDetail","view":true},{"userUserGroup":"test9","userid":3,"workflowname":"control1","stepstepItem":"stepItem","stepname":"controlDetail","view":true,"modify":true}],"WFinheritpermissions":false,"frameworklist":{"control":true,"control2":true}}',
+@FrameworkID = 1,
+@MethodName=NULL,@UserLoginID=3261
+
+
+SELECT * FROM Registers
