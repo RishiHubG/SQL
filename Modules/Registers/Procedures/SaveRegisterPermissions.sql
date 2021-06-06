@@ -453,7 +453,7 @@ BEGIN TRY
 					SET @MethodName = 'NULL'
 
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
-				SET @Params = CONCAT(@Params,'@MethodName=',@MethodName,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
 			--PRINT @PARAMS
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -493,7 +493,7 @@ BEGIN CATCH
 					SET @MethodName = 'NULL'
 
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
-				SET @Params = CONCAT(@Params,'@MethodName=',@MethodName,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 

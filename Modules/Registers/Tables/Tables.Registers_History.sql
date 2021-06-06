@@ -86,8 +86,8 @@ GO
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
 --COLUMNS WILL BE ADDED TO THIS TABLE; NO REMOVAL OF COLUMNS
-DROP TABLE  IF EXISTS dbo.RegisterPropertyXref_Data_history
-CREATE TABLE dbo.RegisterPropertyXref_Data_history
+DROP TABLE  IF EXISTS dbo.RegisterPropertiesXref_Data_history
+CREATE TABLE dbo.RegisterPropertiesXref_Data_history
 (
 historyid INT IDENTITY(1,1),
 usercreated INT NOT NULL,

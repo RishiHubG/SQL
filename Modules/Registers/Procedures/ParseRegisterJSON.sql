@@ -459,7 +459,7 @@ BEGIN
 				 SET @DataCols =STUFF(
 							 (SELECT CONCAT(', [',Replace(TA.StringValue,' ',''),'] [', TA.DataType,'] ', TA.DataTypeLength)
 							 FROM #TMP_registerData TA								  
-							  WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.StringValue AND C.object_id =OBJECT_ID('RegisterPropertyXref_Data'))
+							  WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.StringValue AND C.object_id =OBJECT_ID('RegisterPropertiesXref_Data'))
 							 FOR XML PATH('')
 							 )
 							 ,1,1,'')
@@ -467,12 +467,12 @@ BEGIN
 
 				IF @DataCols IS NOT NULL
 				BEGIN
-					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertyXref_Data ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
+					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertiesXref_Data ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
 					PRINT @SQL	
 					EXEC sp_executesql @SQL	
 
 					--CREATE _DATA_HISTORY TABLE
-					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertyXref_Data_history ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
+					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertiesXref_Data_history ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
 					PRINT @SQL	
 					EXEC sp_executesql @SQL	
 
@@ -481,29 +481,29 @@ BEGIN
 					DECLARE @cols VARCHAR(MAX) = ''
 
 					SELECT @cols = CONCAT(@cols,N', [',name,'] ')
-					FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.RegisterPropertyXref_Data' , NULL, 1)
+					FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.RegisterPropertiesXref_Data' , NULL, 1)
 					
 					SET @cols = STUFF(@cols, 1, 1, N'');
 									 
 
-					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='RegisterPropertyXref_Data_Insert')						
+					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='RegisterPropertiesXref_Data_Insert')						
 						SET @SQL = N'ALTER TRIGGER '
 					ELSE
 						SET @SQL = N'CREATE TRIGGER '
 
-					SET @SQL = CONCAT(@SQL,N' dbo.RegisterPropertyXref_Data_Insert
-									   ON  dbo.RegisterPropertyXref_Data
+					SET @SQL = CONCAT(@SQL,N' dbo.RegisterPropertiesXref_Data_Insert
+									   ON  dbo.RegisterPropertiesXref_Data
 									   AFTER INSERT, UPDATE
 									AS 
 									BEGIN
 										SET NOCOUNT ON;
 
 										IF EXISTS(SELECT 1 FROM INSERTED) AND  NOT EXISTS(SELECT 1 FROM DELETED) --INSERT
-											INSERT INTO dbo.RegisterPropertyXref_Data_history(<ColumnList>)
+											INSERT INTO dbo.RegisterPropertiesXref_Data_history(<ColumnList>)
 												SELECT <columnList>
 												FROM INSERTED
 										ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
-											INSERT INTO dbo.RegisterPropertyXref_Data_history(<ColumnList>)
+											INSERT INTO dbo.RegisterPropertiesXref_Data_history(<ColumnList>)
 												SELECT <columnList>
 												FROM DELETED
 									END;',CHAR(10))

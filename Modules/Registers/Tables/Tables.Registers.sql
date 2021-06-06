@@ -1,5 +1,6 @@
-
-DROP TABLE  IF EXISTS RegisterPropertiesXref,RegisterPropertyXref_Data,RegisterProperties,dbo.Registers
+DROP TABLE  IF EXISTS dbo.RegisterPropertiesXref_Data
+DROP TABLE  IF EXISTS RegisterPropertiesXref
+DROP TABLE IF EXISTS RegisterProperties
 
 DROP TABLE  IF EXISTS dbo.Registers
 CREATE TABLE dbo.Registers
@@ -78,17 +79,17 @@ GO
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
 --COLUMNS WILL BE ADDED TO THIS TABLE; NO REMOVAL OF COLUMNS
-DROP TABLE  IF EXISTS dbo.RegisterPropertyXref_Data
-CREATE TABLE dbo.RegisterPropertyXref_Data
+DROP TABLE  IF EXISTS dbo.RegisterPropertiesXref_Data
+CREATE TABLE dbo.RegisterPropertiesXref_Data
 (
-RegisterPropertyXref_DataID INT IDENTITY(1,1),
+RegisterPropertiesXref_DataID INT IDENTITY(1,1),
 registerid INT ,
 usercreated INT NOT NULL,
 datecreated DATETIME2(0) NOT NULL,
 usermodified INT,
 datemodified DATETIME2(0),
-CONSTRAINT PK_RegisterPropertyXref_Data_RegisterPropertyXref_DataID PRIMARY KEY(RegisterPropertyXref_DataID)
+CONSTRAINT PK_RegisterPropertiesXref_Data_RegisterPropertiesXref_DataID PRIMARY KEY(RegisterPropertiesXref_DataID)
 )
- 		ALTER TABLE [dbo].RegisterPropertyXref_Data ADD CONSTRAINT DF_RegisterPropertyXref_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-		ALTER TABLE [dbo].RegisterPropertyXref_Data ADD CONSTRAINT FK_RegisterPropertyXref_Data_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
+ 		ALTER TABLE [dbo].RegisterPropertiesXref_Data ADD CONSTRAINT DF_RegisterPropertiesXref_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+		ALTER TABLE [dbo].RegisterPropertiesXref_Data ADD CONSTRAINT FK_RegisterPropertiesXref_Data_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
 GO

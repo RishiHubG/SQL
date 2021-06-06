@@ -1,6 +1,8 @@
 
 
-DROP TABLE  IF EXISTS UniversePropertiesXref,UniversePropertyXerf_Data,UniverseProperties,dbo.Universe
+DROP TABLE IF EXISTS UniversePropertiesXerf_Data
+DROP TABLE  IF EXISTS UniversePropertiesXref
+DROP TABLE IF EXISTS UniverseProperties
 
 DROP TABLE  IF EXISTS dbo.Universe
 CREATE TABLE dbo.Universe
@@ -78,17 +80,17 @@ GO
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
 --COLUMNS WILL BE ADDED TO THIS TABLE; NO REMOVAL OF COLUMNS
-DROP TABLE  IF EXISTS dbo.UniversePropertyXerf_Data
-CREATE TABLE dbo.UniversePropertyXerf_Data
+DROP TABLE  IF EXISTS dbo.UniversePropertiesXerf_Data
+CREATE TABLE dbo.UniversePropertiesXerf_Data
 (
-UniversePropertyXerf_DataID INT IDENTITY(1,1),
+UniversePropertiesXerf_DataID INT IDENTITY(1,1),
 UniverseID INT ,
 UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
 DateModified DATETIME2(0),
-CONSTRAINT PK_UniversePropertyXerf_Data_UniversePropertyXerf_DataID PRIMARY KEY(UniversePropertyXerf_DataID)
+CONSTRAINT PK_UniversePropertyXerf_Data_UniversePropertiesXerf_Data_DataID PRIMARY KEY(UniversePropertiesXerf_DataID)
 )
- 		ALTER TABLE [dbo].UniversePropertyXerf_Data ADD CONSTRAINT DF_UniversePropertyXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-		ALTER TABLE [dbo].UniversePropertyXerf_Data ADD CONSTRAINT FK_UniversePropertyXerf_Data_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.Universe(UniverseID)
+ 		ALTER TABLE [dbo].UniversePropertiesXerf_Data ADD CONSTRAINT DF_UniversePropertiesXerf_Data_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+		ALTER TABLE [dbo].UniversePropertiesXerf_Data ADD CONSTRAINT FK_UniversePropertiesXerf_Data_Data_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.Universe(UniverseID)
 GO

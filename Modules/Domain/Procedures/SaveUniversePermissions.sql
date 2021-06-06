@@ -199,7 +199,7 @@ BEGIN TRY
 		IF @LogRequest = 1
 		BEGIN			
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
-				SET @Params = CONCAT(@Params,'@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
 			--PRINT @PARAMS
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -233,7 +233,7 @@ BEGIN CATCH
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
-				SET @Params = CONCAT(@Params,'@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 

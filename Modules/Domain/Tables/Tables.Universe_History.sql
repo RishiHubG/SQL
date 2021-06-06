@@ -1,7 +1,6 @@
-USE JUNK
-GO
+ 
 
-DROP TABLE  IF EXISTS dbo.Universe_history,UniverseProperties_history,UniversePropertiesXref_history,UniversePropertyXerf_Data_history
+DROP TABLE  IF EXISTS dbo.Universe_history,UniverseProperties_history,UniversePropertiesXref_history,UniversePropertiesXerf_Data_history
 
 DROP TABLE  IF EXISTS dbo.Universe_history
 CREATE TABLE dbo.Universe_history
@@ -85,8 +84,8 @@ GO
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
 --COLUMNS WILL BE ADDED TO THIS TABLE; NO REMOVAL OF COLUMNS
-DROP TABLE  IF EXISTS dbo.UniversePropertyXerf_Data_history
-CREATE TABLE dbo.UniversePropertyXerf_Data_history
+DROP TABLE  IF EXISTS dbo.UniversePropertiesXerf_Data_history
+CREATE TABLE dbo.UniversePropertiesXerf_Data_history
 (
 HistoryID INT IDENTITY(1,1),
 UserCreated INT NOT NULL,
@@ -97,7 +96,7 @@ VersionNum INT NOT NULL,
 PeriodIdentifierID INT NULL,
 OperationType VARCHAR(50),
 UserActionID INT,
-UniversePropertyXerf_DataID INT,
+UniversePropertiesXerf_DataID INT,
 UniverseID INT
 )
  		 

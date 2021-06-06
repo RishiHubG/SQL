@@ -202,12 +202,12 @@ BEGIN TRY
 		
 				IF @EntityID = -1
 				BEGIN
-					SET @SQL = CONCAT('INSERT INTO dbo.UniversePropertyXerf_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
+					SET @SQL = CONCAT('INSERT INTO dbo.UniversePropertiesXerf_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
 					PRINT @SQL
 				END
 				ELSE	--UPDATE
 				BEGIN
-					SET @SQL = CONCAT('UPDATE dbo.UniversePropertyXerf_Data',CHAR(10),' SET ',@UpdStr)
+					SET @SQL = CONCAT('UPDATE dbo.UniversePropertiesXerf_Data',CHAR(10),' SET ',@UpdStr)
 					SET @SQL = CONCAT(@SQL, ' WHERE UniverseID=', @UniverseID)
 					PRINT @SQL
 				END
@@ -223,15 +223,15 @@ BEGIN TRY
 
 				--UPDATE _HISTORY TABLE-----------------------------------------
 		
-				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertyXerf_Data_history WHERE UniverseID = @UniverseID)
+				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertiesXerf_Data_history WHERE UniverseID = @UniverseID)
 
 				----UPDATE VERSION NO.
-				--UPDATE dbo.UniversePropertyXerf_Data_history
+				--UPDATE dbo.UniversePropertiesXerf_Data_history
 				--	SET VersionNum = @VersionNum
 				--WHERE HistoryID = @HistoryID			 
 
 				----RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
-				--UPDATE dbo.UniversePropertyXerf_Data_history
+				--UPDATE dbo.UniversePropertiesXerf_Data_history
 				--	SET PeriodIdentifierID = 0,
 				--		UserModified = @UserLoginID,
 				--		DateModified = GETUTCDATE()
@@ -239,7 +239,7 @@ BEGIN TRY
 				--	  AND VersionNum < @VersionNum
 		
 				----UPDATE OTHER COLUMNS FOR CURRENT VERSION
-				--UPDATE dbo.UniversePropertyXerf_Data_history
+				--UPDATE dbo.UniversePropertiesXerf_Data_history
 				--	SET PeriodIdentifierID = @PeriodIdentifierID,
 				--		UserModified = @UserLoginID,
 				--		DateModified = GETUTCDATE(),
@@ -255,7 +255,7 @@ BEGIN TRY
 				IF @LogRequest = 1
 				BEGIN			
 						SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
-						SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
+						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
 					--PRINT @PARAMS
 			
 					SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -286,8 +286,8 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 

@@ -220,36 +220,36 @@ BEGIN TRY
 		
 				IF @EntityID = -1
 				BEGIN
-					SET @SQL = CONCAT('INSERT INTO dbo.RegisterPropertyXref_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
+					SET @SQL = CONCAT('INSERT INTO dbo.RegisterPropertiesXref_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
 					PRINT @SQL
 				END
 				ELSE	--UPDATE
 				BEGIN
-					SET @SQL = CONCAT('UPDATE dbo.RegisterPropertyXref_Data',CHAR(10),' SET ',@UpdStr)
+					SET @SQL = CONCAT('UPDATE dbo.RegisterPropertiesXref_Data',CHAR(10),' SET ',@UpdStr)
 					SET @SQL = CONCAT(@SQL, ' WHERE RegisterID=', @RegisterID)
 					PRINT @SQL
 				END
 		
 				-- RETURN
 				EXEC sp_executesql @SQL	
-
+				
 				--CALL DOMAIN PERMISSIONS HERE
 				EXEC dbo.SaveRegisterPermissions @InputJSON = @InputJSON,
 												 @UserLoginID=@UserLoginID,
 												 @MethodName = @MethodName,
 												 @AccessControlID = @AccessControlID
-
+												 
 				--UPDATE _HISTORY TABLE-----------------------------------------
 		
-				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.RegisterPropertyXref_Data_history WHERE RegisterID = @RegisterID)
+				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.RegisterPropertiesXref_Data_history WHERE RegisterID = @RegisterID)
 
 				----UPDATE VERSION NO.
-				--UPDATE dbo.RegisterPropertyXref_Data_history
+				--UPDATE dbo.RegisterPropertiesXref_Data_history
 				--	SET VersionNum = @VersionNum
 				--WHERE HistoryID = @HistoryID			 
 
 				----RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
-				--UPDATE dbo.RegisterPropertyXref_Data_history
+				--UPDATE dbo.RegisterPropertiesXref_Data_history
 				--	SET PeriodIdentifierID = 0,
 				--		UserModified = @UserLoginID,
 				--		DateModified = GETUTCDATE()
@@ -257,7 +257,7 @@ BEGIN TRY
 				--	  AND VersionNum < @VersionNum
 		
 				----UPDATE OTHER COLUMNS FOR CURRENT VERSION
-				--UPDATE dbo.RegisterPropertyXref_Data_history
+				--UPDATE dbo.RegisterPropertiesXref_Data_history
 				--	SET PeriodIdentifierID = @PeriodIdentifierID,
 				--		UserModified = @UserLoginID,
 				--		DateModified = GETUTCDATE(),
@@ -278,8 +278,8 @@ BEGIN TRY
 				ELSE
 					SET @MethodName = 'NULL'
 
-						SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
-						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum,',@FrameworkID=',@FrameworkID)
+						SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@FrameworkID=',@FrameworkID)
 						SET @Params = CONCAT(@Params,',@name=',CHAR(39),@Name,CHAR(39),',@MethodName=',@MethodName)
 					--PRINT @PARAMS
 			
@@ -319,8 +319,8 @@ BEGIN CATCH
 					SET @MethodName = 'NULL'
 			 
 
-						SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
-						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum,',@FrameworkID=',@FrameworkID)
+						SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@FrameworkID=',@FrameworkID)
 						SET @Params = CONCAT(@Params,',@name=',CHAR(39),@Name,CHAR(39),',@MethodName=',@MethodName)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
