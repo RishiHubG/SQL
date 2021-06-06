@@ -49,7 +49,8 @@ CREATE TABLE dbo.RegisterProperties_history
 	useractionid INT,
 	registerpropertyid INT NOT NULL,
 	registerid INT NOT NULL,	
-	propertyname NVARCHAR(100) NOT NULL,
+	propertyname NVARCHAR(MAX) NOT NULL,
+	apikeyname NVARCHAR(MAX) NOT NULL,
 	jsontype NVARCHAR(50) NOT NULL,
 	CONSTRAINT PK_RegisterProperties_history_HistoryID PRIMARY KEY(HistoryID)
 	)
@@ -72,7 +73,8 @@ useractionid INT,
 registerpropertiesxrefid INT NOT NULL,
 registerid INT NOT NULL,
 registerpropertyid INT NOT NULL,
-propertyname NVARCHAR(1000),
+propertyname NVARCHAR(MAX) NOT NULL,
+apikeyname NVARCHAR(MAX) NOT NULL,
 isrequired BIT,
 isactive BIT, 
 CONSTRAINT PK_RegisterPropertiesXref_history_HistoryID PRIMARY KEY(HistoryID)

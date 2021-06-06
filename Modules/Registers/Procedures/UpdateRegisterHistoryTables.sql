@@ -18,7 +18,7 @@ CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
-Create   PROCEDURE [dbo].[UpdateRegisterHistoryTables]
+Create OR ALTER PROCEDURE [dbo].[UpdateRegisterHistoryTables]
 @RegisterID INT,
 @VersionNum INT
 AS
@@ -79,7 +79,8 @@ BEGIN
            ,[UserActionID]
            ,[RegisterPropertyID]
            ,[RegisterID]
-           ,[PropertyName],
+           ,[PropertyName]
+		   ,[APIKEYName],
 		   [JSONType])
 		SELECT  [UserCreated]
            ,[DateCreated]
@@ -91,7 +92,8 @@ BEGIN
            ,NULL
            ,[RegisterPropertyID]
            ,[RegisterID]
-           ,[PropertyName],
+           ,[PropertyName]
+		   ,[APIKEYName],
 		   [JSONType]
 		FROM dbo.RegisterProperties R
 		WHERE RegisterID = @RegisterID
@@ -110,6 +112,7 @@ BEGIN
 					,[RegisterID]
 					,[RegisterPropertyID]
 					,[PropertyName]
+					,[APIKEYName]
 					,[IsRequired]
 					,[IsActive])
 		SELECT [UserCreated]
@@ -124,6 +127,7 @@ BEGIN
 			,[RegisterID]
 			,[RegisterPropertyID]
 			,[PropertyName]
+			,[APIKEYName]
 			,[IsRequired]
 			,[IsActive]
 		FROM dbo.RegisterPropertiesXref R

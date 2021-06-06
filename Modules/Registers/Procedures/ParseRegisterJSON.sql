@@ -176,7 +176,7 @@ BEGIN
 
 	DECLARE @ID INT,			
 			@VersionNum INT,
-			@RegisterID INT,
+			@RegisterID INT = 3, --POINTS TO EntityAdminForm.EntityTypeID
 			@SQL NVARCHAR(MAX),
 			@IsDataTypesCompatible BIT = 1,
 			@Params VARCHAR(MAX),
@@ -188,7 +188,7 @@ BEGIN
  DROP TABLE IF EXISTS #TMP_registerData
  DROP TABLE IF EXISTS #TMP_ALLSTEPS 
  DROP TABLE IF EXISTS #TMP_RegisterPropertiesXref
- CREATE TABLE #TMP_NewRegisterProperties(RegisterPropertyID INT,RegisterID INT,PropertyName VARCHAR(1000))
+ CREATE TABLE #TMP_NewRegisterProperties(RegisterPropertyID INT,RegisterID INT,PropertyName NVARCHAR(MAX),ApiKeyName NVARCHAR(MAX))
 	
 	--LIST OF COMPATIBLE DATA TYPES==============================================================
 		DECLARE @DataTypes TABLE
@@ -275,12 +275,10 @@ BEGIN
 		--SELECT @VersionNum = VersionNum + 1,
 		--	   @RegisterID = RegisterID
 		--FROM dbo.Registers 
-		--WHERE Name=@RegisterName
-
-		SET @RegisterID = 3
+		--WHERE Name=@RegisterName		
 
 		SELECT @VersionNum = VersionNum + 1			    
-		FROM EntityAdminForm
+		FROM dbo.EntityAdminForm
 		WHERE EntitytypeId = @RegisterID		
 
 	BEGIN TRAN
@@ -378,14 +376,14 @@ BEGIN
 
 			--END
 			--INSERT NEW PROPERTIES (IF ANY)
-			INSERT INTO dbo.RegisterProperties(RegisterID,UserCreated,VersionNum,PropertyName,JSONType)
-				OUTPUT INSERTED.RegisterPropertyID, inserted.RegisterID,INSERTED.PropertyName INTO #TMP_NewRegisterProperties(RegisterPropertyID,RegisterID,PropertyName)
-			SELECT @RegisterID, @UserLoginID, @VersionNum,StringValue,JSONType
+			INSERT INTO dbo.RegisterProperties(RegisterID,UserCreated,VersionNum,PropertyName,ApiKeyName,JSONType)
+				OUTPUT INSERTED.RegisterPropertyID, inserted.RegisterID,INSERTED.PropertyName,INSERTED.ApiKeyName INTO #TMP_NewRegisterProperties(RegisterPropertyID,RegisterID,PropertyName,ApiKeyName)
+			SELECT @RegisterID, @UserLoginID, @VersionNum,REPLACE(StringValue,' ',''),StringValue,JSONType
 			FROM #TMP_registers TA
 			WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterProperties WHERE RegisterID = @RegisterID AND PropertyName = TA.StringValue)-- AND VersionNum = @VersionNum) 
 			      AND KeyName ='Label'
-			
-			
+			--ROLLBACK
+			--RETURN
 			--UPDATE WITH CURRENT VERSION NO.
 			UPDATE dbo.RegisterProperties
 			SET VersionNum = @VersionNum,
@@ -402,7 +400,7 @@ BEGIN
 				UNION
 			*/
 				--INSERT MISSING PROPERTIES AS WELL: THIS IS TO HANDLE ANY DELETES IN THE CURRENT VERSION
-				SELECT RP.RegisterPropertyID,RP.RegisterID,RP.PropertyName,0 AS IsActive
+				SELECT RP.RegisterPropertyID,RP.RegisterID,RP.PropertyName,RP.ApiKeyName,0 AS IsActive
 					INTO #TMP_MissingRegistersProperties
 				FROM dbo.RegisterProperties RP 
 					  INNER JOIN RegisterPropertiesXref RPX ON RPX.RegisterPropertyID = RP.RegisterPropertyID AND RPX.RegisterID=RP.RegisterID
@@ -411,7 +409,7 @@ BEGIN
 					   AND RPX.IsActive = 1
 
 				--INSERT BACK A PROPERTY WHICH WAS REMOVED EARLIER
-				SELECT RP.RegisterPropertyID,RP.RegisterID,RP.PropertyName,1 AS IsActive
+				SELECT RP.RegisterPropertyID,RP.RegisterID,RP.PropertyName,RP.ApiKeyName,1 AS IsActive
 					INTO #TMP_ActivateMissingRegistersProperties
 				FROM dbo.RegisterProperties RP
 					 INNER JOIN RegisterPropertiesXref RPX ON RPX.RegisterPropertyID = RP.RegisterPropertyID AND RPX.RegisterID=RP.RegisterID
@@ -419,8 +417,8 @@ BEGIN
 					 AND RP.RegisterID = @RegisterID
 					 AND RPX.IsActive = 0	
 			
-			INSERT INTO dbo.RegisterPropertiesXref(RegisterPropertyID,RegisterID,UserCreated,VersionNum,PropertyName,IsActive)
-				SELECT RegisterPropertyID, RegisterID,@UserLoginID,@VersionNum,PropertyName,1
+			INSERT INTO dbo.RegisterPropertiesXref(RegisterPropertyID,RegisterID,UserCreated,VersionNum,PropertyName,ApiKeyName,IsActive)
+				SELECT RegisterPropertyID, RegisterID,@UserLoginID,@VersionNum,PropertyName,ApiKeyName,1
 				FROM #TMP_NewRegisterProperties --#TMP_NewRegisterProperties TR
 				--WHERE NOT EXISTS(SELECT 1 FROM dbo.RegisterPropertiesXref WHERE RegisterPropertyID= TR.RegisterPropertyID AND RegisterID = @RegisterID AND PropertyName = TR.PropertyName AND VersionNum = @VersionNum) 
 			
@@ -459,7 +457,7 @@ BEGIN
 
 				DECLARE @DataCols VARCHAR(MAX) 
 				 SET @DataCols =STUFF(
-							 (SELECT CONCAT(', [',TA.StringValue,'] [', TA.DataType,'] ', TA.DataTypeLength)
+							 (SELECT CONCAT(', [',Replace(TA.StringValue,' ',''),'] [', TA.DataType,'] ', TA.DataTypeLength)
 							 FROM #TMP_registerData TA								  
 							  WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.StringValue AND C.object_id =OBJECT_ID('RegisterPropertyXref_Data'))
 							 FOR XML PATH('')
@@ -517,7 +515,7 @@ BEGIN
 	 		
 			--POPULATE THE HISTORY TABLES FOR THE FIRST VERSION OF DATA (AFTER ALL THE DATA HAS BEEN POPULATED IN THE MAIN TABLES)
 			IF @VersionNum = 1 OR EXISTS(SELECT 1 FROM #TMP_NewRegisterProperties)
-				EXEC dbo.UpdateregisterHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
+				EXEC dbo.UpdateRegisterHistoryTables @RegisterID = @RegisterID,@VersionNum = @VersionNum
 
 			--UPDATE OPERATION TYPE IN HISTORY TABLE-------
 			IF @VersionNum > 1
@@ -579,8 +577,10 @@ BEGIN
 		IF @LogRequest = 1
 		BEGIN
 			 
-			 IF @MethodName IS NOT NULL
+				 IF @MethodName IS NOT NULL
 					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'		 
 
 			SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39),',@MethodName=',@MethodName,'@UserModified=',@UserModified)
@@ -617,6 +617,9 @@ BEGIN
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 				 IF @MethodName IS NOT NULL
 					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'
+			
 
 			SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39),',@MethodName=',@MethodName,'@UserModified=',@UserModified)

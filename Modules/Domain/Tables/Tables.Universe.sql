@@ -48,7 +48,7 @@ CREATE TABLE dbo.UniverseProperties
 	)
 
 	ALTER TABLE dbo.UniverseProperties ADD CONSTRAINT FK_UniverseProperties_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 			
-	ALTER TABLE [dbo].UniverseProperties ADD CONSTRAINT FK_UniverseProperties_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.Universe(UniverseID)
+	ALTER TABLE [dbo].UniverseProperties ADD CONSTRAINT FK_UniverseProperties_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.EntityAdminForm(EntityTypeID)
 GO
 	
 GO
@@ -70,7 +70,7 @@ IsActive BIT,
 CONSTRAINT PK_UniversePropertiesXref_UniverseID_UniversePropertyID PRIMARY KEY(UniversePropertiesXrefID,UniversePropertyID,UniverseID)
 )
  		ALTER TABLE [dbo].UniversePropertiesXref ADD CONSTRAINT DF_UniversePropertiesXref_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-		ALTER TABLE [dbo].Universe ADD CONSTRAINT FK_UniverseProperties_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.EntityAdminForm(EntityTypeID)
+		ALTER TABLE [dbo].Universe ADD CONSTRAINT FK_UniversePropertiesXref_UniverseID FOREIGN KEY(UniverseID) REFERENCES dbo.EntityAdminForm(EntityTypeID)
 		ALTER TABLE [dbo].UniversePropertiesXref ADD CONSTRAINT FK_UniversePropertiesXref_UniversePropertyID FOREIGN KEY(UniversePropertyID) REFERENCES dbo.UniverseProperties(UniversePropertyID)
 GO
 

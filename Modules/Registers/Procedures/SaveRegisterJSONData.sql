@@ -272,8 +272,11 @@ BEGIN TRY
 				--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 				IF @LogRequest = 1
 				BEGIN			
-						IF @MethodName IS NOT NULL
-							SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				
+				IF @MethodName IS NOT NULL
+					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'
 
 						SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
 						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum,',@FrameworkID=',@FrameworkID)
@@ -310,8 +313,11 @@ BEGIN CATCH
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 
-						IF @MethodName IS NOT NULL
-							SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				 IF @MethodName IS NOT NULL
+					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'
+			 
 
 						SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
 						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum,',@FrameworkID=',@FrameworkID)

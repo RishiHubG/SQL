@@ -447,8 +447,10 @@ BEGIN TRY
 		IF @LogRequest = 1
 		BEGIN			
 
-				 IF @MethodName IS NOT NULL
+				IF @MethodName IS NOT NULL
 					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'
 
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
 				SET @Params = CONCAT(@Params,'@MethodName=',@MethodName,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
@@ -484,8 +486,11 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				 IF @MethodName IS NOT NULL
+				
+				IF @MethodName IS NOT NULL
 					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'
 
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
 				SET @Params = CONCAT(@Params,'@MethodName=',@MethodName,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)

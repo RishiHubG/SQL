@@ -42,13 +42,14 @@ CREATE TABLE dbo.RegisterProperties
 	usermodified INT,
 	datemodified DATETIME2(0),
 	versionnum INT NOT NULL,
-	propertyname NVARCHAR(100) NOT NULL,
+	propertyname NVARCHAR(MAX) NOT NULL,
+	apikeyname NVARCHAR(MAX) NOT NULL,
 	jsontype NVARCHAR(50) NOT NULL,
 	CONSTRAINT PK_RegisterProperties_RegisterPropertyID PRIMARY KEY(RegisterPropertyID)
 	)
 
 	ALTER TABLE dbo.RegisterProperties ADD CONSTRAINT FK_RegisterProperties_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-	ALTER TABLE [dbo].Registers ADD CONSTRAINT FK_RegisterProperties_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.Registers(RegisterID)
+	ALTER TABLE [dbo].Registers ADD CONSTRAINT FK_RegisterProperties_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.EntityAdminForm(EntityTypeID)
 GO
 
 DROP TABLE  IF EXISTS dbo.RegisterPropertiesXref
@@ -62,13 +63,14 @@ datecreated DATETIME2(0) NOT NULL,
 usermodified INT,
 datemodified DATETIME2(0),
 versionnum INT NOT NULL,
-propertyname NVARCHAR(1000),
+propertyname NVARCHAR(MAX) NOT NULL,
+apikeyname NVARCHAR(MAX) NOT NULL,
 isrequired BIT,
 isactive BIT, 
 CONSTRAINT PK_RegisterPropertiesXref_RegisterID_RegisterPropertyID PRIMARY KEY(RegisterPropertiesXrefID,RegisterPropertyID,RegisterID)
 )
  		ALTER TABLE [dbo].RegisterPropertiesXref ADD CONSTRAINT DF_RegisterPropertiesXref_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-		ALTER TABLE [dbo].RegisterPropertiesXref ADD CONSTRAINT FK_RegisterPropertiesXref_RegisterID FOREIGN KEY(RegisterID) REFERENCES  dbo.Registers(RegisterID)
+		ALTER TABLE [dbo].RegisterPropertiesXref ADD CONSTRAINT FK_RegisterPropertiesXref_RegisterID FOREIGN KEY(RegisterID) REFERENCES dbo.EntityAdminForm(EntityTypeID)
 		ALTER TABLE [dbo].RegisterPropertiesXref ADD CONSTRAINT FK_RegisterPropertiesXref_RegisterPropertyID FOREIGN KEY(RegisterPropertyID) REFERENCES dbo.RegisterProperties(RegisterPropertyID)
 GO
 
