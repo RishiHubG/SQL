@@ -70,7 +70,7 @@ BEGIN
 	WHERE ParentID = @EntityID
 
 	SELECT @RegisterCount = COUNT(*) 
-	FROM dbo.Register 
+	FROM dbo.Registers 
 	WHERE UniverseID = @EntityID
 
 	SELECT entitytypeid,
