@@ -573,13 +573,17 @@ BEGIN
 	
 			END
 			------------------------------------------------		
-
+		 
+ 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
 		BEGIN
 			 
+			 IF @MethodName IS NOT NULL
+					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+
 			SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39),',@MethodName=',@MethodName,'@UserModified=',@UserModified)
 
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
@@ -611,8 +615,12 @@ BEGIN
 			ROLLBACK
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
+				 IF @MethodName IS NOT NULL
+					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+
 			SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39),',@MethodName=',@MethodName,'@UserModified=',@UserModified)
+
 
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 		 

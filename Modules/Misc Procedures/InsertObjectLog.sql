@@ -15,7 +15,7 @@ SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
 CREATE OR ALTER PROCEDURE dbo.InsertObjectLog
- @ObjectName VARCHAR(8000),	
+ @ObjectName VARCHAR(MAX),	
  @Params VARCHAR(MAX),
  @UserLoginID INT,
  @ErrorMessage VARCHAR(MAX) = NULL

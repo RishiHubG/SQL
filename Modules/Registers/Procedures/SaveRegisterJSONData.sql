@@ -234,7 +234,7 @@ BEGIN TRY
 				EXEC sp_executesql @SQL	
 
 				--CALL DOMAIN PERMISSIONS HERE
-				EXEC dbo.SaveregisterPermissions @InputJSON = @InputJSON,
+				EXEC dbo.SaveRegisterPermissions @InputJSON = @InputJSON,
 												 @UserLoginID=@UserLoginID,
 												 @MethodName = @MethodName,
 												 @AccessControlID = @AccessControlID
@@ -272,8 +272,12 @@ BEGIN TRY
 				--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 				IF @LogRequest = 1
 				BEGIN			
+						IF @MethodName IS NOT NULL
+							SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+
 						SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
-						SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum)
+						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum,',@FrameworkID=',@FrameworkID)
+						SET @Params = CONCAT(@Params,',@name=',CHAR(39),@Name,CHAR(39),',@MethodName=',@MethodName)
 					--PRINT @PARAMS
 			
 					SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -305,8 +309,13 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@LogRequest=',@LogRequest)
+
+						IF @MethodName IS NOT NULL
+							SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+
+						SET @Params = CONCAT('@EntityID=',@RegisterID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@VersionNum=',@VersionNum,',@FrameworkID=',@FrameworkID)
+						SET @Params = CONCAT(@Params,',@name=',CHAR(39),@Name,CHAR(39),',@MethodName=',@MethodName)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
