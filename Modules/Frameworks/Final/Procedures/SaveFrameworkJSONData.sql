@@ -24,7 +24,10 @@ CREATE OR ALTER PROCEDURE dbo.SaveFrameworkJSONData
 @EntityTypeID INT=NULL,
 @ParentEntityID INT=NULL,
 @ParentEntityTypeID INT=NULL, 
+@Name NVARCHAR(MAX) = NULL,
+@Description NVARCHAR(MAX) = NULL,
 @MethodName NVARCHAR(200)=NULL, 
+@FrameworkID INT,
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -43,23 +46,25 @@ BEGIN TRY
 	BEGIN
 
 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
-	DECLARE @FrameworkID INT,
-			@PeriodIdentifierID INT = 1,
+	DECLARE @PeriodIdentifierID INT = 1,
 			@OperationType VARCHAR(50),
-			@VersionNum INT,
-			@IsAvailable BIT = 0
+			@VersionNum INT
+			--@IsAvailable BIT = 0
 
-	DECLARE @TableName VARCHAR(500) = (SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @EntityID)
+	DECLARE @TableName VARCHAR(500) = (SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @FrameworkID)
 
 	IF @TableName IS NULL
+	BEGIN
+		PRINT '_DATA TABLE NOT AVAILABLE!!'
 		RETURN
+	END
 	
-	SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM dbo.',@TableName,' WHERE FrameworkID = ',@EntityID,') SET @IsAvailable = 1;' )
-	EXEC sp_executesql @SQL,N'@IsAvailable BIT OUTPUT',@IsAvailable OUTPUT
+	--SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM dbo.',@TableName,' WHERE FrameworkID = ',@EntityID,') SET @IsAvailable = 1;' )
+	--EXEC sp_executesql @SQL,N'@IsAvailable BIT OUTPUT',@IsAvailable OUTPUT
 
-	IF @IsAvailable = 0
+	IF @EntityID = -1
 		SET @OperationType ='INSERT'
-	ELSE IF @IsAvailable = 1
+	ELSE IF @EntityID > 0
 	    SET @OperationType ='UPDATE'
 
 	--IF @EntityID = -1
@@ -68,10 +73,14 @@ BEGIN TRY
 	--END
 	--ELSE
 	--BEGIN
-		SELECT @FrameworkID = @EntityID,
-			   @VersionNum = MAX(VersionNum) + 1
-		FROM dbo.TAB_Data
-		WHERE FrameworkID = @EntityID
+
+		--SET @SQL = CONCAT(N'SELECT TOP 1 @VersionNum = MAX(VersionNum)+1 FROM dbo.',@TableName,'_HISTORY WHERE FrameworkID = ',@FrameworkID,' ORDER BY HISTORYID DESC' )
+		--EXEC sp_executesql @SQL,N'@VersionNum BIT OUTPUT',@VersionNum OUTPUT
+
+		--SELECT @FrameworkID = @EntityID,
+		--	   @VersionNum = MAX(VersionNum) + 1
+		--FROM dbo.TAB_Data
+		--WHERE FrameworkID = @EntityID
 		
 		IF @VersionNum IS NULL	
 			SET @VersionNum = 1
@@ -114,9 +123,10 @@ BEGIN TRY
 		--WHERE TA.Pos > 0
 
 		--SELECT * FROM #TMP_DATA_KEYNAME
+		
+		SELECT * FROM #TMP_ALLSTEPS
 		--RETURN
-		--SELECT * FROM #TMP_ALLSTEPS
-
+		/*
 		 --GET THE SELECTBOXES (THESE WILL HAVE A PARENT OF TYPE "Object")
 		 -------------------------------------------------------------------------------------------------------
 		DECLARE @TBL TABLE(Name VARCHAR(100))
@@ -163,6 +173,7 @@ BEGIN TRY
 		--SELECT * FROM #TMP_Objects
 		 -------------------------------------------------------------------------------------------------------
 		
+
 		 --BUILD THE COLUMN LIST
 		 -------------------------------------------------------------------------------------------------------
 
@@ -182,14 +193,24 @@ BEGIN TRY
 		WHERE Parent_ID = 0
 			  AND OBJECTID IS NULL
 			  AND StringValue <> ''
-		 
-		--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
-		INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-			SELECT 'VersionNum',@VersionNum
-			UNION
-			SELECT 'UserCreated',@UserLoginID
+		 */
 
- 	 	
+		  SELECT Element_ID,
+				Name AS ColumnName,
+				StringValue					
+			INTO #TMP_INSERT
+		 FROM #TMP_ALLSTEPS			  
+		 WHERE ValueType !='Object'			   
+			   AND Name NOT IN ('userCreated','dateCreated','userModified','dateModified','submit')
+
+		--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
+		--INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+		--	SELECT 'VersionNum',@VersionNum
+		--	UNION
+		--	SELECT 'UserCreated',@UserLoginID
+
+ 	 	--SELECT * FROM #TMP_INSERT
+		--RETURN
 		IF @OperationType ='INSERT'
 		BEGIN
 	 		SET @ColumnNames = STUFF
@@ -223,7 +244,8 @@ BEGIN TRY
 								1,1,'')
 				
 		END
-
+		--SELECT @ColumnNames,@ColumnValues
+		--RETURN
 	BEGIN TRAN
 		
 		IF @OperationType ='INSERT'
@@ -277,8 +299,14 @@ BEGIN TRY
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
 		BEGIN			
-				SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@LogRequest=',@LogRequest)
+				IF @MethodName IS NOT NULL
+					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'
+
+				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,'@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,'@Name=',CHAR(39),@Name,CHAR(39),'@Description=',CHAR(39),@Description,CHAR(39))
+				SET @Params = CONCAT(@Params,',@FrameworkID=',@FrameworkID,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 
 			--PRINT @PARAMS
 			
@@ -304,8 +332,14 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,'@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@LogRequest=',@LogRequest)
+				IF @MethodName IS NOT NULL
+					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'
+
+				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,'@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,'@Name=',CHAR(39),@Name,CHAR(39),'@Description=',CHAR(39),@Description,CHAR(39))
+				SET @Params = CONCAT(@Params,',@FrameworkID=',@FrameworkID,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 

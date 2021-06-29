@@ -24,7 +24,7 @@ CREATE OR ALTER PROCEDURE dbo.SaveUniverseJSONData
 @ParentEntityID INT=NULL,
 @ParentEntityTypeID INT=NULL,
 @MethodName NVARCHAR(2000) = NULL,
-@UniverseName NVARCHAR(MAX) = NULL,
+@Name NVARCHAR(MAX) = NULL,
 @Description NVARCHAR(MAX) = NULL,
 @LogRequest BIT = 1
 AS
@@ -67,7 +67,7 @@ BEGIN TRY
 					EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT				
 
 					INSERT INTO dbo.Universe([Name],[Description],AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
-						SELECT @UniverseName, @Description,@AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
+						SELECT @Name, @Description,@AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
 		
 					SET @UniverseID = SCOPE_IDENTITY()
 
@@ -82,7 +82,7 @@ BEGIN TRY
 					EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
 
 					INSERT INTO dbo.Universe([Name],[Description],ParentID,AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
-						SELECT @UniverseName, @Description,@ParentEntityID, @AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
+						SELECT @Name, @Description,@ParentEntityID, @AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
 		
 					SET @UniverseID = SCOPE_IDENTITY()
 
@@ -202,12 +202,12 @@ BEGIN TRY
 		
 				IF @EntityID = -1
 				BEGIN
-					SET @SQL = CONCAT('INSERT INTO dbo.UniversePropertiesXerf_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
+					SET @SQL = CONCAT('INSERT INTO dbo.UniversePropertiesXref_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
 					PRINT @SQL
 				END
 				ELSE	--UPDATE
 				BEGIN
-					SET @SQL = CONCAT('UPDATE dbo.UniversePropertiesXerf_Data',CHAR(10),' SET ',@UpdStr)
+					SET @SQL = CONCAT('UPDATE dbo.UniversePropertiesXref_Data',CHAR(10),' SET ',@UpdStr)
 					SET @SQL = CONCAT(@SQL, ' WHERE UniverseID=', @UniverseID)
 					PRINT @SQL
 				END
@@ -223,15 +223,15 @@ BEGIN TRY
 
 				--UPDATE _HISTORY TABLE-----------------------------------------
 		
-				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertiesXerf_Data_history WHERE UniverseID = @UniverseID)
+				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertiesXref_Data_history WHERE UniverseID = @UniverseID)
 
 				----UPDATE VERSION NO.
-				--UPDATE dbo.UniversePropertiesXerf_Data_history
+				--UPDATE dbo.UniversePropertiesXref_Data_history
 				--	SET VersionNum = @VersionNum
 				--WHERE HistoryID = @HistoryID			 
 
 				----RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
-				--UPDATE dbo.UniversePropertiesXerf_Data_history
+				--UPDATE dbo.UniversePropertiesXref_Data_history
 				--	SET PeriodIdentifierID = 0,
 				--		UserModified = @UserLoginID,
 				--		DateModified = GETUTCDATE()
@@ -239,7 +239,7 @@ BEGIN TRY
 				--	  AND VersionNum < @VersionNum
 		
 				----UPDATE OTHER COLUMNS FOR CURRENT VERSION
-				--UPDATE dbo.UniversePropertiesXerf_Data_history
+				--UPDATE dbo.UniversePropertiesXref_Data_history
 				--	SET PeriodIdentifierID = @PeriodIdentifierID,
 				--		UserModified = @UserLoginID,
 				--		DateModified = GETUTCDATE(),
@@ -254,7 +254,7 @@ BEGIN TRY
 				--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 				IF @LogRequest = 1
 				BEGIN			
-						SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
 						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
 					--PRINT @PARAMS
 			
@@ -286,7 +286,7 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
 				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)

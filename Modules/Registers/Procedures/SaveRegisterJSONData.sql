@@ -240,9 +240,9 @@ BEGIN TRY
 												 @AccessControlID = @AccessControlID
 												 
 				--UPDATE _HISTORY TABLE-----------------------------------------
-		
+			
 				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.RegisterPropertiesXref_Data_history WHERE RegisterID = @RegisterID)
-
+				
 				----UPDATE VERSION NO.
 				--UPDATE dbo.RegisterPropertiesXref_Data_history
 				--	SET VersionNum = @VersionNum
@@ -278,7 +278,7 @@ BEGIN TRY
 				ELSE
 					SET @MethodName = 'NULL'
 
-						SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
 						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@FrameworkID=',@FrameworkID)
 						SET @Params = CONCAT(@Params,',@name=',CHAR(39),@Name,CHAR(39),',@MethodName=',@MethodName)
 					--PRINT @PARAMS
@@ -319,7 +319,7 @@ BEGIN CATCH
 					SET @MethodName = 'NULL'
 			 
 
-						SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1,@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
 						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@FrameworkID=',@FrameworkID)
 						SET @Params = CONCAT(@Params,',@name=',CHAR(39),@Name,CHAR(39),',@MethodName=',@MethodName)
 			
