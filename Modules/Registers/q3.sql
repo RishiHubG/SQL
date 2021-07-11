@@ -125,7 +125,7 @@ INSERT INTO dbo.AccessControlledResource ([userid], [read], [modify], [write], [
  IF NOT EXISTS(SELECT 1 FROM dbo.AccessControlledResource WHERE AccessControlID=153 AND UserID=3)
 INSERT INTO dbo.AccessControlledResource ([userid], [modify], [write], [cut], [copy], [delete], [administrate], [adhoc],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)VALUES ('3', 'true', 'true', 'true', 'true', 'false', 'false', 'false','153','3261','2021-06-05 04:28:22.520','3261','2021-06-05 04:28:22.520','1'); 
 
- 
+ SELECT * FROM Registers
 
  --ROLLBACK COMMIT
 SET XACT_ABORT ON;
@@ -144,3 +144,23 @@ exec SaveRegisterJSONData
 
 
 SELECT * FROM Registers
+ 
+
+ --ROLLBACK COMMIT
+SET XACT_ABORT ON;
+BEGIN TRAN;
+EXEC dbo.SaveregisterJSONData 
+@EntityID=-1,
+@InputJSON='{"attributes":{"currency":""},"domainpermissiona":[{"userUserGroup":"","read":false,"modify":false,"write":false,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false,"username":"","export":false,"report":false}],"domianinherentpermissions":false,"workflowpermissions":[{"userUserGroup":"","read":false,"modify":false,"write":false,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false,"workflowname":"","stepstepItem":"","stepname":"","stepItemName":{},"view":false}],"WFinheritpermissions":false}',
+@UserLoginID=3355,@LogRequest=1,
+@EntityTypeID=3,@ParentEntityID=4,
+@ParentEntityTypeID=2,
+@FrameworkID=11,
+@name='Test wtih Rishi132',
+@MethodName=NULL
+
+SELECT * FROM RegisterPropertiesXref_Data
+SELECT * FROM REGISTERS  ORDER BY REGISTERID DESC
+SELECT * FROM REGISTERS WHERE REGISTERID=39
+INSERT INTO dbo.RegisterPropertiesXref_Data(RegisterID, [UserCreated], [Currency],ExchangeRate) VALUES('40', '3355', '','')
+RegisterPropertiesXref_Data_History

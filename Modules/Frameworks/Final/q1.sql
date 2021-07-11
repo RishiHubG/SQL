@@ -113,3 +113,12 @@ reputational_Value
 reputational_Description
 reputational_Color
 */
+
+SELECT CONVERT(DATETIME2(3), GETUTCDATE(), 120); -- 101 = mm/dd/yyyy
+SELECT CAST(CONVERT(DATETIME2(3),  GETUTCDATE(), 120) AS VARCHAR(100))
+  --ROLLBACK COMMIT
+SET XACT_ABORT ON;
+BEGIN TRAN;
+EXEC dbo.SaveFrameworkJSONData @InputJSON='{"container":{"category":"informationKnowledge","subcategory":"","consequence":"veryLow","likelihood":"unlikely","riskrating":""}}',
+@UserLoginID=3356,@EntityID=-1,@EntityTypeID=9,@ParentEntityID=26,@ParentEntityTypeID=3,
+@Name='Name12',@Description='Test NAme',@FrameworkID=11,@MethodName=NULL,@LogRequest=1

@@ -28,7 +28,7 @@ CREATE TABLE dbo.Registers
 	propagatedwfaccesscontrolid INT,
 	hasextendedproperties BIT,
 	CONSTRAINT PK_Registers_RegisterID PRIMARY KEY(RegisterID),
-	CONSTRAINT UQ_Registers_Name UNIQUE(Name),
+	CONSTRAINT UQ_Registers_Name UNIQUE(Name,ParentID),
 	)
 		ALTER TABLE [dbo].Registers ADD CONSTRAINT DF_Registers_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
 GO

@@ -49,6 +49,8 @@ BEGIN TRY
 	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
 								 @MethodName = @MethodName,
 								 @UserID = @UserID	OUTPUT							     
+	
+	BEGIN TRAN
 
 	IF @UserID IS NOT NULL
 	BEGIN	
@@ -214,10 +216,7 @@ BEGIN TRY
 										1,1,'')
 				
 				END
-		 		
-
-			--BEGIN TRAN
-		
+				
 				IF @EntityID = -1
 				BEGIN
 					SET @SQL = CONCAT('INSERT INTO dbo.RegisterPropertiesXref_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
@@ -291,7 +290,7 @@ BEGIN TRY
 				END
 				------------------------------------------------------------------------------------------------------------------------------------------
 
-			--	COMMIT
+				COMMIT
 		
 				--DROP TEMP TABLES--------------------------------------	
 				 DROP TABLE IF EXISTS #TMP_INSERT

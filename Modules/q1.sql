@@ -353,4 +353,7 @@ drop table IF EXISTS TAB_Frameworksteps_history
 		SELECT * FROM dbo.TAB_Framework_Attributes_history WHERE VersionNum=4
 		EXEC dbo.UpdateHistoryOperationType @FrameworkID=1, @TableInitial ='TAB',@VersionNum=4
 		
+		SELECT * FROM TestControls_DATA
+		SELECT * FROM TestControls_data_history
+		SP_tABLES '%TESTCONTROLS%'
 */

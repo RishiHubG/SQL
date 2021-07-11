@@ -98,7 +98,7 @@ versionnum INT NULL,
 periodidentifierid INT NULL,
 operationtype NVARCHAR(50),
 useractionid INT,
-RegisterPropertyXref_Dataid INT,
+RegisterPropertiesXref_DataID INT NOT NULL,
 registerid INT
 )
  		 

@@ -37,14 +37,16 @@ BEGIN TRY
 	SET XACT_ABORT ON;
 
 	DECLARE @UserID INT
-
+		
 	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
 								 @MethodName = @MethodName,
 								 @UserID = @UserID	OUTPUT							     
-
+	
 	IF @UserID IS NOT NULL
 	BEGIN
 
+	DECLARE @UTCDATE DATETIME2(3) = GETUTCDATE()
+	DECLARE @FixedColumns VARCHAR(1000) 
 	DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 	DECLARE @PeriodIdentifierID INT = 1,
 			@OperationType VARCHAR(50),
@@ -77,11 +79,9 @@ BEGIN TRY
 		--SET @SQL = CONCAT(N'SELECT TOP 1 @VersionNum = MAX(VersionNum)+1 FROM dbo.',@TableName,'_HISTORY WHERE FrameworkID = ',@FrameworkID,' ORDER BY HISTORYID DESC' )
 		--EXEC sp_executesql @SQL,N'@VersionNum BIT OUTPUT',@VersionNum OUTPUT
 
-		--SELECT @FrameworkID = @EntityID,
-		--	   @VersionNum = MAX(VersionNum) + 1
-		--FROM dbo.TAB_Data
-		--WHERE FrameworkID = @EntityID
-		
+		SET @SQL = CONCAT('SELECT @VersionNum = MAX(VersionNum) + 1 FROM ',@TableName,' WHERE FrameworkID =', @FrameworkID)		
+		EXEC sp_executesql @SQL,N'@VersionNum INT OUTPUT',@VersionNum OUTPUT
+
 		IF @VersionNum IS NULL	
 			SET @VersionNum = 1
 		
@@ -90,7 +90,7 @@ BEGIN TRY
 	 SELECT *
 			INTO #TMP_ALLSTEPS
 	 FROM dbo.HierarchyFromJSON(@inputJSON) 
-
+	
 		;WITH CTE
 		AS
 		(
@@ -103,7 +103,7 @@ BEGIN TRY
 			   CAST(NULL AS VARCHAR(500)) AS KeyName,			   
 				ROW_NUMBER()OVER(PARTITION BY T.Element_ID,T.Name ORDER BY TAB.pos DESC) AS RowNum
 		 FROM #TMP_ALLSTEPS T
-			  CROSS APPLY dbo.[FindPatternLocation](T.Name,'.')TAB	 
+			  OUTER APPLY dbo.[FindPatternLocation](T.Name,'.')TAB	 
 		 WHERE Parent_ID = 0
 		)
 		
@@ -115,7 +115,7 @@ BEGIN TRY
 		UPDATE #TMP_DATA_KEYNAME
 			SET KeyName = SUBSTRING(Name,Pos+1,len(Name))
 		WHERE Pos > 0
-
+	 
 		--UPDATE T
 		--	SET StringValue = TA.StringValue
 		--FROM #TMP_DATA_KEYNAME T
@@ -124,7 +124,7 @@ BEGIN TRY
 
 		--SELECT * FROM #TMP_DATA_KEYNAME
 		
-		SELECT * FROM #TMP_ALLSTEPS
+		--SELECT * FROM #TMP_ALLSTEPS
 		--RETURN
 		/*
 		 --GET THE SELECTBOXES (THESE WILL HAVE A PARENT OF TYPE "Object")
@@ -197,20 +197,20 @@ BEGIN TRY
 
 		  SELECT Element_ID,
 				Name AS ColumnName,
-				StringValue					
+				CAST(StringValue AS VARCHAR(MAX)) AS StringValue
 			INTO #TMP_INSERT
 		 FROM #TMP_ALLSTEPS			  
-		 WHERE ValueType !='Object'			   
+		 WHERE ValueType NOT IN ('Object','array')
 			   AND Name NOT IN ('userCreated','dateCreated','userModified','dateModified','submit')
 
 		--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
-		--INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-		--	SELECT 'VersionNum',@VersionNum
-		--	UNION
-		--	SELECT 'UserCreated',@UserLoginID
-
- 	 	--SELECT * FROM #TMP_INSERT
-		--RETURN
+		INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+			SELECT 'VersionNum',CAST(@VersionNum AS VARCHAR(10))
+			UNION
+			SELECT 'UserCreated',CAST(@UserLoginID AS VARCHAR(10))
+			UNION
+			SELECT 'DateCreated', CAST(CONVERT(DATETIME2(3),  @UTCDATE, 120) AS VARCHAR(100))
+ 	 	 
 		IF @OperationType ='INSERT'
 		BEGIN
 	 		SET @ColumnNames = STUFF
@@ -250,12 +250,23 @@ BEGIN TRY
 		
 		IF @OperationType ='INSERT'
 		BEGIN
+			--SET @FixedColumns = 'UserCreated,DateCreated,UserModified,DateModified'
+		 --   DECLARE @FixedColumnValues VARCHAR(MAX) =  CONCAT(
+			--												   CHAR(39),@UserLoginID,CHAR(39),',',
+			--												   CHAR(39),@UTCDATE,CHAR(39),',',
+			--					  							   CHAR(39),@UserLoginID,CHAR(39),',',
+			--												   CHAR(39),@UTCDATE,CHAR(39)
+			--													)		 
+			--SET @ColumnNames = CONCAT(@FixedColumns,',',@ColumnNames)
+			--SET @ColumnValues = CONCAT(@FixedColumnValues,',',@ColumnValues)
 			SET @SQL = CONCAT('INSERT INTO dbo.',@TableName,'(',@ColumnNames,') VALUES(',@ColumnValues,')')
 			PRINT @SQL		 
 		END
 		ELSE IF @OperationType ='UPDATE'
 		BEGIN
+			--SET @FixedColumns   = CONCAT('UserModified=',@UserLoginID,',DateModified=',CHAR(39),@UTCDATE,CHAR(39))
 			SET @SQL = CONCAT('UPDATE dbo.',@TableName,CHAR(10),' SET ',@UpdStr)
+			--SET @SQL = CONCAT(@SQL,',',CHAR(10),@FixedColumns, CHAR(10))
 			SET @SQL = CONCAT(@SQL, ' WHERE FrameworkID=', @FrameworkID)
 			PRINT @SQL
 		END		
@@ -304,8 +315,8 @@ BEGIN TRY
 				ELSE
 					SET @MethodName = 'NULL'
 
-				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,'@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,'@Name=',CHAR(39),@Name,CHAR(39),'@Description=',CHAR(39),@Description,CHAR(39))
+				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@Name=',CHAR(39),@Name,CHAR(39),',@Description=',CHAR(39),@Description,CHAR(39))
 				SET @Params = CONCAT(@Params,',@FrameworkID=',@FrameworkID,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 
 			--PRINT @PARAMS
@@ -337,8 +348,8 @@ BEGIN CATCH
 				ELSE
 					SET @MethodName = 'NULL'
 
-				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,'@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,'@Name=',CHAR(39),@Name,CHAR(39),'@Description=',CHAR(39),@Description,CHAR(39))
+				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
+				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@Name=',CHAR(39),@Name,CHAR(39),',@Description=',CHAR(39),@Description,CHAR(39))
 				SET @Params = CONCAT(@Params,',@FrameworkID=',@FrameworkID,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
