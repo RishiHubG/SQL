@@ -46,6 +46,12 @@ BEGIN TRY
 
 	DECLARE @UserID INT
 
+	IF @EntityID = -1 AND EXISTS (SELECT 1 FROM dbo.Registers WHERE NAME = @Name AND parentid = @ParentEntityID)
+	BEGIN
+		PRINT 'VIOLATION OF UNIQUE KEY; REGISTER ALREADY EXISTS!!'
+		RETURN
+	END
+
 	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
 								 @MethodName = @MethodName,
 								 @UserID = @UserID	OUTPUT							     
@@ -172,10 +178,10 @@ BEGIN TRY
 				WHERE TD.Name ='attributes'			  
 
 				--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
-				INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-					--SELECT 'VersionNum',@VersionNum
-					--UNION
-					SELECT 'UserCreated',@UserLoginID
+				--INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+				--	--SELECT 'VersionNum',@VersionNum
+				--	--UNION
+					--SELECT 'UserCreated',@UserLoginID
 			
 
 						 --SELECT * FROM #TMP_INSERT
@@ -191,8 +197,12 @@ BEGIN TRY
 											ORDER BY Element_ID
 											FOR XML PATH ('')								
 											),1,1,'')
-		
-					SET @ColumnNames = CONCAT('RegisterID',',',@ColumnNames)
+					
+						
+						DECLARE @HistoryColumns VARCHAR(MAX) = 'RegisterPropertiesXref_DataID,RegisterID,UserCreated,DateCreated ,UserModified, Datemodified'
+						SET @HistoryColumns = CONCAT(@HistoryColumns,',',@ColumnNames)
+
+					SET @ColumnNames = CONCAT('RegisterID,UserCreated,',@ColumnNames)
 
 					SET @ColumnValues = STUFF
 											((SELECT CONCAT(', ',CHAR(39),StringValue,CHAR(39))
@@ -201,7 +211,7 @@ BEGIN TRY
 											FOR XML PATH ('')								
 											),1,1,'')
 
-					SET @ColumnValues = CONCAT(CHAR(39),@RegisterID,CHAR(39),',',@ColumnValues)
+					SET @ColumnValues = CONCAT(CHAR(39),@RegisterID,CHAR(39),',',CHAR(39),@UserLoginID,CHAR(39),',',@ColumnValues)
 				END
 				ELSE
 				BEGIN
@@ -216,7 +226,8 @@ BEGIN TRY
 										1,1,'')
 				
 				END
-				
+			
+
 				--UPDATE TRIGGER FOR ANY NEW COLUMNS/REMOVAL OF EXISTING COLUMNS---------------------
 					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='RegisterPropertiesXref_Data_Insert')						
 						SET @SQL = N'ALTER TRIGGER '
@@ -239,11 +250,11 @@ BEGIN TRY
 												SELECT <columnList>
 												FROM DELETED
 									END;',CHAR(10))
-					SET @SQL = REPLACE(@SQL,'<columnList>',@ColumnNames)
+					SET @SQL = REPLACE(@SQL,'<columnList>',@HistoryColumns)
 					PRINT @SQL	
 					EXEC sp_executesql @SQL	
 				--END: TRIGGER------------------------------------------------------------------------
-
+			
 				IF @EntityID = -1
 				BEGIN
 					SET @SQL = CONCAT('INSERT INTO dbo.RegisterPropertiesXref_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
@@ -255,7 +266,7 @@ BEGIN TRY
 					SET @SQL = CONCAT(@SQL, ' WHERE RegisterID=', @RegisterID)
 					PRINT @SQL
 				END
-		
+			
 				-- RETURN
 				EXEC sp_executesql @SQL	
 				

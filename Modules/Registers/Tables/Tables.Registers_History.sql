@@ -92,12 +92,12 @@ CREATE TABLE dbo.RegisterPropertiesXref_Data_history
 historyid INT IDENTITY(1,1),
 usercreated INT NOT NULL,
 datecreated DATETIME2(0) NOT NULL,
-usermodified INT,
-datemodified DATETIME2(0),
+usermodified INT NULL,
+datemodified DATETIME2(0) NULL,
 versionnum INT NULL,
 periodidentifierid INT NULL,
-operationtype NVARCHAR(50),
-useractionid INT,
+operationtype NVARCHAR(50) NULL,
+useractionid INT NULL,
 RegisterPropertiesXref_DataID INT NOT NULL,
 registerid INT
 )
