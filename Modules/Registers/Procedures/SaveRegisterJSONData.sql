@@ -217,6 +217,33 @@ BEGIN TRY
 				
 				END
 				
+				--UPDATE TRIGGER FOR ANY NEW COLUMNS/REMOVAL OF EXISTING COLUMNS---------------------
+					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='RegisterPropertiesXref_Data_Insert')						
+						SET @SQL = N'ALTER TRIGGER '
+					ELSE
+						SET @SQL = N'CREATE TRIGGER '
+
+					SET @SQL = CONCAT(@SQL,N' dbo.RegisterPropertiesXref_Data_Insert
+									   ON  dbo.RegisterPropertiesXref_Data
+									   AFTER INSERT, UPDATE
+									AS 
+									BEGIN
+										SET NOCOUNT ON;
+
+										IF EXISTS(SELECT 1 FROM INSERTED) AND  NOT EXISTS(SELECT 1 FROM DELETED) --INSERT
+											INSERT INTO dbo.RegisterPropertiesXref_Data_history(<ColumnList>)
+												SELECT <columnList>
+												FROM INSERTED
+										ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
+											INSERT INTO dbo.RegisterPropertiesXref_Data_history(<ColumnList>)
+												SELECT <columnList>
+												FROM DELETED
+									END;',CHAR(10))
+					SET @SQL = REPLACE(@SQL,'<columnList>',@ColumnNames)
+					PRINT @SQL	
+					EXEC sp_executesql @SQL	
+				--END: TRIGGER------------------------------------------------------------------------
+
 				IF @EntityID = -1
 				BEGIN
 					SET @SQL = CONCAT('INSERT INTO dbo.RegisterPropertiesXref_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')

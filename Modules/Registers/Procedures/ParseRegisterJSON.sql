@@ -180,8 +180,9 @@ BEGIN
 			@SQL NVARCHAR(MAX),
 			@IsDataTypesCompatible BIT = 1,
 			@Params VARCHAR(MAX),
-			@ObjectName VARCHAR(100)
-			
+			@ObjectName VARCHAR(100),
+			@sUserModified VARCHAR(50)
+
  DROP TABLE IF EXISTS #TMP_Objects
  DROP TABLE IF EXISTS #TMP_registers
  DROP TABLE IF EXISTS #TMP_NewRegisterProperties
@@ -464,7 +465,7 @@ BEGIN
 							 )
 							 ,1,1,'')
 				PRINT @DataCols	
-
+				 
 				IF @DataCols IS NOT NULL
 				BEGIN
 					SET @SQL = CONCAT(N' ALTER TABLE dbo.RegisterPropertiesXref_Data ADD', CHAR(10), @DataCols, ' NULL ',CHAR(10))
@@ -481,11 +482,14 @@ BEGIN
 					DECLARE @cols VARCHAR(MAX) = ''
 
 					SELECT @cols = CONCAT(@cols,N', [',name,'] ')
-					FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.RegisterPropertiesXref_Data' , NULL, 1)
+					FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.RegisterPropertiesXref_Data' , NULL, 1) A
+						  INNER JOIN RegisterPropertiesXref RPX ON RPX.propertyname=A.name
+					WHERE RPX.isactive = 1
 					
 					SET @cols = STUFF(@cols, 1, 1, N'');
 									 
-
+					PRINT @cols
+					
 					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='RegisterPropertiesXref_Data_Insert')						
 						SET @SQL = N'ALTER TRIGGER '
 					ELSE
@@ -511,6 +515,7 @@ BEGIN
 					PRINT @SQL	
 					EXEC sp_executesql @SQL	
 				END
+				 
 		 --RETURN
 	 		
 			--POPULATE THE HISTORY TABLES FOR THE FIRST VERSION OF DATA (AFTER ALL THE DATA HAS BEEN POPULATED IN THE MAIN TABLES)
@@ -581,9 +586,14 @@ BEGIN
 					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
 				ELSE
 					SET @MethodName = 'NULL'		 
+			
+			IF @UserModified IS NULL
+				SET @sUserModified ='NULL'
+			ELSE
+				SET @sUserModified = CAST(@sUserModified AS VARCHAR(50))
 
 			SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39),',@MethodName=',@MethodName,'@UserModified=',@UserModified)
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39),',@MethodName=',@MethodName,',@UserModified=',@UserModified)
 
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
@@ -614,15 +624,20 @@ BEGIN
 		IF @@TRANCOUNT = 1 AND XACT_STATE() <> 0
 			ROLLBACK
 
-			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
+			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()			
+
 				 IF @MethodName IS NOT NULL
 					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
 				ELSE
 					SET @MethodName = 'NULL'
 			
+			IF @UserModified IS NULL
+				SET @sUserModified ='NULL'
+			ELSE
+				SET @sUserModified = CAST(@sUserModified AS VARCHAR(50))
 
 			SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39),',@MethodName=',@MethodName,'@UserModified=',@UserModified)
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39),',@MethodName=',@MethodName,',@UserModified=',@sUserModified)
 
 
 			SET @ObjectName = OBJECT_NAME(@@PROCID)

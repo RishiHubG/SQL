@@ -57,6 +57,7 @@ BEGIN TRY
 					@WorkflowID INT,
 					@CurrentDate DATETIME2(3) =  GETUTCDATE()
 			
+			BEGIN TRAN
 
 			IF @EntityID = -1 AND @ParentEntityID IS NULL
 			BEGIN
@@ -196,10 +197,34 @@ BEGIN TRY
 										1,1,'')
 				
 				END
-		 		
+			
+				--UPDATE TRIGGER FOR ANY NEW COLUMNS/REMOVAL OF EXISTING COLUMNS---------------------
+					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='UniversePropertiesXerf_Data_Insert')						
+						SET @SQL = N'ALTER TRIGGER '
+					ELSE
+						SET @SQL = N'CREATE TRIGGER '
 
-			--BEGIN TRAN
-		
+					SET @SQL = CONCAT(@SQL,N' dbo.UniversePropertiesXerf_Data_Insert
+									   ON  dbo.UniversePropertiesXerf_Data
+									   AFTER INSERT, UPDATE
+									AS 
+									BEGIN
+										SET NOCOUNT ON;
+																				
+										IF EXISTS(SELECT 1 FROM INSERTED) AND  NOT EXISTS(SELECT 1 FROM DELETED) --INSERT
+											INSERT INTO dbo.UniversePropertiesXerf_Data_history(<ColumnList>)
+												SELECT <columnList>
+												FROM INSERTED
+										ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
+											INSERT INTO dbo.UniversePropertiesXerf_Data_history(<ColumnList>)
+												SELECT <columnList>
+												FROM DELETED
+									END;',CHAR(10))
+					SET @SQL = REPLACE(@SQL,'<columnList>',@ColumnNames)
+					PRINT @SQL	
+					EXEC sp_executesql @SQL	
+					--END: TRIGGER------------------------------------------------------------------------
+
 				IF @EntityID = -1
 				BEGIN
 					SET @SQL = CONCAT('INSERT INTO dbo.UniversePropertiesXref_Data','(',@ColumnNames,') VALUES(',@ColumnValues,')')
@@ -266,7 +291,7 @@ BEGIN TRY
 				END
 				------------------------------------------------------------------------------------------------------------------------------------------
 
-			--	COMMIT
+				COMMIT
 		
 				--DROP TEMP TABLES--------------------------------------	
 				 DROP TABLE IF EXISTS #TMP_INSERT

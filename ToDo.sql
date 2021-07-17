@@ -1,10 +1,16 @@
-1.
 SELECT * FROM OBJECTLOG order by id desc
+
+1.
 --REGISTER SAVE
 SELECT * FROM OBJECTLOG WHERE ID=2376
 
 --REGISTER SAVE
 SELECT * FROM OBJECTLOG WHERE ID=2377
+
+--REGISTER SAVE
+SELECT * FROM OBJECTLOG WHERE ID=2465
+
+--rollback
 
 ALTER TABLE RegisterPropertiesXref_Data_history DROP COLUMN RegisterPropertyXref_Dataid
 ALTER TABLE RegisterPropertiesXref_Data_history ADD RegisterPropertiesXref_DataID INT NOT NULL

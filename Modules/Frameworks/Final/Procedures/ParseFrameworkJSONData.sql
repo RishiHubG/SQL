@@ -66,7 +66,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  SELECT *
 		INTO #TMP_ALLSTEPS
  FROM dbo.HierarchyFromJSON(@inputJSON)
-
+ WHERE NOT (Name = 'actions' AND ValueType ='array')		--EXCLUDING A PARENT NODE WHICH HAS A CALCULATION FORMULA
+	   
  SET @Name = REPLACE(@NAME,' ','')
 
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =2
@@ -337,7 +338,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		UPDATE dbo.Frameworks
 			SET VersionNum = @VersionNum,
 				UserModified = 1,
-				DateModified = GETUTCDATE()
+				DateModified = GETUTCDATE(),
+				FullSchemaJSON=@FullSchemaJSON
 		WHERE FrameworkID = @FrameworkID --AND Name = @Name
  --==================================================================================================================================
 		
@@ -616,7 +618,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				--	 TAB.ParentName = 'validate'				
 
 				SET IDENTITY_INSERT dbo.FrameworkLookups ON;
-
+				
 				--GET THE LOOKUPS ATTRIBUTES
 				IF @StepItemType = 'selectboxes'
 				BEGIN
@@ -688,7 +690,6 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 							
 				END
 				ELSE
-										
 								INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
 									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
 										   @FrameworkID,
@@ -714,7 +715,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					--UPDATE dbo.FrameworkLookups SET VersionNum = @VersionNum
 		
 		END	--END OF OUTERMOST IF -> IF @StepID IS NOT NULL
-
+		
 		DELETE FROM #TMP_Objects WHERE Element_ID = @ID
 		--DELETE FROM @Framework_Metafield
 		
@@ -861,6 +862,7 @@ BEGIN CATCH
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
+			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
 			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
