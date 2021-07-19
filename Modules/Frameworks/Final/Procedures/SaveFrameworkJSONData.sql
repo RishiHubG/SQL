@@ -26,8 +26,7 @@ CREATE OR ALTER PROCEDURE dbo.SaveFrameworkJSONData
 @ParentEntityTypeID INT=NULL, 
 @Name NVARCHAR(MAX) = NULL,
 @Description NVARCHAR(MAX) = NULL,
-@MethodName NVARCHAR(200)=NULL, 
-@FrameworkID INT,
+@MethodName NVARCHAR(200)=NULL,
 @LogRequest BIT = 1
 AS
 BEGIN
@@ -53,6 +52,7 @@ BEGIN TRY
 			@VersionNum INT
 			--@IsAvailable BIT = 0
 
+	DECLARE @Frameworkid int = (select frameworkid from Registers where registerid = @ParentEntityID)
 	DECLARE @TableName VARCHAR(500) = (SELECT CONCAT(Name,'_DATA') FROM dbo.Frameworks WHERE FrameworkID = @FrameworkID)
 
 	IF @TableName IS NULL
