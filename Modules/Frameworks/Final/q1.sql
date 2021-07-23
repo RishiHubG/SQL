@@ -126,6 +126,9 @@ EXEC dbo.SaveFrameworkJSONData @InputJSON='{"container":{"category":"information
 --TO DO
 @ParentEntityID=registerID new col. in _data fro framework
 change in parse, hard code registerid and savedata in framework
+referencenum nvarchar
+registerreferenece
+knowledgebasereference nvarchar100
 
 1. frameworkid
 2. entityid - registerid
