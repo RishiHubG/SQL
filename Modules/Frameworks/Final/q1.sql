@@ -122,3 +122,12 @@ BEGIN TRAN;
 EXEC dbo.SaveFrameworkJSONData @InputJSON='{"container":{"category":"informationKnowledge","subcategory":"","consequence":"veryLow","likelihood":"unlikely","riskrating":""}}',
 @UserLoginID=3356,@EntityID=-1,@EntityTypeID=9,@ParentEntityID=26,@ParentEntityTypeID=3,
 @Name='Name12',@Description='Test NAme',@FrameworkID=11,@MethodName=NULL,@LogRequest=1
+
+--TO DO
+@ParentEntityID=registerID new col. in _data fro framework
+change in parse, hard code registerid and savedata in framework
+
+1. frameworkid
+2. entityid - registerid
+2. parententityid
+3. ParentEntityTypeID

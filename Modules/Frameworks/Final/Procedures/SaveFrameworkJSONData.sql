@@ -194,7 +194,7 @@ BEGIN TRY
 			  AND OBJECTID IS NULL
 			  AND StringValue <> ''
 		 */
-
+		 
 		  SELECT Element_ID,
 				Name AS ColumnName,
 				CAST(StringValue AS VARCHAR(MAX)) AS StringValue
@@ -317,7 +317,7 @@ BEGIN TRY
 
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
 				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@Name=',CHAR(39),@Name,CHAR(39),',@Description=',CHAR(39),@Description,CHAR(39))
-				SET @Params = CONCAT(@Params,',@FrameworkID=',@FrameworkID,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 
 			--PRINT @PARAMS
 			
@@ -350,7 +350,7 @@ BEGIN CATCH
 
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
 				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@Name=',CHAR(39),@Name,CHAR(39),',@Description=',CHAR(39),@Description,CHAR(39))
-				SET @Params = CONCAT(@Params,',@FrameworkID=',@FrameworkID,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
