@@ -456,9 +456,9 @@ BEGIN
 
 				DECLARE @DataCols VARCHAR(MAX) 
 				 SET @DataCols =STUFF(
-							 (SELECT CONCAT(', [',TA.StringValue,'] [', TA.DataType,'] ', TA.DataTypeLength)
+							 (SELECT CONCAT(', [',REPLACE(TA.StringValue,' ',''),'] [', TA.DataType,'] ', TA.DataTypeLength)
 							 FROM #TMP_AssessmentData TA								  
-							  WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.StringValue AND C.object_id =OBJECT_ID('UniversePropertiesXref_Data'))
+							  WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = REPLACE(TA.StringValue,' ','') AND C.object_id =OBJECT_ID('UniversePropertiesXref_Data'))
 							 FOR XML PATH('')
 							 )
 							 ,1,1,'')

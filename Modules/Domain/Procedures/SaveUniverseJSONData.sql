@@ -82,6 +82,8 @@ BEGIN TRY
 					EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @AccessControlId OUTPUT
 					EXEC dbo.[GetNewAccessControllId] @UserLoginid, @MethodName, @EntityTypeID, @WorkflowID OUTPUT
 
+					IF @ParentEntityID = -1 SET @ParentEntityID = NULL
+
 					INSERT INTO dbo.Universe([Name],[Description],ParentID,AccessControlId,WorkFlowACID,UserCreated,DateCreated,DateModified)
 						SELECT @Name, @Description,@ParentEntityID, @AccessControlId,@WorkflowID,@UserLoginID,@CurrentDate,@CurrentDate
 		
