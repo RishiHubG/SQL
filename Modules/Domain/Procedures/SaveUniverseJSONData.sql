@@ -21,8 +21,8 @@ CREATE OR ALTER PROCEDURE dbo.SaveUniverseJSONData
 @UserLoginID INT,
 @EntityID INT,
 @EntityTypeID INT=NULL,
-@ParentEntityID INT=NULL,
-@ParentEntityTypeID INT=NULL,
+@ParentEntityID INT,
+@ParentEntityTypeID INT,
 @MethodName NVARCHAR(2000) = NULL,
 @Name NVARCHAR(MAX) = NULL,
 @Description NVARCHAR(MAX) = NULL,
@@ -35,6 +35,7 @@ BEGIN TRY
 	SET XACT_ABORT ON; 
 
 	DECLARE @UserID INT
+	DECLARE @ParamParentEntityID INT =  @ParentEntityID
 
 	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
 								 @MethodName = @MethodName,
@@ -42,7 +43,7 @@ BEGIN TRY
 
 	IF @UserID IS NOT NULL
 	BEGIN
-
+			
 			IF @EntityTypeid <> 2 OR @ParentEntityTypeid <> 2
 			BEGIN
 				PRINT 'UNAUTHORIZED ACCESS!!!!'
@@ -282,7 +283,7 @@ BEGIN TRY
 				IF @LogRequest = 1
 				BEGIN			
 						SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
-						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
+						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParamParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
 					--PRINT @PARAMS
 			
 					SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -292,7 +293,7 @@ BEGIN TRY
 											 @UserLoginID = @UserLoginID
 				END
 				------------------------------------------------------------------------------------------------------------------------------------------
-
+				
 				COMMIT
 		
 				--DROP TEMP TABLES--------------------------------------	
@@ -308,13 +309,13 @@ BEGIN TRY
 
 END TRY
 BEGIN CATCH
-	
+		 
 		IF @@TRANCOUNT = 1 AND XACT_STATE() <> 0
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
+				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParamParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
