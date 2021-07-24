@@ -335,7 +335,7 @@ BEGIN TRY
 
 		SELECT NULL AS ErrorMessage
 
-		SELECT @Frameworkid AS Frameworkid,@EntityID AS Registerid, @ParentEntityID AS ParentEntityID, @ParentEntityTypeID AS ParentEntityTypeID
+		SELECT @Frameworkid AS Frameworkid,@EntityID AS EntityID , @ParentEntityID AS Registerid, @ParentEntityTypeID AS ParentEntityTypeID
 
 		END		--END OF USER PERMISSION CHECK
 		 ELSE IF @UserID IS NULL

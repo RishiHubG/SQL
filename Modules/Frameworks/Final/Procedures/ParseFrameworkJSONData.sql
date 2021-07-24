@@ -119,8 +119,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 DateModified DATETIME2(0),
 	 VersionNum INT NOT NULL,
 	 registerid INT,
-	 referencenum nvarchar nvarchar(250) NULL
-	 registerreferenece nvarchar(250) NULL
+	 referencenum nvarchar(250) NULL,
+	 registerreferenece nvarchar(250) NULL,
      knowledgebasereference nvarchar(250)  NULL'
 	 
 	 DROP TABLE IF EXISTS #TMP_DATA
