@@ -210,6 +210,8 @@ BEGIN TRY
 			SELECT 'UserCreated',CAST(@UserLoginID AS VARCHAR(10))
 			UNION
 			SELECT 'DateCreated', CAST(CONVERT(DATETIME2(3),  @UTCDATE, 120) AS VARCHAR(100))
+			UNION
+			SELECT 'RegisterID', CAST(@ParentEntityID AS VARCHAR(10))
  	 	 
 		IF @OperationType ='INSERT'
 		BEGIN
@@ -332,6 +334,8 @@ BEGIN TRY
 		COMMIT
 
 		SELECT NULL AS ErrorMessage
+
+		SELECT @Frameworkid AS Frameworkid,@EntityID AS Registerid, @ParentEntityID AS ParentEntityID, @ParentEntityTypeID AS ParentEntityTypeID
 
 		END		--END OF USER PERMISSION CHECK
 		 ELSE IF @UserID IS NULL
