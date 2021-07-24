@@ -199,13 +199,13 @@ BEGIN TRY
 				END
 			
 				--UPDATE TRIGGER FOR ANY NEW COLUMNS/REMOVAL OF EXISTING COLUMNS---------------------
-					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='UniversePropertiesXerf_Data_Insert')						
+					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='UniversePropertiesXref_Data_Insert')						
 						SET @SQL = N'ALTER TRIGGER '
 					ELSE
 						SET @SQL = N'CREATE TRIGGER '
 
-					SET @SQL = CONCAT(@SQL,N' dbo.UniversePropertiesXerf_Data_Insert
-									   ON  dbo.UniversePropertiesXerf_Data
+					SET @SQL = CONCAT(@SQL,N' dbo.UniversePropertiesXref_Data_Insert
+									   ON  dbo.UniversePropertiesXref_Data
 									   AFTER INSERT, UPDATE
 									AS 
 									BEGIN
