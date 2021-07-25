@@ -107,7 +107,7 @@ BEGIN
 		SET @cols = STUFF(@cols, 1, 1, N'');
 				
 		IF @TemplateTableName LIKE '%FrameworkLookups%' OR @TemplateTableName LIKE '%FrameworkAttributes%'
-			SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName, ';',CHAR(10))
+			SET @SQL = CONCAT('DROP TABLE IF EXISTS [',@NewTableName, '];',CHAR(10))
 
 		SET @SQL = CONCAT(@SQL,'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME =''',@NewTableName,''')', CHAR(10))
 		SET @SQL = CONCAT(@SQL, N' CREATE TABLE dbo.[', @NewTableName , '](', @cols, ') ', CHAR(10), CHAR(10))
@@ -125,16 +125,16 @@ BEGIN
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 		
-		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,'(', @cols, ') ', CHAR(10))		
+		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.',@NewTableName, ' WHERE VersionNum = ', @VersionNum,' AND FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.[',@NewTableName, '] WHERE VersionNum = ', @VersionNum,' AND FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
 		--IF @TemplateTableName NOT LIKE '%FrameworkLookups%'
-		SET @SQL = CONCAT('SET IDENTITY_INSERT ',@NewTableName,' ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT ',@NewTableName,' OFF ;')
+		SET @SQL = CONCAT('SET IDENTITY_INSERT [',@NewTableName,'] ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT [',@NewTableName,'] OFF ;')
 		PRINT @SQL
 		EXEC sp_executesql @SQL 
 
 		--UPDATE VERSION NUMBER		
-		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,CHAR(10))		
+		SET @SQL = CONCAT('UPDATE dbo.[',@NewTableName,']',CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
 		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, CHAR(10))
 		PRINT @SQL
@@ -169,7 +169,7 @@ BEGIN
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 
-		SET @SQL = CONCAT('INSERT INTO dbo.',@NewTableName,@HistoryTable,'(', @cols, ') ', CHAR(10))		
+		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,@HistoryTable,'](', @cols, ') ', CHAR(10))		
 		--IF @VersionNum = 1
 		--	SET @cols = REPLACE(@cols,'[OperationType]','''INSERT''')
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,@HistoryTable,';', CHAR(10))		
@@ -179,7 +179,7 @@ BEGIN
 		SET @SQL = ''
 
 		--UPDATE CURRENT IDENTIFIER IN HISTORY TABLE FOR OLDER VERSIONS
-		SET @SQL = CONCAT('UPDATE dbo.',@NewTableName,@HistoryTable,CHAR(10))		
+		SET @SQL = CONCAT('UPDATE dbo.[',@NewTableName,@HistoryTable,']',CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SET PeriodIdentifierID = 0', CHAR(10))
 		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, ' AND VersionNum < ',@VersionNum, CHAR(10))		
 		PRINT @SQL

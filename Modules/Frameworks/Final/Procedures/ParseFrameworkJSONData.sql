@@ -70,6 +70,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	   
  SET @Name = REPLACE(@NAME,' ','')
 
+ DECLARE @FrameWorkTblName VARCHAR(500) = CONCAT('[', @Name,'_data]')
+ DECLARE @FrameWorkHistTblName VARCHAR(500) = CONCAT('[', @Name,'_data_history]')
+
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =2
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =20
 
@@ -222,7 +225,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	SET @SQL = CONCAT(N'SELECT @NewDataCols = STUFF(
 						(SELECT CONCAT('', ['',[Name],''] ['', DataType,''] '', DataTypeLength)
 						FROM #TMP_DATA TA								  
-						WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.Name AND C.object_id =OBJECT_ID(',CHAR(39),@Name,'_data',CHAR(39),'))
+						WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.Name AND C.object_id =OBJECT_ID(',CHAR(39),@FrameWorkTblName,CHAR(39),'))
 						FOR XML PATH('''')
 						)
 						,1,1,'''')'
@@ -230,6 +233,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	EXEC sp_executesql @SQL,N'@NewDataCols VARCHAR(MAX) OUTPUT',@NewDataCols OUTPUT
 	--SELECT @NewDataCols
 	--RETURN
+	
+	BEGIN TRAN
 
 	SET @MainDataCols = CONCAT(@SQL_ID,' IDENTITY(1,1),',CHAR(10),@StaticCols,CHAR(10),@DataCols)
 	SET @StaticCols = CONCAT(@StaticCols,',PeriodIdentifier INT')
@@ -238,17 +243,17 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	--PRINT @HistDataCols
 
 	SET @SQL = ''
-	SET @SQL = CONCAT(N'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME=',CHAR(39),@Name,'_data',CHAR(39),')', CHAR(10))
+	SET @SQL = CONCAT(N'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME=',CHAR(39),@FrameWorkTblName,CHAR(39),')', CHAR(10))
 	SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))
-	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @Name ,'_data',CHAR(10), '(', @MainDataCols, ') ;',CHAR(10))
-	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @Name ,'_data_history',CHAR(10), '(', @HistDataCols, ') ;',CHAR(10))	
+	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @FrameWorkTblName,CHAR(10), '(', @MainDataCols, ') ;',CHAR(10))
+	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @FrameWorkHistTblName, CHAR(10), '(', @HistDataCols, ') ;',CHAR(10))	
 	SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
 	IF @NewDataCols IS NOT NULL	--_DATA TABLE ALREADY EXISTS
 	BEGIN
 		SET @SQL = CONCAT(@SQL,N' ELSE ',CHAR(10)) 
 		SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))	
-		SET @SQL = CONCAT(@SQL,N' ALTER TABLE dbo.', @Name ,'_data ADD ', CHAR(10), @NewDataCols, CHAR(10),';')
-		SET @SQL = CONCAT(@SQL,N' ALTER TABLE dbo.', @Name ,'_data_history ADD ', CHAR(10), @NewDataCols, CHAR(10),';')
+		SET @SQL = CONCAT(@SQL,N' ALTER TABLE dbo.', @FrameWorkTblName ,' ADD ', CHAR(10), @NewDataCols, CHAR(10),';')
+		SET @SQL = CONCAT(@SQL,N' ALTER TABLE dbo.', @FrameWorkHistTblName ,' ADD ', CHAR(10), @NewDataCols, CHAR(10),';')
 		SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
 	END
 	PRINT @SQL
@@ -262,7 +267,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		DECLARE @cols VARCHAR(MAX) = ''
 
 		SELECT @SQL = CONCAT('SELECT @cols = CONCAT(@cols,N'', ['',name,''] '')
-							  FROM sys.dm_exec_describe_first_result_set(N''SELECT * FROM dbo.',@Name,'_data',''', NULL, 1)')
+							  FROM sys.dm_exec_describe_first_result_set(N''SELECT * FROM dbo.',@FrameWorkTblName,''', NULL, 1)')
 					
 		SELECT @SQL = CONCAT(@SQL,CHAR(10),';SET @cols = STUFF(@cols, 1, 1, N'''');')
 		PRINT @SQL
@@ -271,29 +276,29 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SET @SQL = ''
 
 		--CREATE INSERT TRIGGER
-		IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME = CONCAT(@Name,'_Data_Insert'))						
+		IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME = CONCAT('[',@Name,'_Data_Insert]'))						
 			SET @SQL = N'ALTER TRIGGER '
 		ELSE
 			SET @SQL = N'CREATE TRIGGER '
 
-		SET @SQL = CONCAT(@SQL,N' dbo.', @Name,'_Data_Insert
-							ON  dbo.',@Name,'_Data
+		SET @SQL = CONCAT(@SQL,N' dbo.[', @Name,'_Data_Insert]
+							ON  dbo.',@FrameWorkTblName,'
 							AFTER INSERT, UPDATE
 						AS 
 						BEGIN
 							SET NOCOUNT ON;
 																				
 							IF EXISTS(SELECT 1 FROM INSERTED) AND  NOT EXISTS(SELECT 1 FROM DELETED) --INSERT
-								INSERT INTO dbo.',@Name,'_Data_history(<ColumnList>)
+								INSERT INTO dbo.',@FrameWorkHistTblName,'(<ColumnList>)
 									SELECT <columnList>
 									FROM INSERTED
 							ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
-								INSERT INTO dbo.',@Name,'_Data_history(<ColumnList>)
+								INSERT INTO dbo.',@FrameWorkHistTblName,'(<ColumnList>)
 									SELECT <columnList>
 									FROM DELETED
 						END;',CHAR(10))
 		SET @SQL = REPLACE(@SQL,'<columnList>',@cols)
-		--EXEC [LongPrint] @SQL	
+		EXEC [LongPrint] @SQL	
 		EXEC sp_executesql @SQL	
 	--==SCHEMA FOR _DATA ENDS HERE=========================================================================================================================
 				
@@ -319,7 +324,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	IF @VersionNum IS NULL
 		SET @VersionNum = 1
 
-	BEGIN TRAN
+
 	
 	--INSERT NEW JSONKEY(NAME) IF IT DOES NOT EXIST=====================================================================================		
 	IF @IsAvailable IS NULL OR @IsAvailable = 0	
@@ -389,7 +394,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		--CHECK FOR THE EXISTENCE OF THE STEP======================================================================================================		
 		SELECT @SQL = '', @StepID= NULL,@IsAvailable = NULL
 		SET @TemplateTableName = 'FrameworkSteps'
-		SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
+		SET @TableName = CONCAT('[',@Name,'_',@TemplateTableName,']')
 		
 		SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
 		SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
@@ -464,7 +469,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			--CHECK FOR THE EXISTENCE OF THE STEPITEM======================================================================================================
 			SELECT @SQL = '', @StepItemID= NULL,@IsAvailable = NULL
 			SET @TemplateTableName = 'FrameworkStepItems'
-			SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
+			SET @TableName = CONCAT('[',@Name,'_',@TemplateTableName,']')
 
 			SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
 			SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
@@ -568,7 +573,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		--================================================================================================================================== 		
 		SELECT @SQL = ''
 		SET @TemplateTableName = 'FrameworkAttributes'
-		SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
+		SET @TableName = CONCAT('[',@Name,'_',@TemplateTableName,']')
 		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
 		SET @SQL = CONCAT(@SQL,' SELECT @AttributeID = MAX(AttributeID) + 1 FROM ',@TableName);						
 		PRINT @SQL  
@@ -582,7 +587,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						
 		SELECT @SQL = ''
 		SET @TemplateTableName = 'FrameworkLookups'
-		SET @TableName = CONCAT(@Name,'_',@TemplateTableName)
+		SET @TableName = CONCAT('[',@Name,'_',@TemplateTableName,']')
 		SET @SQL = CONCAT(' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',@TableName,''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
 		SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM ',@TableName,')', CHAR(10))
 		SET @SQL = CONCAT(@SQL,' SELECT @LookupID = MAX(LookupID) + 1 FROM ',@TableName);						

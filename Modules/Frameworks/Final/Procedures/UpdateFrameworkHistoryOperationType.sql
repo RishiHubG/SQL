@@ -50,7 +50,7 @@ BEGIN
 				DECLARE @PrevVersionNum INT = @VersionNum - 1, @Query NVARCHAR(MAX), @HistTableSuffix VARCHAR(50)='_history'
 				DECLARE @cols VARCHAR(MAX)='',@HistoryTableName VARCHAR(500),@KeyName VARCHAR(500),@SelectCols VARCHAR(MAX),@CommonID INT
 
-				SET @TableInitial = CONCAT('dbo.',@TableInitial)
+				--SET @TableInitial = CONCAT('dbo.',@TableInitial)
 
 				WHILE EXISTS(SELECT 1 FROM #TBL_OperationTypeList)
 				BEGIN
@@ -73,7 +73,7 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepID AS CommonID, Curr.StepName AS KeyName,Curr.StepName AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_FrameworkSteps_history Curr
+													FROM [',@TableInitial,'_FrameworkSteps_history] Curr
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
 													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		
 													)TAB'
@@ -83,8 +83,8 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.StepItemKey AS KeyName,Curr.StepItemName AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_FrameworkStepItems_history Curr
-														 INNER JOIN ',@TableInitial,'_FrameworkSteps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
+													FROM [',@TableInitial,'_FrameworkStepItems_history] Curr
+														 INNER JOIN [',@TableInitial,'_FrameworkSteps_history] Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
 													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''
 														  
@@ -92,8 +92,8 @@ BEGIN
 													
 													--CASE WHEN A STEPITEM IS MOVED TO ANOTHER STEP
 													SELECT DISTINCT Curr.StepItemID AS CommonID,''StepID'' AS KeyName,CAST(Curr.StepID AS VARCHAR(10)) AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_FrameworkStepItems_history Curr
-														 INNER JOIN ',@TableInitial,'_FrameworkSteps_history Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
+													FROM [',@TableInitial,'_FrameworkStepItems_history] Curr
+														 INNER JOIN [',@TableInitial,'_FrameworkSteps_history] Curr_Steps ON Curr_Steps.StepID = Curr.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,')
 													      AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		 		
 													)TAB'
@@ -103,9 +103,9 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.AttributeKey AS KeyName,Curr.AttributeValue AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_FrameworkAttributes_history Curr	
-														 INNER JOIN ',@TableInitial,'_FrameworkStepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
-														 INNER JOIN ',@TableInitial,'_FrameworkSteps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
+													FROM [',@TableInitial,'_FrameworkAttributes_history] Curr	
+														 INNER JOIN [',@TableInitial,'_FrameworkStepItems_history] Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
+														 INNER JOIN [',@TableInitial,'_FrameworkSteps_history] Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,') 
 														  AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''		
 													)TAB' 
@@ -115,9 +115,9 @@ BEGIN
 													FROM
 													(
 													SELECT DISTINCT Curr.StepItemID AS CommonID, Curr.LookupValue AS KeyName,Curr.LookupName AS KeyValue,Curr.VersionNum
-													FROM ',@TableInitial,'_FrameworkLookups_history Curr	
-														 INNER JOIN ',@TableInitial,'_FrameworkStepItems_history Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
-														 INNER JOIN ',@TableInitial,'_FrameworkSteps_history Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
+													FROM [',@TableInitial,'_FrameworkLookups_history] Curr	
+														 INNER JOIN [',@TableInitial,'_FrameworkStepItems_history] Curr_Met ON Curr_Met.StepItemID = Curr.StepItemID	
+														 INNER JOIN [',@TableInitial,'_FrameworkSteps_history] Curr_Steps ON Curr_Steps.StepID = Curr_Met.StepID	 
 													WHERE Curr.VersionNum IN (',@PrevVersionNum,',',@VersionNum,') 
 														  AND ISNULL(Curr.OperationType,''1'') <> ''DELETE''
 													)TAB' 
@@ -190,7 +190,7 @@ BEGIN
 						WHERE ID = @ID	
 						
 						SELECT @cols = CONCAT(@cols,N', ', name , ' ')
-						FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM ', @HistoryTableName) , NULL, 1)
+						FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM [', @HistoryTableName,']') , NULL, 1)
 						WHERE NAME <> 'HistoryID';
 
 						SET @cols = STUFF(@cols, 1, 1, N'');						  
@@ -201,8 +201,8 @@ BEGIN
 								SET @SelectCols = REPLACE(@SelectCols,'OperationType','''DELETE''')
 								SET @SelectCols = REPLACE(@SelectCols,'VersionNum',@VersionNum)
 								SET @SelectCols = REPLACE(@SelectCols,'PeriodIdentifierID','1')
-								SET @Query = CONCAT('INSERT INTO ',@HistoryTableName,'(',@cols,')', CHAR(10))
-								SET @Query = CONCAT(@Query,' SELECT ',@SelectCols,' FROM ',@HistoryTableName, CHAR(10))
+								SET @Query = CONCAT('INSERT INTO [',@HistoryTableName,'](',@cols,')', CHAR(10))
+								SET @Query = CONCAT(@Query,' SELECT ',@SelectCols,' FROM [',@HistoryTableName, ']',CHAR(10))
 								SET @Query = CONCAT(@Query, ' WHERE FrameworkID=',@FrameworkID,' AND VersionNum=',@VersionNum - 1, ' AND ',@KeyColName,'=''',@KeyName,'''')
 
 								IF @TableType IN ('StepItems','Attributes','Lookups')
@@ -225,7 +225,7 @@ BEGIN
 					
 					--FOR StepItems,Attributes,Lookups: UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
 					SET @Query = STUFF(
-										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,CASE WHEN KeyName <>'StepID' THEN CONCAT(' AND ',KeyColName,'=''',KeyName,'''') END, ' AND StepItemID = ', CommonID, ';', CHAR(10))
+										(SELECT CONCAT('; ','UPDATE [',HistoryTableName,'] SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,CASE WHEN KeyName <>'StepID' THEN CONCAT(' AND ',KeyColName,'=''',KeyName,'''') END, ' AND StepItemID = ', CommonID, ';', CHAR(10))
 										FROM #TMP_OperationType
 										WHERE OperationType IS NOT NULL 
 											  AND TableType IN ('StepItems','Attributes','Lookups')
@@ -239,7 +239,7 @@ BEGIN
 
 					--FOR STEPS:UPDATE THE OPERATION TYPE FLAG IN HISTORY TABLE
 					SET @Query = STUFF(
-										(SELECT CONCAT('; ','UPDATE ',HistoryTableName,' SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''' AND StepID = ', CommonID, ';', CHAR(10))
+										(SELECT CONCAT('; ','UPDATE [',HistoryTableName,'] SET OperationType=''',OperationType, ''' WHERE FrameworkID = ',@FrameworkID,' AND VersionNum=',@VersionNum,' AND ',KeyColName,'=''',KeyName,''' AND StepID = ', CommonID, ';', CHAR(10))
 										FROM #TMP_OperationType
 										WHERE OperationType IS NOT NULL 
 											  AND TableType = 'Steps'

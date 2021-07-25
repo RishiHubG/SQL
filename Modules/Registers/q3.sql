@@ -171,3 +171,20 @@ BEGIN TRAN;
 EXEC dbo.SaveregisterJSONData @EntityID=-1,@InputJSON='{"attributes":{"currency":""},"domainpermissiona":[{"userUserGroup":"","read":false,"modify":false,"write":false,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false,"username":"","export":false,"report":false}],"domianinherentpermissions":false,"workflowpermissions":[{"userUserGroup":"","read":false,"modify":false,"write":false,"cut":false,"copy":false,"delete":false,"administrate":false,"adhoc":false,"workflowname":"","stepstepItem":"","stepname":"","stepItemName":{},"view":false}],"WFinheritpermissions":false}',
 @UserLoginID=3355,@LogRequest=1,@EntityTypeID=3,@ParentEntityID=4,@ParentEntityTypeID=2,@FrameworkID=11,
 @name='Test wtih Rishi11',@MethodName=NULL
+
+
+--EXEC dbo.RegisterCleanupByFrameworkID @Frameworkid =11111
+CREATE OR ALTER  PROC dbo.RegisterCleanupByFrameworkID
+@Frameworkid INT
+AS
+BEGIN
+
+DECLARE @RegisterID INT
+SELECT @RegisterID = RegisterID FROM dbo.Registers WHERE frameworkid=@frameworkid
+
+DELETE FROM RegisterPropertiesXref_Data WHERE RegisterID=@RegisterID
+DELETE FROM RegisterPropertiesXref WHERE RegisterID=@RegisterID
+DELETE FROM RegisterProperties WHERE RegisterID=@RegisterID
+DELETE FROM Registers WHERE RegisterID=@RegisterID
+
+END
