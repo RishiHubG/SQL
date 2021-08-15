@@ -156,14 +156,16 @@ BEGIN TRY
 				WHERE TD.Name ='attributes'			  
 
 				--INSERT ANY OTHER AD-HOC/FIXED COLUMNS
-				INSERT INTO #TMP_INSERT(ColumnName,StringValue)
-					--SELECT 'VersionNum',@VersionNum
-					--UNION
-					SELECT 'UserCreated',@UserLoginID
-			
+				--INSERT INTO #TMP_INSERT(ColumnName,StringValue)
+				--	SELECT 'VersionNum',CAST(@VersionNum AS VARCHAR(MAX))
+				--	UNION
+				--	SELECT 'UserCreated',CAST(@UserLoginID AS VARCHAR(MAX))
+				--	UNION
+				--	SELECT 'DateCreated',CAST(GETUTCDATE() AS VARCHAR(MAX))
 
-						 --SELECT * FROM #TMP_INSERT
-					   --RETURN			
+			
+							 --SELECT * FROM #TMP_INSERT
+						  -- RETURN			
 
  	 			DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
 
@@ -175,8 +177,11 @@ BEGIN TRY
 											ORDER BY Element_ID
 											FOR XML PATH ('')								
 											),1,1,'')
-		
-					SET @ColumnNames = CONCAT('UniverseID',',',@ColumnNames)
+					
+					DECLARE @HistoryColumns VARCHAR(MAX) = 'UniversePropertiesXref_DataID,UniverseID,UserCreated,DateCreated ,UserModified, Datemodified'
+					SET @HistoryColumns = CONCAT(@HistoryColumns,',',@ColumnNames)
+
+					SET @ColumnNames = CONCAT('UniverseID,UserCreated',',',@ColumnNames)
 
 					SET @ColumnValues = STUFF
 											((SELECT CONCAT(', ',CHAR(39),StringValue,CHAR(39))
@@ -185,7 +190,8 @@ BEGIN TRY
 											FOR XML PATH ('')								
 											),1,1,'')
 
-					SET @ColumnValues = CONCAT(CHAR(39),@UniverseID,CHAR(39),',',@ColumnValues)
+					SET @ColumnValues = CONCAT(CHAR(39),@UniverseID,CHAR(39),',',CHAR(39),@UserLoginID,CHAR(39),',',@ColumnValues)
+					
 				END
 				ELSE
 				BEGIN
@@ -200,7 +206,7 @@ BEGIN TRY
 										1,1,'')
 				
 				END
-			
+				
 				--UPDATE TRIGGER FOR ANY NEW COLUMNS/REMOVAL OF EXISTING COLUMNS---------------------
 					IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME ='UniversePropertiesXref_Data_Insert')						
 						SET @SQL = N'ALTER TRIGGER '
@@ -215,17 +221,17 @@ BEGIN TRY
 										SET NOCOUNT ON;
 																				
 										IF EXISTS(SELECT 1 FROM INSERTED) AND  NOT EXISTS(SELECT 1 FROM DELETED) --INSERT
-											INSERT INTO dbo.UniversePropertiesXerf_Data_history(<ColumnList>)
+											INSERT INTO dbo.UniversePropertiesXref_Data_history(<ColumnList>)
 												SELECT <columnList>
 												FROM INSERTED
 										ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
-											INSERT INTO dbo.UniversePropertiesXerf_Data_history(<ColumnList>)
+											INSERT INTO dbo.UniversePropertiesXref_Data_history(<ColumnList>)
 												SELECT <columnList>
 												FROM DELETED
 									END;',CHAR(10))
-					SET @SQL = REPLACE(@SQL,'<columnList>',@ColumnNames)
+					SET @SQL = REPLACE(@SQL,'<columnList>',@HistoryColumns)
 					PRINT @SQL	
-					EXEC sp_executesql @SQL	
+					EXEC sp_executesql @SQL
 					--END: TRIGGER------------------------------------------------------------------------
 
 				IF @EntityID = -1
@@ -241,8 +247,8 @@ BEGIN TRY
 				END
 		
 				-- RETURN
-				--EXEC sp_executesql @SQL	
-
+				EXEC sp_executesql @SQL	
+				
 				--CALL DOMAIN PERMISSIONS HERE
 				EXEC dbo.SaveUniversePermissions @InputJSON = @InputJSON,
 												 @UserLoginID=@UserLoginID,
@@ -251,29 +257,33 @@ BEGIN TRY
 
 				--UPDATE _HISTORY TABLE-----------------------------------------
 		
-				--DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertiesXref_Data_history WHERE UniverseID = @UniverseID)
+				DECLARE @HistoryID INT = (SELECT MAX(HistoryID) FROM dbo.UniversePropertiesXref_Data_history WHERE UniverseID = @UniverseID)
+				SELECT @VersionNum = MAX(VersionNum) + 1 FROM dbo.UniversePropertiesXref_Data_history WHERE UniverseID = @UniverseID
 
-				----UPDATE VERSION NO.
-				--UPDATE dbo.UniversePropertiesXref_Data_history
-				--	SET VersionNum = @VersionNum
-				--WHERE HistoryID = @HistoryID			 
+				IF @VersionNum IS NULL
+					SET @VersionNum = 1
 
-				----RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
-				--UPDATE dbo.UniversePropertiesXref_Data_history
-				--	SET PeriodIdentifierID = 0,
-				--		UserModified = @UserLoginID,
-				--		DateModified = GETUTCDATE()
-				--WHERE UniverseID = @UniverseID
-				--	  AND VersionNum < @VersionNum
+				--UPDATE VERSION NO.
+				UPDATE dbo.UniversePropertiesXref_Data_history
+					SET VersionNum = @VersionNum
+				WHERE HistoryID = @HistoryID			 
+
+				--RESET PERIODIDENTIFIER FOR EARLIER VERSIONS
+				UPDATE dbo.UniversePropertiesXref_Data_history
+					SET PeriodIdentifierID = 0,
+						UserModified = @UserLoginID,
+						DateModified = GETUTCDATE()
+				WHERE UniverseID = @UniverseID
+					  AND VersionNum < @VersionNum
 		
-				----UPDATE OTHER COLUMNS FOR CURRENT VERSION
-				--UPDATE dbo.UniversePropertiesXref_Data_history
-				--	SET PeriodIdentifierID = @PeriodIdentifierID,
-				--		UserModified = @UserLoginID,
-				--		DateModified = GETUTCDATE(),
-				--		OperationType = @OperationType
-				--WHERE UniverseID = @UniverseID
-				--	  AND VersionNum = @VersionNum
+				--UPDATE OTHER COLUMNS FOR CURRENT VERSION
+				UPDATE dbo.UniversePropertiesXref_Data_history
+					SET PeriodIdentifierID = @PeriodIdentifierID,
+						UserModified = @UserLoginID,
+						DateModified = GETUTCDATE(),
+						OperationType = @OperationType
+				WHERE UniverseID = @UniverseID
+					  AND VersionNum = @VersionNum
 				-----------------------------------------------------------------
 
 				DECLARE @Params VARCHAR(MAX)
@@ -294,6 +304,7 @@ BEGIN TRY
 				END
 				------------------------------------------------------------------------------------------------------------------------------------------
 				
+				
 				COMMIT
 		
 				--DROP TEMP TABLES--------------------------------------	
@@ -302,6 +313,7 @@ BEGIN TRY
 				 --------------------------------------------------------
 
 				 SELECT NULL AS ErrorMessage
+				 SELECT @UniverseID AS id
 
 		 END		--END OF USER PERMISSION CHECK
 		 ELSE IF @UserID IS NULL
@@ -310,7 +322,7 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
 		 
-		IF @@TRANCOUNT = 1 AND XACT_STATE() <> 0
+		IF @@TRANCOUNT = 1 AND XACT_STATE() = -1
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()

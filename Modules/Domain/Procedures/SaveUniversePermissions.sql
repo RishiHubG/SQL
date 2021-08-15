@@ -71,24 +71,59 @@ BEGIN TRY
 		WHERE Pos > 0
 
 		--SELECT * FROM #TMP_DATA_KEYNAME
-		--RETURN
+		
 		--SELECT * FROM #TMP_ALLSTEPS
 
+		;WITH CTE 
+		AS
+		(
+			SELECT Element_ID, Name,Parent_ID,StringValue,OBJECT_ID AS ObjectID
+			FROM #TMP_ALLSTEPS
+			WHERE Name = 'permissionList'
+				  AND Parent_ID = 0
+
+			UNION ALL
+
+			SELECT TA.Element_ID, TA.Name,TA.Parent_ID,TA.StringValue,TA.OBJECT_ID AS ObjectID
+			FROM CTE C
+				 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = C.Element_ID
+			--WHERE TA.Name <> 'unassigned'
+		),
+		CTE_Assigned AS	--FETCH ALL PERMISSIONS UNDER ""ASSIGNED"" NODE
+		(
+			SELECT Element_ID, Name,Parent_ID,StringValue,ObjectID
+			FROM CTE
+			WHERE Name = 'Assigned'
+
+			UNION ALL
+
+			SELECT TA.Element_ID, TA.Name,TA.Parent_ID,TA.StringValue,TA.OBJECT_ID AS ObjectID
+			FROM CTE_Assigned C
+				 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = C.Element_ID
+		
+		)
+
+		SELECT * 
+			INTO #TMP_AssignedPermissions
+		FROM CTE_Assigned
+
+		DELETE FROM #TMP_AssignedPermissions WHERE Name = 'Assigned' OR Name IS NULL
+		--SELECT * FROM #TMP_AssignedPermissions
+		--RETURN
 		 --BUILD THE COLUMN LIST
 		 -------------------------------------------------------------------------------------------------------
 		 
 		 DROP TABLE IF EXISTS #TMP
 		
-		SELECT TA_Child.Element_ID,
-			   TA_Child.Name AS ColumnName,
-			   TA_Child.StringValue,
-			   TA_Child.Parent_ID AS ParentID
+		SELECT TD.Element_ID,
+			   TD.Name AS ColumnName,
+			   TD.StringValue,
+			   TD.Parent_ID AS ParentID
 			INTO #TMP
-		FROM #TMP_DATA_KEYNAME TD
-			 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TD.ObjectID
-			 INNER JOIN #TMP_ALLSTEPS TA_Child ON TA_Child.Parent_ID = TA.Element_ID
-		WHERE TD.Name ='domainpermissiona'
-			  AND TA_Child.Name <> 'userUserGroup'		 
+		FROM #TMP_AssignedPermissions TD
+		--	 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TD.ObjectID
+		--	 INNER JOIN #TMP_ALLSTEPS TA_Child ON TA_Child.Parent_ID = TA.Element_ID
+		--WHERE TA_Child.Name <> 'userUserGroup'		 
 		
 		SELECT ParentID,
 			  TRY_PARSE(StringValue AS INT) AS UserID
@@ -96,8 +131,10 @@ BEGIN TRY
 		FROM #TMP
 		WHERE ColumnName = 'userid'
 
+		--SELECT * FROM #TMP_AssignedPermissions
+		--SELECT * FROM #TMP
 		--SELECT * FROM #TMP_Users
-
+		--RETURN
 		--BUILD THE COLUMNS
 		SELECT 
 			ParentID,
@@ -132,13 +169,12 @@ BEGIN TRY
 		GROUP BY ParentID
 
 		DECLARE @Customized BIT = 1
-		DECLARE @FixedColumns VARCHAR(1000) = 'AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised'
+		DECLARE @FixedColumns VARCHAR(1000) = 'AccessControlID,UserCreated,DateCreated,UserModified,DateModified'
 		DECLARE @FixedColumnValues VARCHAR(1000) =  CONCAT(CHAR(39),@AccessControlID,CHAR(39),',',
 									   CHAR(39),@UserLoginID,CHAR(39),',',
 									   CHAR(39),GETUTCDATE(),CHAR(39),',',
 								  	   CHAR(39),@UserLoginID,CHAR(39),',',
-									   CHAR(39),GETUTCDATE(),CHAR(39),',',
-									   CHAR(39),@Customized,CHAR(39)
+									   CHAR(39),GETUTCDATE(),CHAR(39)
 									   )		 
 		
 		--BUILD THE INSERT
@@ -161,7 +197,7 @@ BEGIN TRY
 					FROM #TMP_AccessControlledResource 	
 					FOR XML PATH ('')								
 					),1,1,'')	
-		 
+		
 		PRINT @SQL
 		EXEC (@SQL)
 
@@ -182,13 +218,7 @@ BEGIN TRY
 					),1,1,'')	
 		 
 		PRINT @SQL
-		EXEC (@SQL)
-
-		--SET Customized TO FALSE FOR OTHER USERS
-		UPDATE ACR
-			SET Customised = 0
-		FROM dbo.AccessControlledResource ACR
-			 INNER JOIN #TMP_UG_Users TMP ON TMP.UserID = ACR.UserID
+		EXEC (@SQL)		
 
 		--RETURN					   
 		 
@@ -227,9 +257,6 @@ BEGIN TRY
 
 END TRY
 BEGIN CATCH
-	
-		--IF @@TRANCOUNT = 1 AND XACT_STATE() <> 0
-		--	ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
