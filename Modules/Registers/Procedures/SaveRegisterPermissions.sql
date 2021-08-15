@@ -82,20 +82,50 @@ BEGIN TRY
 		
 		 --BUILD THE COLUMN LIST
 		 -------------------------------------------------------------------------------------------------------
-		 
+		 		
+	;WITH CTE 
+		AS
+		(
+			SELECT Element_ID, Name,Parent_ID,StringValue,OBJECT_ID AS ObjectID
+			FROM #TMP_ALLSTEPS
+			WHERE Name = 'permissionList'
+				  AND Parent_ID = 0
+
+			UNION ALL
+
+			SELECT TA.Element_ID, TA.Name,TA.Parent_ID,TA.StringValue,TA.OBJECT_ID AS ObjectID
+			FROM CTE C
+				 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = C.Element_ID			
+		),
+		CTE_Assigned AS	--FETCH ALL PERMISSIONS UNDER ""ASSIGNED"" NODE
+		(
+			SELECT Element_ID, Name,Parent_ID,StringValue,ObjectID
+			FROM CTE
+			WHERE Name = 'Assigned'
+
+			UNION ALL
+
+			SELECT TA.Element_ID, TA.Name,TA.Parent_ID,TA.StringValue,TA.OBJECT_ID AS ObjectID
+			FROM CTE_Assigned C
+				 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = C.Element_ID
+		
+		)
+
+		SELECT * 
+			INTO #TMP_AssignedPermissions
+		FROM CTE_Assigned
+
+		DELETE FROM #TMP_AssignedPermissions WHERE Name = 'Assigned' OR Name IS NULL	 
+		
 		 DROP TABLE IF EXISTS #TMP
 		
-		SELECT TA_Child.Element_ID,
-			   TA_Child.Name AS ColumnName,
-			   TA_Child.StringValue,
-			   TA_Child.Parent_ID AS ParentID
+		SELECT TD.Element_ID,
+			   TD.Name AS ColumnName,
+			   TD.StringValue,
+			   TD.Parent_ID AS ParentID
 			INTO #TMP
-		FROM #TMP_DATA_KEYNAME TD
-			 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = TD.ObjectID
-			 INNER JOIN #TMP_ALLSTEPS TA_Child ON TA_Child.Parent_ID = TA.Element_ID
-		WHERE TD.Name ='domainpermissiona'
-			  AND TA_Child.Name <> 'userUserGroup'		 
-		
+		FROM #TMP_AssignedPermissions TD
+
 		SELECT ParentID,
 			  TRY_PARSE(StringValue AS INT) AS UserID
 			INTO #TMP_Users
@@ -149,9 +179,7 @@ BEGIN TRY
 				SELECT 'UserID' 
 						UNION  	
 				SELECT 'Rights' 
-						UNION  
-				--SELECT	'Customised' 
-				--		UNION  
+						UNION 				
 				SELECT	'Read' 
 						UNION  
 				SELECT	'Modify' 
@@ -275,13 +303,12 @@ BEGIN TRY
 		GROUP BY ParentID
 		
 		DECLARE @Customized BIT = 1
-		DECLARE @FixedColumns VARCHAR(1000) = 'AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised'
+		DECLARE @FixedColumns VARCHAR(1000) = 'AccessControlID,UserCreated,DateCreated,UserModified,DateModified'
 		DECLARE @FixedColumnValues VARCHAR(1000) =  CONCAT(CHAR(39),@AccessControlID,CHAR(39),',',
 									   CHAR(39),@UserLoginID,CHAR(39),',',
 									   CHAR(39),@UTCDATE,CHAR(39),',',
 								  	   CHAR(39),@UserLoginID,CHAR(39),',',
-									   CHAR(39),@UTCDATE,CHAR(39),',',
-									   CHAR(39),@Customized,CHAR(39)
+									   CHAR(39),@UTCDATE,CHAR(39)
 									   )		 
 			
 		--BUILD THE INSERT
@@ -321,8 +348,7 @@ BEGIN TRY
 						[DateModified] [datetime] NULL,
 						[UserId] [int] NULL,
 						[ParentID] [int] NULL,
-						[Rights] [int] NULL,
-						[Customised] [bit] NULL,
+						[Rights] [int] NULL,						
 						[Read] [int] NULL,
 						[Modify] [int] NULL,
 						[Write] [int] NULL,
@@ -414,8 +440,8 @@ BEGIN TRY
 
 		SET @SQL = STUFF
 					((SELECT CONCAT('; ', 
-										'INSERT INTO dbo.UserAccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [UserID], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified,Customised)',
-										[Adhoc],',', [Administrate],',', [Copy],',', [Cut],',', [Delete],',', [Export],',', [Modify],',', [Read],',', [Report],',', [Rights],',', [UserID],',', [Write],',',@AccessControlID,',',@UserLoginID,',', CHAR(39),@UTCDATE,CHAR(39),',',@UserLoginID,',', CHAR(39),@UTCDATE,CHAR(39),',0',
+										'INSERT INTO dbo.UserAccessControlledResource ([Adhoc], [Administrate], [Copy], [Cut], [Delete], [Export], [Modify], [Read], [Report], [Rights], [UserID], [Write],AccessControlID,UserCreated,DateCreated,UserModified,DateModified)',
+										[Adhoc],',', [Administrate],',', [Copy],',', [Cut],',', [Delete],',', [Export],',', [Modify],',', [Read],',', [Report],',', [Rights],',', [UserID],',', [Write],',',@AccessControlID,',',@UserLoginID,',', CHAR(39),@UTCDATE,CHAR(39),',',@UserLoginID,',', CHAR(39),@UTCDATE,CHAR(39),
 									CHAR(10))
 					FROM #TMP_Permissions 	
 					FOR XML PATH ('')								
@@ -432,11 +458,6 @@ BEGIN TRY
 
 		---END: UNION OF UG USERS PERMISSIONS IF USERS BELONGS TO MORE THAN ONE UG ENDS HERE*********************************************************************
 
-		--SET Customized TO FALSE FOR OTHER USERS
-		UPDATE ACR
-			SET Customised = 0
-		FROM dbo.UserAccessControlledResource ACR
-			 INNER JOIN #TMP_UG_Users TMP ON TMP.UserID = ACR.UserID
 
 		--END: CHECK FOR USERGROUPS & INSERT FOR OTHER USERS***********************************************************************************					   
 		 

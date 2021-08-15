@@ -86,8 +86,7 @@ BEGIN TRY
 
 			SELECT TA.Element_ID, TA.Name,TA.Parent_ID,TA.StringValue,TA.OBJECT_ID AS ObjectID
 			FROM CTE C
-				 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = C.Element_ID
-			--WHERE TA.Name <> 'unassigned'
+				 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = C.Element_ID			
 		),
 		CTE_Assigned AS	--FETCH ALL PERMISSIONS UNDER ""ASSIGNED"" NODE
 		(
