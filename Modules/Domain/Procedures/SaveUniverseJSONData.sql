@@ -291,9 +291,14 @@ BEGIN TRY
 
 				--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 				IF @LogRequest = 1
-				BEGIN			
-						SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
-						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParamParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
+				BEGIN	
+						IF @MethodName IS NOT NULL
+						SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+						ELSE
+						SET @MethodName = 'NULL'
+
+						SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParamParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@MethodName=',@MethodName,',@Description=',CHAR(39),@Description,CHAR(39),',@Name=',CHAR(39),@Name,CHAR(39))
 					--PRINT @PARAMS
 			
 					SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -326,9 +331,15 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
-				SET @Params = CONCAT('@EntityID=',@UniverseID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
-				SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParamParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID)
-			
+
+						IF @MethodName IS NOT NULL
+							SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+						ELSE
+							SET @MethodName = 'NULL'
+
+						SET @Params = CONCAT('@EntityID=',@EntityID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=',@LogRequest,',@EntityTypeID=',@EntityTypeID)
+						SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParamParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@MethodName=',@MethodName,',@Description=',CHAR(39),@Description,CHAR(39),',@Name=',CHAR(39),@Name,CHAR(39))
+	
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
 			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,

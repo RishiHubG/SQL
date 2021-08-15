@@ -228,8 +228,14 @@ BEGIN TRY
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
 		BEGIN			
+			
+			IF @MethodName IS NOT NULL
+				SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+			ELSE
+				SET @MethodName = 'NULL'
+
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
-				SET @Params = CONCAT(@Params,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest,',@MethodName=',@MethodName)
 			--PRINT @PARAMS
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
@@ -259,8 +265,14 @@ END TRY
 BEGIN CATCH
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
+
+			IF @MethodName IS NOT NULL
+				SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+			ELSE
+				SET @MethodName = 'NULL'
+
 				SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
-				SET @Params = CONCAT(@Params,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest)
+				SET @Params = CONCAT(@Params,',@AccessControlID=',@AccessControlID,',@LogRequest=',@LogRequest,',@MethodName=',@MethodName)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
