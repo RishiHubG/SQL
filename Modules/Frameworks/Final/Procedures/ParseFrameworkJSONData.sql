@@ -72,7 +72,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
  DECLARE @FrameWorkTblName VARCHAR(500) = CONCAT('[', @Name,'_data]')
  DECLARE @FrameWorkHistTblName VARCHAR(500) = CONCAT('[', @Name,'_data_history]')
-
+ DECLARE @FrameWorkTblName_WhereClause VARCHAR(500)
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =2
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =20
 
@@ -241,9 +241,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	SET @HistDataCols = CONCAT(@SQL_HistoryID,',',CHAR(10),@SQL_ID,',', CHAR(10),@StaticCols,CHAR(10),',OperationType VARCHAR(50)',CHAR(10),@DataCols)
 	
 	--PRINT @HistDataCols
-
+	SET @FrameWorkTblName_WhereClause = CONCAT(@Name,'_data')
 	SET @SQL = ''
-	SET @SQL = CONCAT(N'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME=',CHAR(39),@FrameWorkTblName,CHAR(39),')', CHAR(10))
+	SET @SQL = CONCAT(N'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME=',CHAR(39),@FrameWorkTblName_WhereClause,CHAR(39),')', CHAR(10))
 	SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))
 	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @FrameWorkTblName,CHAR(10), '(', @MainDataCols, ') ;',CHAR(10))
 	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @FrameWorkHistTblName, CHAR(10), '(', @HistDataCols, ') ;',CHAR(10))	
@@ -276,7 +276,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SET @SQL = ''
 
 		--CREATE INSERT TRIGGER
-		IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME = CONCAT('[',@Name,'_Data_Insert]'))						
+		IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME = CONCAT(@Name,'_Data_Insert'))						
 			SET @SQL = N'ALTER TRIGGER '
 		ELSE
 			SET @SQL = N'CREATE TRIGGER '
@@ -507,7 +507,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
 		IF @IsAvailable IS NULL OR @IsAvailable = 0
 		BEGIN
-
+						
 					SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
 
 					INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
