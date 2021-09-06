@@ -91,6 +91,90 @@ BEGIN TRY
 			INTO #TMP_ALLSTEPS
 	 FROM dbo.HierarchyFromJSON(@inputJSON) 
 	
+	--SEPARATE OUT CONTACT LIST
+	;WITH CTE_ContactList
+	AS
+	(		
+		SELECT T.Element_ID,
+			   T.Name, 
+			   T.Parent_ID,
+			   T.OBJECT_ID AS ObjectID,			   
+			   T.StringValue,
+			   1 as Lvl
+		 FROM #TMP_ALLSTEPS T			  
+		 WHERE Name ='contactList'
+
+		 UNION ALL
+
+		 SELECT T.Element_ID,
+			   T.Name, 
+			   T.Parent_ID,
+			   T.OBJECT_ID AS ObjectID,			   
+			   T.StringValue,
+			   C.Lvl+1
+		 FROM CTE_ContactList C
+			  INNER JOIN #TMP_ALLSTEPS T ON T.Parent_ID = C.Element_ID
+	)
+
+	SELECT *
+		INTO #TMP_ContactList
+	FROM CTE_ContactList
+	
+	--REMOVE CONTACT LIST NODE ELEMENTS FROM THE MAIN NODES WE ARE PROCESSING
+	DELETE T FROM #TMP_ALLSTEPS T WHERE EXISTS(SELECT 1 FROM #TMP_ContactList WHERE Element_ID = T.Element_ID)
+
+	--SEPARATE OUT ASSIGNED FROM WITHIN CONTACT LIST
+	;WITH CTE_AssignedContactList
+	AS
+	(		
+		SELECT T.Element_ID,
+			   T.Name, 
+			   T.Parent_ID,
+			   T.ObjectID,			   
+			   T.StringValue,
+			   1 as Lvl
+		 FROM #TMP_ContactList T			  
+		 WHERE Name ='assigned'
+
+		 UNION ALL
+
+		 SELECT T.Element_ID,
+			   T.Name, 
+			   T.Parent_ID,
+			   T.ObjectID,			   
+			   T.StringValue,
+			   C.Lvl+1
+		 FROM CTE_AssignedContactList C
+			  INNER JOIN #TMP_ContactList T ON T.Parent_ID = C.Element_ID
+	)
+	SELECT * 
+		INTO #TMP_AssignedContactList
+	FROM CTE_AssignedContactList
+	WHERE NOT (Name IS NULL OR Name = 'name' OR Name = 'assigned')
+
+	--SELECT * FROM #TMP_AssignedContactList
+
+	DECLARE @TBL TABLE(ContactID INT, RoleTypeID INT,Notify BIT)
+
+	INSERT INTO @TBL(ContactID,RoleTypeID,Notify)
+		SELECT  MAX(CASE WHEN Name ='ID'  THEN StringValue END),
+				MAX(CASE WHEN Name ='Role' THEN  StringValue END),
+				MAX(CASE WHEN Name ='Notify' THEN  StringValue END)
+		FROM #TMP_AssignedContactList 			
+		GROUP BY Parent_ID
+	
+	IF @EntityID = -1
+	BEGIN
+		INSERT INTO dbo.ContactInst(UserCreated,DateCreated,UserModified,DateModified,RoleTypeID,ContactId,Notify,FrameworkId,EntityTypeId,EntityId)
+			SELECT @UserID,@UTCDATE,@UserID,@UTCDATE, RoleTypeID,ContactID,Notify,@Frameworkid,@EntityTypeID, @EntityID
+			FROM @TBL T
+			WHERE NOT EXISTS(SELECT 1 FROM dbo.ContactInst WHERE ContactID = T.ContactID AND RoleTypeID =T.RoleTypeID)
+	END
+	--ELSE -- TO DO: UPDATE
+	--BEGIN
+	--END
+
+
 		;WITH CTE
 		AS
 		(
