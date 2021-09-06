@@ -140,7 +140,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 WHERE TA.Name = 'type'
 	
 	 UPDATE #TMP_DATA
-		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button') THEN 'NVARCHAR' 
+		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored') THEN 'NVARCHAR' 
 							WHEN StringValue IN ('number','checkbox','radio') THEN 'INT'
 							WHEN StringValue = 'datetime' THEN 'DATETIME' 							
 							WHEN StringValue = 'currency' THEN 'FLOAT'
@@ -209,7 +209,18 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				 CROSS APPLY (SELECT 'Name' UNION SELECT 'Value' UNION SELECT 'Description' UNION SELECT 'Color')TAB(TName)
 			WHERE StringValue = 'selectboxes'			
 	------------------------------------------------------------------------------------
-
+	
+	/*IF "type": "colored", THEN CREATE 1 ADDITIONAL COLUMN IN _DATA:
+			colouredddl_Colour		 
+	*/
+	------------------------------------------------------------------------------------
+		INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType,DataTypeLength)
+			SELECT Element_ID, CONCAT(NAME,'_',TAB.TName),'colored_DELETE',DataType,DataTypeLength
+			FROM #TMP_DATA
+				 CROSS APPLY (SELECT 'Color')TAB(TName)
+			WHERE StringValue = 'colored'			
+	------------------------------------------------------------------------------------
+	
 	 DECLARE @DataCols VARCHAR(MAX), @HistDataCols VARCHAR(MAX), @MainDataCols VARCHAR(MAX), @NewDataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(
 					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
@@ -261,7 +272,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	EXEC sp_executesql @SQL	
 
 	--CLEANUP THESE ROWS AS THEY ARE NO LONGER NEEDED
-	DELETE FROM #TMP_DATA WHERE StringValue = 'selectboxes_DELETE'
+	DELETE FROM #TMP_DATA WHERE StringValue IN ('selectboxes_DELETE','colored_DELETE')
 
 		--CREATE TRIGGER
 		DECLARE @cols VARCHAR(MAX) = ''
