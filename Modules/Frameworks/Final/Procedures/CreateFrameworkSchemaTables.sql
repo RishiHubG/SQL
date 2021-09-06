@@ -131,8 +131,32 @@ BEGIN
 		PRINT @SQL
 		EXEC sp_executesql @SQL,N'@MAXID INT OUTPUT',@MAXID OUTPUT
 		
-		--TO DO:
-		--IF @MAXID IS NOT NULL
+		--IF DATA ALREADY EXISTS THEN REORGANIZE THE PK ID OF THE TABLE TO START FROM THE LAST ID+1
+		IF @MAXID IS NOT NULL
+		BEGIN
+		
+			SET @MAXID = @MAXID + 1
+			DECLARE @PKEY_NAME VARCHAR(500)
+			SET @SQL = CONCAT(' SELECT @PKEY_NAME = CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME=''',@TemplateTableName,''' AND CONSTRAINT_TYPE = ''PRIMARY KEY''')
+			PRINT @SQL
+			EXEC sp_executesql @SQL,N'@PKEY_NAME VARCHAR(500) OUTPUT',@PKEY_NAME OUTPUT
+			
+			SET @SQL = CONCAT('ALTER TABLE ',@TemplateTableName, ' ADD UNIQUEID INT;', CHAR(10))
+			PRINT @SQL
+			EXEC sp_executesql @SQL
+			
+			SET @SQL = CONCAT(' UPDATE ',@TemplateTableName, ' SET UNIQUEID = ',@MAXID,'+',@PK,';', CHAR(10))
+			IF @PKEY_NAME IS NOT NULL
+				SET @SQL = CONCAT(@SQL, ' ALTER TABLE ',@TemplateTableName, ' DROP CONSTRAINT ',@PKEY_NAME,';', CHAR(10))
+			
+			SET @SQL = CONCAT(@SQL, ' ALTER TABLE ',@TemplateTableName, ' DROP COLUMN ',@PK,';', CHAR(10))
+			--PRINT @SQL
+			--EXEC sp_executesql @SQL			
+			SET @SQL = CONCAT(@SQL,' EXEC sp_rename ''',@TemplateTableName,'.UNIQUEID'',''',@PK,''',''COLUMN''',';', CHAR(10))	
+			PRINT @SQL
+			EXEC sp_executesql @SQL		
+			
+		END
 		-------------------------------------------------------------------------
 		
 		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))		
@@ -210,7 +234,23 @@ BEGIN
 	DELETE FROM @TBL_List WHERE ID = @ID
 	DELETE FROM @TBL WHERE NewTableName = @NewTableName
 	SELECT @cols = '',@SQL='',@DropConstraintsSQL=''
-	--RETURN
+	
+
+	 --ADDING PK & IDENTITY BACK TO THE TEMPLATE TABLE	
+	 IF @MAXID IS NOT NULL 
+	 BEGIN		
+		 SET @SQL = CONCAT(' ALTER TABLE ',@TemplateTableName,' DROP COLUMN ',@PK,';',CHAR(10))
+		 SET @SQL = CONCAT(@SQL,' ALTER TABLE ',@TemplateTableName,' ADD ',@PK,' INT IDENTITY(1,1) NOT NULL;',CHAR(10))		 
+		 PRINT @SQL
+		 EXEC sp_executesql @SQL
+
+		 IF @PKEY_NAME IS NOT NULL
+			SET @SQL = CONCAT(' ALTER TABLE ',@TemplateTableName,' ADD CONSTRAINT ', @PKEY_NAME,' PRIMARY KEY(',@PK,');',CHAR(10))
+
+		 PRINT @SQL
+		 EXEC sp_executesql @SQL
+	 END
+	  SET @SQL = ''
 END
 		
 		--UPDATE OPERATION TYPE FLAG IN FRAMEWORK HISTORY TABLES==============================================
