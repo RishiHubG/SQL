@@ -168,7 +168,7 @@ BEGIN TRY
 		INSERT INTO dbo.ContactInst(UserCreated,DateCreated,UserModified,DateModified,RoleTypeID,ContactId,Notify,FrameworkId,EntityTypeId,EntityId)
 			SELECT @UserID,@UTCDATE,@UserID,@UTCDATE, RoleTypeID,ContactID,Notify,@Frameworkid,@EntityTypeID, @EntityID
 			FROM @TBL T
-			WHERE NOT EXISTS(SELECT 1 FROM dbo.ContactInst WHERE ContactID = T.ContactID AND RoleTypeID =T.RoleTypeID)
+			WHERE NOT EXISTS(SELECT 1 FROM dbo.ContactInst WHERE ContactID = T.ContactID AND RoleTypeID =T.RoleTypeID AND FrameworkId = @Frameworkid)
 	END
 	--ELSE -- TO DO: UPDATE
 	--BEGIN
