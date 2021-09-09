@@ -153,23 +153,51 @@ BEGIN TRY
 	WHERE NOT (Name IS NULL OR Name = 'name' OR Name = 'assigned')
 
 	--SELECT * FROM #TMP_AssignedContactList
+	--RETURN
+	DECLARE @TBL TABLE(ContactInstID INT, ContactID INT, RoleTypeID INT,Notify BIT)
 
-	DECLARE @TBL TABLE(ContactID INT, RoleTypeID INT,Notify BIT)
-
-	INSERT INTO @TBL(ContactID,RoleTypeID,Notify)
+	INSERT INTO @TBL(ContactInstID,ContactID,RoleTypeID,Notify)
 		SELECT  MAX(CASE WHEN Name ='ID'  THEN StringValue END),
+				MAX(CASE WHEN Name ='ID'  THEN StringValue END),
 				MAX(CASE WHEN Name ='Role' THEN  StringValue END),
 				MAX(CASE WHEN Name ='Notify' THEN  StringValue END)
 		FROM #TMP_AssignedContactList 			
 		GROUP BY Parent_ID
 	
-	IF @EntityID = -1
-	BEGIN
+		SELECT ContactInstId
+			INTO #TBL_REMOVECONTACTS
+		FROM dbo.ContactInst C
+		WHERE FrameWorkID = @Frameworkid
+			  AND EntityTypeID = @EntityTypeID
+			  AND EntityID = @EntityID
+			  AND NOT EXISTS(SELECT 1 FROM @TBL WHERE ContactID = C.ContactId)
+			  AND ContactInstID <> -1
+		
+		--REMOVE CONTACTS NOT PART OF THE CURRENT JSON
+		DELETE C FROM dbo.ContactInst C WHERE EXISTS (SELECT 1 FROM #TBL_REMOVECONTACTS WHERE ContactInstId = C.ContactInstId)
+
+		--INSERT NEW CONTACTS
 		INSERT INTO dbo.ContactInst(UserCreated,DateCreated,UserModified,DateModified,RoleTypeID,ContactId,Notify,FrameworkId,EntityTypeId,EntityId)
 			SELECT @UserID,@UTCDATE,@UserID,@UTCDATE, RoleTypeID,ContactID,Notify,@Frameworkid,@EntityTypeID, @EntityID
 			FROM @TBL T
-			WHERE NOT EXISTS(SELECT 1 FROM dbo.ContactInst WHERE ContactID = T.ContactID AND RoleTypeID =T.RoleTypeID AND FrameworkId = @Frameworkid)
-	END
+			WHERE ContactInstID = -1 --NOT EXISTS(SELECT 1 FROM dbo.ContactInst WHERE ContactID = T.ContactID AND RoleTypeID =T.RoleTypeID AND FrameworkId = @Frameworkid)
+		
+		--UPDATE EXISTING CONTACT'S ROLETYPEID
+		UPDATE CInst
+			SET RoleTypeID = T.RoleTypeID,
+				DateModified = @UTCDATE
+		FROM dbo.ContactInst CInst
+			 INNER JOIN @TBL T ON Cinst.ContactInstId = Cinst.ContactInstId
+		WHERE ISNULL(CInst.RoleTypeID,0) <> ISNULL(T.RoleTypeID,0)
+		
+		--UPDATE EXISTING CONTACT'S Notify
+		UPDATE CInst
+			SET Notify = T.Notify,
+				DateModified = @UTCDATE
+		FROM dbo.ContactInst CInst
+			 INNER JOIN @TBL T ON Cinst.ContactInstId = Cinst.ContactInstId
+		WHERE ISNULL(CInst.Notify,0) <> ISNULL(T.Notify,0)
+			
 	--ELSE -- TO DO: UPDATE
 	--BEGIN
 	--END
