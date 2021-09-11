@@ -855,7 +855,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
 		----INSERT INTO FrameworksEntityGridMapping & FrameworkAttributesMappig:------------------------------------------------
 			INSERT INTO dbo.FrameworksEntityGridMapping (UserCreated,DateCreated ,UserModified,	DateModified, VersionNum,FrameworkID,StepItemID,Label,APIKey)
-				SELECT @UserID,GETUTCDATE(),@UserID,GETUTCDATE(),@VersionNum, @FrameworkID,FSI.StepItemID, @StepID,FSI.StepItemKey
+				SELECT @UserID,GETUTCDATE(),@UserID,GETUTCDATE(),@VersionNum, @FrameworkID,FSI.StepItemID, FSI.StepItemName,FSI.StepItemKey
 				FROM dbo.FrameworkSteps FS
 					 INNER JOIN FrameworkStepItems FSI ON FSI.StepID = FS.StepID
 				WHERE FS.FrameworkID = @FrameworkID
@@ -871,6 +871,60 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				WHERE FS.NAME='attributes'
 					  AND TblKey.NAME='Key'
 					  AND NOT EXISTS(SELECT 1 FROM dbo.FrameworkAttributesMapping WHERE FrameworkID = @FrameworkID AND VersionNum = @VersionNum)
+ 
+		INSERT INTO [dbo].FrameworksEntityGridMapping_history
+				   (ID,
+					FrameworkID,					
+					[StepItemID]
+				   ,Label
+				   ,APIKey				   
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   PeriodIdentifierID)
+		SELECT		ID,
+					@FrameworkID,					
+					[StepItemID]
+				   ,Label
+				   ,APIKey
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				    @PeriodIdentifierID    
+		FROM dbo.FrameworksEntityGridMapping
+		WHERE FrameworkID = @FrameworkID
+			  AND VersionNum = @VersionNum
+
+		INSERT INTO [dbo].FrameworkAttributesMapping_history
+				   (ID,
+					FrameworkID,					
+					AttributeType
+				   ,AttributeName
+				   ,APIKey				   
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				   PeriodIdentifierID)
+		SELECT		ID,
+					@FrameworkID,					
+					AttributeType
+				   ,AttributeName
+				   ,APIKey
+				   ,[UserCreated]
+				   ,[DateCreated]
+				   ,[UserModified]
+				   ,[DateModified]
+				   ,[VersionNum],
+				    @PeriodIdentifierID    
+		FROM dbo.FrameworkAttributesMapping
+		WHERE FrameworkID = @FrameworkID
+			  AND VersionNum = @VersionNum
 		------------------------------------------------------------------------------------------------------------------------
 
 

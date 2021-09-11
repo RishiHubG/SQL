@@ -3082,9 +3082,14 @@ DBCC OPENTRAN
 
 TRUNCATE TABLE FrameworksEntityGridMapping
 TRUNCATE TABLE FrameworkAttributesMapping
+TRUNCATE TABLE FrameworksEntityGridMapping_history
+TRUNCATE TABLE FrameworkAttributesMapping_history
 
 SELECT * FROM FrameworksEntityGridMapping
 SELECT * FROM FrameworkAttributesMapping
+
+SELECT * FROM FrameworksEntityGridMapping_history
+SELECT * FROM FrameworkAttributesMapping_history
 
 SELECT * FROM FrameworkSteps WHERE FRAMEWORKID=36
 SELECT * FROM FrameworkStepItems  WHERE StepID=2 AND StepItemType='entityLinkGrid'

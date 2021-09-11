@@ -124,3 +124,47 @@ OrderBy INT
 	ALTER TABLE [dbo].FrameworkLookups_history ADD CONSTRAINT DF_FrameworkLookups_history_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
 GO
 --ALTER TABLE dbo.FrameworkLookups_history ADD CONSTRAINT FK_FrameworkLookups_history_history_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems_history(StepItemID)
+
+
+
+DROP TABLE  IF EXISTS dbo.FrameworksEntityGridMapping_history
+CREATE TABLE dbo.FrameworksEntityGridMapping_history
+	(
+	HistoryID INT IDENTITY(1,1),	
+	UserCreated INT NOT NULL,
+	DateCreated DATETIME2(0) NOT NULL,
+	UserModified INT,
+	DateModified DATETIME2(0),
+	VersionNum INT NOT NULL,
+	PeriodIdentifierID INT NOT NULL,
+	OperationType VARCHAR(50),
+	UserActionID INT,
+	ID INT,
+	FrameworkID INT,
+	StepItemID INT,
+	Label NVARCHAR(MAX),
+	APIKey  NVARCHAR(MAX)
+	)
+ 
+GO
+
+DROP TABLE  IF EXISTS dbo.FrameworkAttributesMapping_history
+CREATE TABLE dbo.FrameworkAttributesMapping_history
+	(
+	HistoryID INT IDENTITY(1,1),	
+	UserCreated INT NOT NULL,
+	DateCreated DATETIME2(0) NOT NULL,
+	UserModified INT,
+	DateModified DATETIME2(0),
+	VersionNum INT NOT NULL,
+	PeriodIdentifierID INT NOT NULL,
+	OperationType VARCHAR(50),
+	UserActionID INT,
+	ID INT,
+	FrameworkID INT,	
+	APIKey NVARCHAR(MAX),
+	AttributeType NVARCHAR(MAX),
+	AttributeName NVARCHAR(MAX)
+	)
+ 
+GO
