@@ -115,3 +115,38 @@ GO
 
 --ALTER TABLE dbo.FrameworkLookups ADD CONSTRAINT FK_FrameworkLookups_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems(StepItemID)
 --ALTER TABLE dbo.FrameworkLookups ADD CONSTRAINT FK_FrameworkLookups_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
+
+
+DROP TABLE  IF EXISTS dbo.FrameworksEntityGridMapping
+CREATE TABLE dbo.FrameworksEntityGridMapping
+	(
+	ID INT IDENTITY(1,1),
+	UserCreated INT NOT NULL,
+	DateCreated DATETIME2(0) NOT NULL,
+	UserModified INT,
+	DateModified DATETIME2(0),
+	VersionNum INT NULL,
+	FrameworkID INT,
+	StepItemID INT,
+	Label NVARCHAR(MAX),
+	APIKey  NVARCHAR(MAX)
+	)
+	ALTER TABLE [dbo].FrameworksEntityGridMapping ADD CONSTRAINT DF_FrameworksEntityGridMapping_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO
+
+DROP TABLE  IF EXISTS dbo.FrameworkAttributesMapping
+CREATE TABLE dbo.FrameworkAttributesMapping
+	(
+	ID INT IDENTITY(1,1),
+	UserCreated INT NOT NULL,
+	DateCreated DATETIME2(0) NOT NULL,
+	UserModified INT,
+	DateModified DATETIME2(0),
+	VersionNum INT NULL,
+	FrameworkID INT,	
+	APIKey NVARCHAR(MAX),
+	AttributeType NVARCHAR(MAX),
+	AttributeName NVARCHAR(MAX)
+	)
+	ALTER TABLE [dbo].FrameworkAttributesMapping ADD CONSTRAINT DF_FrameworkAttributesMapping_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+GO

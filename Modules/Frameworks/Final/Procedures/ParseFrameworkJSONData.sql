@@ -140,7 +140,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 WHERE TA.Name = 'type'
 	
 	 UPDATE #TMP_DATA
-		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored') THEN 'NVARCHAR' 
+		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid') THEN 'NVARCHAR' 
 							WHEN StringValue IN ('number','checkbox','radio') THEN 'INT'
 							WHEN StringValue = 'datetime' THEN 'DATETIME' 							
 							WHEN StringValue = 'currency' THEN 'FLOAT'
@@ -231,7 +231,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 	SET @DataCols = CONCAT(',FrameworkID INT',@DataCols)
 	PRINT @DataCols
-
+	
 	--CHECK IF TABLE IS ALREADY AVAILABLE, THEN GET ANY NEW COLUMNS THAT ARE PART OF THE SCHEMA
 	SET @SQL = CONCAT(N'SELECT @NewDataCols = STUFF(
 						(SELECT CONCAT('', ['',[Name],''] ['', DataType,''] '', DataTypeLength)
@@ -242,7 +242,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						,1,1,'''')'
 						)
 	EXEC sp_executesql @SQL,N'@NewDataCols VARCHAR(MAX) OUTPUT',@NewDataCols OUTPUT
-	--SELECT @NewDataCols
+	--SELECT * from #TMP_DATA
 	--RETURN
 	
 	BEGIN TRAN
@@ -270,7 +270,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	PRINT @SQL
 	
 	EXEC sp_executesql @SQL	
-
+	
 	--CLEANUP THESE ROWS AS THEY ARE NO LONGER NEEDED
 	DELETE FROM #TMP_DATA WHERE StringValue IN ('selectboxes_DELETE','colored_DELETE')
 
@@ -335,7 +335,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	IF @VersionNum IS NULL
 		SET @VersionNum = 1
 
-
+		
 	
 	--INSERT NEW JSONKEY(NAME) IF IT DOES NOT EXIST=====================================================================================		
 	IF @IsAvailable IS NULL OR @IsAvailable = 0	
@@ -362,7 +362,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				FullSchemaJSON=@FullSchemaJSON
 		WHERE FrameworkID = @FrameworkID --AND Name = @Name
  --==================================================================================================================================
-		
+		--SELECT * FROM #TMP_Objects
+		--ROLLBACK
+		--RETURN
  				
 --PROCESS THE STEP ITEMS ONE BY ONE
  WHILE EXISTS(SELECT 1 FROM #TMP_Objects)
@@ -745,7 +747,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SELECT @StepID = NULL, @StepItemID = NULL, @IsAvailable = NULL, @SQL = NULL, @TemplateTableName = NULL,
 			   @AttributeID = NULL, @LookupID = NULL
 		
- END		
+ END	--END OF WHILE LOOP	
 
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
 		--DECLARE @PeriodIdentifierID INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_history WHERE Name = @Name)
@@ -850,7 +852,27 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		PRINT 'ParseJSONData Completed...'
 			 
 		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
-				
+		
+		----INSERT INTO FrameworksEntityGridMapping & FrameworkAttributesMappig:------------------------------------------------
+			INSERT INTO dbo.FrameworksEntityGridMapping (UserCreated,DateCreated ,UserModified,	DateModified, VersionNum,FrameworkID,StepItemID,Label,APIKey)
+				SELECT @UserID,GETUTCDATE(),@UserID,GETUTCDATE(),@VersionNum, @FrameworkID,FSI.StepItemID, @StepID,FSI.StepItemKey
+				FROM dbo.FrameworkSteps FS
+					 INNER JOIN FrameworkStepItems FSI ON FSI.StepID = FS.StepID
+				WHERE FS.FrameworkID = @FrameworkID
+					  AND FS.StepName = 'entitylinks'
+					  AND FSI.StepItemType IN ('entityLinkGrid','datagrid')
+					  AND NOT EXISTS(SELECT 1 FROM dbo.FrameworksEntityGridMapping WHERE FrameworkID = @FrameworkID AND StepItemID = @StepItemID AND VersionNum = @VersionNum)
+			
+			INSERT INTO dbo.FrameworkAttributesMapping (UserCreated,DateCreated ,UserModified,	DateModified, VersionNum,FrameworkID,APIkey,AttributeName,AttributeType)
+				SELECT @UserID,GETUTCDATE(),@UserID,GETUTCDATE(),@VersionNum, @FrameworkID,TblKey.StringValue,FSI.Name,FSI.StringValue
+				FROM #TMP_ALLSTEPS FS
+					 INNER JOIN #TMP_ALLSTEPS FSI ON FSI.Parent_ID = FS.Element_ID
+					 INNER JOIN #TMP_ALLSTEPS TblKey ON TblKey.Parent_ID = FS.Parent_ID
+				WHERE FS.NAME='attributes'
+					  AND TblKey.NAME='Key'
+					  AND NOT EXISTS(SELECT 1 FROM dbo.FrameworkAttributesMapping WHERE FrameworkID = @FrameworkID AND VersionNum = @VersionNum)
+		------------------------------------------------------------------------------------------------------------------------
+
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
