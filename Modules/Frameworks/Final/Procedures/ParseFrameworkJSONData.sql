@@ -140,8 +140,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 WHERE TA.Name = 'type'
 	
 	 UPDATE #TMP_DATA
-		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid') THEN 'NVARCHAR' 
-							WHEN StringValue IN ('number','checkbox','radio') THEN 'INT'
+		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid','checkbox','radio') THEN 'NVARCHAR' 
+							WHEN StringValue = 'number' THEN 'INT'
 							WHEN StringValue = 'datetime' THEN 'DATETIME' 							
 							WHEN StringValue = 'currency' THEN 'FLOAT'
 							WHEN StringValue = 'time' THEN 'TIME'
