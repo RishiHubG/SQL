@@ -1,5 +1,7 @@
 
+--SELECT * FROM TABLE_TableDef_DATA
 --ROLLBACK COMMIT
+SET XACT_ABORT ON
 BEGIN TRAN
 
 exec parseCustomFormData @name=N'Table Def',@description=N'Table Des',
@@ -377,3 +379,5 @@ exec parseCustomFormData @name=N'Table Def',@description=N'Table Des',
 @EntityId=-1,@Entitytypeid=12,@UserloginId=3648,@MethodName=NULL
 
 --ROLLBACK
+
+

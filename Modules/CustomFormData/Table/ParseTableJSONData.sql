@@ -21,7 +21,7 @@ CREATE OR ALTER PROCEDURE dbo.ParseTableJSONData
 @InputJSON VARCHAR(MAX),
 @FullSchemaJSON VARCHAR(MAX),
 @UserLoginID INT,
-@TableInstanceID INT,
+@TableID INT,
 @MethodName NVARCHAR(200)=NULL, 
 @LogRequest BIT = 1
 AS
@@ -56,7 +56,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
  DECLARE @FrameWorkTblName VARCHAR(500) = CONCAT('[Table_', @Name,'_data]')
  DECLARE @FrameWorkHistTblName VARCHAR(500) = CONCAT('[Table_', @Name,'_data_history]')
-  DECLARE @FrameWorkTblNameMapping VARCHAR(500) = CONCAT('[Table_', @Name,'_TableEntityMapping]')
+ DECLARE @FrameWorkTblNameMapping VARCHAR(500) = CONCAT('[Table_', @Name,'_TableEntityMapping]')
  DECLARE @FrameWorkHistTblNameMapping VARCHAR(500) = CONCAT('[Table_', @Name,'_TableEntityMapping_history]')
 
  DECLARE @FrameWorkTblName_WhereClause VARCHAR(500)
@@ -91,7 +91,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@StepItemKey VARCHAR(100),
 			--@Name VARCHAR(100) = 'TAB',
 			@SQL NVARCHAR(MAX),
-			@FrameworkID INT,
+			@FrameworkID INT=100,
 			@IsAvailable BIT,
 			@TemplateTableName SYSNAME,
 			@Counter INT = 1,
@@ -109,6 +109,16 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 VersionNum INT NOT NULL,
 	 FrameworkID INT,
 	 TableInstanceID INT,
+	 FullSchemaJSON VARCHAR(MAX)'
+	  DECLARE @StaticColsMapping VARCHAR(MAX) =	 
+	 'UserCreated INT NOT NULL, 
+	 DateCreated DATETIME2(0) NOT NULL DEFAULT GETDATE(), 
+	 UserModified INT,
+	 DateModified DATETIME2(0),	
+	 VersionNum INT NOT NULL,
+	 TableID INT,
+	 EntityID INT NOT NULL,
+	 FrameworkID INT,	 
 	 FullSchemaJSON VARCHAR(MAX)'
 	 
 	 
@@ -198,7 +208,39 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	PRINT @SQL
 	
 	EXEC sp_executesql @SQL	
+
+	--CREATE MAPPING TABLE---------------------------------------------------------------------------------------------------------------------------------
+	 SET @MainDataCols = CONCAT(@SQL_ID,' IDENTITY(1,1),',CHAR(10),@StaticColsMapping,CHAR(10),@DataCols)
+	 SET @StaticCols = CONCAT(@StaticColsMapping,',PeriodIdentifier INT')
+	 SET @HistDataCols = CONCAT(@SQL_HistoryID,',',CHAR(10),@SQL_ID,',', CHAR(10),@StaticColsMapping,CHAR(10),',OperationType VARCHAR(50)',CHAR(10))
+
+	SET @FrameWorkTblName_WhereClause = CONCAT('Table_',@Name,'_TableEntityMapping')
+	SET @SQL = ''
+	SET @SQL = CONCAT(N'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME=',CHAR(39),@FrameWorkTblName_WhereClause,CHAR(39),')', CHAR(10))
+	SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))
+	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @FrameWorkTblNameMapping,CHAR(10), '(', @StaticColsMapping, ') ;',CHAR(10))
+	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @FrameWorkHistTblNameMapping, CHAR(10), '(', @HistDataCols, ') ;',CHAR(10))	
+	SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
+	PRINT @SQL
 	
+	EXEC sp_executesql @SQL	
+
+
+	--SET @SQL = CONCAT(N'INSERT INTO ',@FrameWorkTblNameMapping,'(UserCreated,DateCreated,UserModified,DateModified,VersionNum,TableID,EntityID,FrameWorkID,FullSchemaJSON)')	 
+	--SET @SQL = CONCAT(@SQL,N' SELECT ',@UserID,',',CHAR(39),GETUTCDATE(),CHAR(39),',',@UserID,',',CHAR(39),GETUTCDATE(),CHAR(39),',','1',',',@TableID,',',@EntityID,',',@FrameworkID,',',CHAR(39),@FullSchemaJSON,CHAR(39))
+	
+	--PRINT @SQL
+	
+	--EXEC sp_executesql @SQL	
+	---MAPPING TABLE ENDS HERE------------------------------------------------------------------------------------------------------------------------------
+	
+
+	--INSERT COLUMN LIST IN PERMANENT TABLE------------
+	INSERT INTO TableColumns (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,1
+		FROM #TMP_DATA
+	---------------------------------------------------
+	--ROLLBACK
 	RETURN
 
 		--CREATE TRIGGER
