@@ -96,7 +96,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@TemplateTableName SYSNAME,
 			@Counter INT = 1,
 			@AttributeID INT, @LookupID INT
-	 	
+	
+	--GET VERSION NO.--------------------------------------------------------
+	SELECT @VersionNum = MAX(VersionNum) + 1 FROM dbo.TableColumnMaster
+
+	IF @VersionNum IS NULL
+		SET @VersionNum = 1
+	---------------------------------------------------------------------------	
+
 	--BUILD SCHEMA FOR _DATA TABLE============================================================================================	 
 	 
 	 DECLARE @SQL_ID VARCHAR(MAX)='ID INT'
@@ -235,11 +242,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	---MAPPING TABLE ENDS HERE------------------------------------------------------------------------------------------------------------------------------
 	
 
-	--INSERT COLUMN LIST IN PERMANENT TABLE------------
-	INSERT INTO TableColumns (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
-		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,1
+	--INSERT COLUMN LIST IN TableColumnMaster------------
+	INSERT INTO dbo.TableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,@VersionNum
 		FROM #TMP_DATA
 	---------------------------------------------------
+	
 	--ROLLBACK
 	RETURN
 

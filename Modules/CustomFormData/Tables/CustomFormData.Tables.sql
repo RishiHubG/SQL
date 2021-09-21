@@ -1,7 +1,7 @@
 
-DROP TABLE IF EXISTS TableColumns
+DROP TABLE IF EXISTS TableColumnMaster
 
-CREATE TABLE dbo.TableColumns
+CREATE TABLE dbo.TableColumnMaster
 (
 ID INT IDENTITY(1,1),
 UserCreated INT NOT NULL, 
