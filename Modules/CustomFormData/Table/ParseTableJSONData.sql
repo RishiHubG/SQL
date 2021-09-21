@@ -1,3 +1,5 @@
+USE AGSQA
+GO
 
 SET ANSI_NULLS ON
 GO
@@ -243,9 +245,44 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	
 
 	--INSERT COLUMN LIST IN TableColumnMaster------------
+	DECLARE @TableColID INT, @PeriodIdentifierID INT
+	DECLARE @TBL_HISTORY TABLE(ID INT NOT NULL,
+								UserCreated INT NOT NULL, 
+								DateCreated DATETIME2(0) NOT NULL, 
+								UserModified INT,
+								DateModified DATETIME2(0),
+								ColumnName VARCHAR(500),
+								IsActive BIT,
+								VersionNum INT NOT NULL) 
+
 	INSERT INTO dbo.TableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum
+			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
 		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,@VersionNum
 		FROM #TMP_DATA
+	
+	--CHECKING FOR ISACTIVE
+	INSERT INTO dbo.TableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum
+			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+		SELECT ColumnName,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),0,@VersionNum
+		FROM dbo.TableColumnMaster TCM
+		WHERE VersionNum = @VersionNum - 1
+		      AND NOT EXISTS(SELECT 1 FROM #TMP_DATA WHERE Name = TCM.ColumnName)
+			  			  
+
+	INSERT INTO dbo.TableColumnMaster_history (ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+		SELECT ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum
+		FROM @TBL_HISTORY
+	
+
+	UPDATE dbo.TableColumnMaster_history
+		SET PeriodIdentifierID = 0
+	WHERE VersionNum < @VersionNum
+
+	UPDATE dbo.TableColumnMaster_history
+		SET PeriodIdentifierID = 1
+	WHERE VersionNum = @VersionNum
 	---------------------------------------------------
 	
 	--ROLLBACK
@@ -732,7 +769,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		--IF @PeriodIdentifierID IS NULL
 		--	SET @PeriodIdentifierID = 1
 
-		DECLARE @PeriodIdentifierID TINYINT = 1
+		--DECLARE @PeriodIdentifierID TINYINT = 1
 		
 		UPDATE [dbo].[Frameworks_history]
 			SET PeriodIdentifierID = 0,

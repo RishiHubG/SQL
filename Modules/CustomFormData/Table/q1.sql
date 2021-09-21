@@ -18,8 +18,10 @@ FullFormJson
 4- STANDARD COLUMNS
 VersionNum
 
+ 
 SELECT * FROM TABLE_TableDef_DATA
-
+SELECT * FROM TableColumnMaster_history
+SELECT * FROM TableColumnMaster
 --ROLLBACK COMMIT
 BEGIN TRAN
 
