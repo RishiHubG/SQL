@@ -7,8 +7,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /***************************************************************************************************
-OBJECT NAME:        dbo.ParseTableJSONData
-CREATION DATE:      2021-09-19
+OBJECT NAME:        dbo.ParseTemplateTableJSONData
+CREATION DATE:      2021-09-21
 AUTHOR:             Rishi Nayar
 DESCRIPTION:		
 					
@@ -17,7 +17,7 @@ CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
 
-CREATE OR ALTER PROCEDURE dbo.ParseTableJSONData
+CREATE OR ALTER PROCEDURE dbo.ParseTemplateTableJSONData
 @Name VARCHAR(100),
 @Entityid INT,
 @InputJSON VARCHAR(MAX),
@@ -52,14 +52,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  SELECT *
 		INTO #TMP_ALLSTEPS
  FROM dbo.HierarchyFromJSON(@inputJSON)
- WHERE ValueType !='array'		
+ WHERE ValueType !='array'
 	   
  SET @Name = REPLACE(@NAME,' ','')
 
- DECLARE @FrameWorkTblName VARCHAR(500) = CONCAT('[Table_', @Name,'_data]')
- DECLARE @FrameWorkHistTblName VARCHAR(500) = CONCAT('[Table_', @Name,'_data_history]')
- DECLARE @FrameWorkTblNameMapping VARCHAR(500) = CONCAT('[Table_', @Name,'_EntityMapping]')
- DECLARE @FrameWorkHistTblNameMapping VARCHAR(500) = CONCAT('[Table_', @Name,'_EntityMapping_history]')
+ DECLARE @FrameWorkTblName VARCHAR(500) = CONCAT('[TemplateTable_', @Name,'_data]')
+ DECLARE @FrameWorkHistTblName VARCHAR(500) = CONCAT('[TemplateTable_', @Name,'_data_history]')
+ DECLARE @FrameWorkTblNameMapping VARCHAR(500) = CONCAT('[TemplateTable_', @Name,'_EntityMapping]')
+ DECLARE @FrameWorkHistTblNameMapping VARCHAR(500) = CONCAT('[TemplateTable_', @Name,'_EntityMapping_history]')
 
  DECLARE @FrameWorkTblName_WhereClause VARCHAR(500)
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =2
@@ -99,7 +99,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@AttributeID INT, @LookupID INT
 	
 	--GET VERSION NO.--------------------------------------------------------
-	SELECT @VersionNum = MAX(VersionNum) + 1 FROM dbo.TableColumnMaster
+	SELECT @VersionNum = MAX(VersionNum) + 1 FROM dbo.TemplateTableColumnMaster
 
 	IF @VersionNum IS NULL
 		SET @VersionNum = 1
@@ -198,7 +198,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	SET @HistDataCols = CONCAT(@SQL_HistoryID,',',CHAR(10),@SQL_ID,',', CHAR(10),@StaticCols,CHAR(10),',OperationType VARCHAR(50)',CHAR(10),@DataCols)
 	
 	--PRINT @HistDataCols
-	SET @FrameWorkTblName_WhereClause = CONCAT('Table_',@Name,'_data')
+	SET @FrameWorkTblName_WhereClause = CONCAT('TemplateTable_',@Name,'_data')
 	SET @SQL = ''
 	SET @SQL = CONCAT(N'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME=',CHAR(39),@FrameWorkTblName_WhereClause,CHAR(39),')', CHAR(10))
 	SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))
@@ -243,7 +243,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	---MAPPING TABLE ENDS HERE------------------------------------------------------------------------------------------------------------------------------
 	
 
-	--INSERT COLUMN LIST IN TableColumnMaster------------
+	--INSERT COLUMN LIST IN TemplateTableColumnMaster------------
 	DECLARE @TableColID INT, @PeriodIdentifierID INT
 	DECLARE @TBL_HISTORY TABLE(ID INT NOT NULL,
 								UserCreated INT NOT NULL, 
@@ -254,32 +254,32 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								IsActive BIT,
 								VersionNum INT NOT NULL) 
 
-	INSERT INTO dbo.TableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+	INSERT INTO dbo.TemplateTableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
 		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum
 			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
 		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,@VersionNum
 		FROM #TMP_DATA
 	
 	--CHECKING FOR ISACTIVE
-	INSERT INTO dbo.TableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+	INSERT INTO dbo.TemplateTableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
 		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum
 			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
 		SELECT ColumnName,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),0,@VersionNum
-		FROM dbo.TableColumnMaster TCM
+		FROM dbo.TemplateTableColumnMaster TCM
 		WHERE VersionNum = @VersionNum - 1
 		      AND NOT EXISTS(SELECT 1 FROM #TMP_DATA WHERE Name = TCM.ColumnName)
 			  			  
 
-	INSERT INTO dbo.TableColumnMaster_history (ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
+	INSERT INTO dbo.TemplateTableColumnMaster_history (ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
 		SELECT ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum
 		FROM @TBL_HISTORY
 	
 
-	UPDATE dbo.TableColumnMaster_history
+	UPDATE dbo.TemplateTableColumnMaster_history
 		SET PeriodIdentifierID = 0
 	WHERE VersionNum < @VersionNum
 
-	UPDATE dbo.TableColumnMaster_history
+	UPDATE dbo.TemplateTableColumnMaster_history
 		SET PeriodIdentifierID = 1
 	WHERE VersionNum = @VersionNum
 	---------------------------------------------------

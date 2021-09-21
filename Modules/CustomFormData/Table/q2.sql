@@ -4,6 +4,13 @@ GO
 SELECT * FROM TableColumnMaster_history
 SELECT * FROM TableColumnMaster
 SELECT * FROM TABLE_TableDef_DATA
+
+DROP TABLE IF EXISTS Table_TableDef_data_history
+DROP TABLE IF EXISTS TABLE_TableDef_DATA
+
+SELECT * FROM TemplateTableColumnMaster_history
+SELECT * FROM TemplateTableColumnMaster
+SELECT * FROM TemplateTABLE_TableDef_DATA
 */
 
 --ROLLBACK COMMIT
