@@ -140,7 +140,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 WHERE TA.Name = 'type'
 	
 	 UPDATE #TMP_DATA
-		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid','checkbox','radio') THEN 'NVARCHAR' 
+		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid','checkbox','radio','tableTemplate') THEN 'NVARCHAR' 
 							WHEN StringValue = 'number' THEN 'INT'
 							WHEN StringValue = 'datetime' THEN 'DATETIME' 							
 							WHEN StringValue = 'currency' THEN 'FLOAT'
@@ -342,14 +342,15 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	BEGIN
 		SET IDENTITY_INSERT dbo.Frameworks ON;
 
-		INSERT INTO dbo.Frameworks (FrameworkID,Name,FrameworkFile,UserCreated,DateCreated,VersionNum,FullSchemaJSON)
+		INSERT INTO dbo.Frameworks (FrameworkID,Name,FrameworkFile,UserCreated,DateCreated,VersionNum,FullSchemaJSON,Frameworkstatus)
 			SELECT  @FrameworkID,
 					@Name,	
 					@inputJSON,		
 					@UserLoginID,
 					GETUTCDATE(),
 					@VersionNum,
-					@FullSchemaJSON
+					@FullSchemaJSON,
+					'Active'
 
 		--SET @FrameworkID = SCOPE_IDENTITY()	
 		SET IDENTITY_INSERT dbo.Frameworks OFF;
@@ -359,7 +360,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			SET VersionNum = @VersionNum,
 				UserModified = 1,
 				DateModified = GETUTCDATE(),
-				FullSchemaJSON=@FullSchemaJSON
+				FullSchemaJSON=@FullSchemaJSON,
+				Frameworkstatus='Active'
 		WHERE FrameworkID = @FrameworkID --AND Name = @Name
  --==================================================================================================================================
 		--SELECT * FROM #TMP_Objects
@@ -860,7 +862,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					 INNER JOIN FrameworkStepItems FSI ON FSI.StepID = FS.StepID
 				WHERE FS.FrameworkID = @FrameworkID
 					  AND FS.StepName = 'entitylinks'
-					  AND FSI.StepItemType IN ('entityLinkGrid','datagrid')
+					  AND FSI.StepItemType IN ('entityLinkGrid','datagrid','tableTemplate')
 					  AND NOT EXISTS(SELECT 1 FROM dbo.FrameworksEntityGridMapping WHERE FrameworkID = @FrameworkID AND StepItemID = @StepItemID AND VersionNum = @VersionNum)
 			
 			INSERT INTO dbo.FrameworkAttributesMapping (UserCreated,DateCreated ,UserModified,	DateModified, VersionNum,FrameworkID,APIkey,AttributeName,AttributeType)
