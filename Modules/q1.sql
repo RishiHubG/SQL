@@ -357,3 +357,9 @@ drop table IF EXISTS TAB_Frameworksteps_history
 		SELECT * FROM TestControls_data_history
 		SP_tABLES '%TESTCONTROLS%'
 */
+
+
+SELECT * FROM Table_TableEntityMapping  -- SINGLE TYPE
+ADD EntityTypeID, APIKey
+
+SELECT * FROM TableColumnMaster

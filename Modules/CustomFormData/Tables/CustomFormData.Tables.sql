@@ -7,7 +7,7 @@ CREATE TABLE dbo.TableColumnMaster
 (
 ID INT IDENTITY(1,1),
 UserCreated INT NOT NULL, 
-DateCreated DATETIME2(0) NOT NULL DEFAULT GETDATE(), 
+DateCreated DATETIME2(0) NOT NULL DEFAULT GETUTCDATE(), 
 UserModified INT,
 DateModified DATETIME2(0),
 ColumnName VARCHAR(500),
@@ -39,7 +39,7 @@ CREATE TABLE dbo.TemplateTableColumnMaster
 (
 ID INT IDENTITY(1,1),
 UserCreated INT NOT NULL, 
-DateCreated DATETIME2(0) NOT NULL DEFAULT GETDATE(), 
+DateCreated DATETIME2(0) NOT NULL DEFAULT GETUTCDATE(), 
 UserModified INT,
 DateModified DATETIME2(0),
 ColumnName VARCHAR(500),
@@ -63,3 +63,42 @@ OperationType VARCHAR(50),
 ColumnName VARCHAR(500),
 IsActive BIT
 )
+
+
+DROP TABLE IF EXISTS [Table_EntityMapping]
+
+CREATE TABLE [dbo].[Table_EntityMapping](
+	[UserCreated] [int] NOT NULL,
+	[DateCreated] [datetime2](0) NOT NULL,
+	[UserModified] [int] NULL,
+	[DateModified] [datetime2](0) NULL,
+	[VersionNum] [int] NOT NULL,
+	[TableID] [int] NULL,
+	[EntityID] [int] NOT NULL,
+	[FrameworkID] [int] NULL,
+	[FullSchemaJSON] [varchar](MAX) NULL,
+	EntityTypeID INT,
+	APIKey INT
+)  
+ 
+
+ALTER TABLE [dbo].[Table_EntityMapping] ADD  DEFAULT (GETUTCDATE()) FOR [DateCreated]
+
+DROP TABLE IF EXISTS [Table_EntityMapping_history]
+
+CREATE TABLE [dbo].[Table_EntityMapping_history](
+	[HistoryID] [int] IDENTITY(1,1) NOT NULL,
+	[ID] [int] NULL,
+	[UserCreated] [int] NOT NULL,
+	[DateCreated] [datetime2](0) NOT NULL,
+	[UserModified] [int] NULL,
+	[DateModified] [datetime2](0) NULL,
+	[VersionNum] [int] NOT NULL,
+	[TableID] [int] NULL,
+	[EntityID] [int] NOT NULL,
+	[FrameworkID] [int] NULL,
+	EntityTypeID INT,
+	APIKey INT,
+	[FullSchemaJSON] [varchar](MAX) NULL,
+	[OperationType] [varchar](50) NULL
+) 

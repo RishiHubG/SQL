@@ -58,9 +58,6 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
  DECLARE @FrameWorkTblName VARCHAR(500) = CONCAT('[Table_', @Name,'_data]')
  DECLARE @FrameWorkHistTblName VARCHAR(500) = CONCAT('[Table_', @Name,'_data_history]')
- DECLARE @FrameWorkTblNameMapping VARCHAR(500) = CONCAT('[Table_', @Name,'_EntityMapping]')
- DECLARE @FrameWorkHistTblNameMapping VARCHAR(500) = CONCAT('[Table_', @Name,'_EntityMapping_history]')
-
  DECLARE @FrameWorkTblName_WhereClause VARCHAR(500)
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =2
  --SELECT * FROM #TMP_ALLSTEPS WHERE Parent_ID =20
@@ -215,33 +212,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	END
 	PRINT @SQL
 	
-	EXEC sp_executesql @SQL	
-
-	--CREATE MAPPING TABLE---------------------------------------------------------------------------------------------------------------------------------
-	 SET @MainDataCols = CONCAT(@SQL_ID,' IDENTITY(1,1),',CHAR(10),@StaticColsMapping,CHAR(10),@DataCols)
-	 SET @StaticCols = CONCAT(@StaticColsMapping,',PeriodIdentifier INT')
-	 SET @HistDataCols = CONCAT(@SQL_HistoryID,',',CHAR(10),@SQL_ID,',', CHAR(10),@StaticColsMapping,CHAR(10),',OperationType VARCHAR(50)',CHAR(10))
-
-	SET @FrameWorkTblName_WhereClause = CONCAT('Table_',@Name,'_TableEntityMapping')
-	SET @SQL = ''
-	SET @SQL = CONCAT(N'IF NOT EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME=',CHAR(39),@FrameWorkTblName_WhereClause,CHAR(39),')', CHAR(10))
-	SET @SQL = CONCAT(@SQL,N' BEGIN ',CHAR(10))
-	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @FrameWorkTblNameMapping,CHAR(10), '(', @StaticColsMapping, ') ;',CHAR(10))
-	SET @SQL = CONCAT(@SQL,N' CREATE TABLE dbo.', @FrameWorkHistTblNameMapping, CHAR(10), '(', @HistDataCols, ') ;',CHAR(10))	
-	SET @SQL = CONCAT(@SQL,N' END ',CHAR(10))
-	PRINT @SQL
-	
-	EXEC sp_executesql @SQL	
-
-
-	--SET @SQL = CONCAT(N'INSERT INTO ',@FrameWorkTblNameMapping,'(UserCreated,DateCreated,UserModified,DateModified,VersionNum,TableID,EntityID,FrameWorkID,FullSchemaJSON)')	 
-	--SET @SQL = CONCAT(@SQL,N' SELECT ',@UserID,',',CHAR(39),GETUTCDATE(),CHAR(39),',',@UserID,',',CHAR(39),GETUTCDATE(),CHAR(39),',','1',',',@TableID,',',@EntityID,',',@FrameworkID,',',CHAR(39),@FullSchemaJSON,CHAR(39))
-	
-	--PRINT @SQL
-	
-	--EXEC sp_executesql @SQL	
-	---MAPPING TABLE ENDS HERE------------------------------------------------------------------------------------------------------------------------------
-	
+	EXEC sp_executesql @SQL		
 
 	--INSERT COLUMN LIST IN TableColumnMaster------------
 	DECLARE @TableColID INT, @PeriodIdentifierID INT
@@ -287,9 +258,16 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
 		BEGIN			
-			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
-			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			
+			IF @MethodName IS NOT NULL
+					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
+				ELSE
+					SET @MethodName = 'NULL'
+
+			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),'@Entityid=',@Entityid,'@TableID=',@TableID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
+			SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
+
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
 			EXEC dbo.InsertObjectLog @ObjectName=@ObjectName,
@@ -311,9 +289,9 @@ BEGIN CATCH
 				ELSE
 					SET @MethodName = 'NULL'
 
-				--SET @Params = CONCAT('@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@EntityID=',@EntityID,',@EntityTypeID=',@EntityTypeID)
-				--SET @Params = CONCAT(@Params,',@ParentEntityID=',@ParentEntityID,',@ParentEntityTypeID=',@ParentEntityTypeID,',@Name=',CHAR(39),@Name,CHAR(39),',@Description=',CHAR(39),@Description,CHAR(39))
-				--SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
+			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),'@Entityid=',@Entityid,'@TableID=',@TableID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
+			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
+			SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 			
 			SET @ObjectName = OBJECT_NAME(@@PROCID)
 
