@@ -111,24 +111,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 DateCreated DATETIME2(0) NOT NULL DEFAULT GETDATE(), 
 	 UserModified INT,
 	 DateModified DATETIME2(0),
-	 VersionNum INT NOT NULL,
-	 FrameworkID INT,
-	 TableInstanceID INT,
-	 FullSchemaJSON VARCHAR(MAX)'
-	  DECLARE @StaticColsMapping VARCHAR(MAX) =	 
-	 'UserCreated INT NOT NULL, 
-	 DateCreated DATETIME2(0) NOT NULL DEFAULT GETDATE(), 
-	 UserModified INT,
-	 DateModified DATETIME2(0),	
-	 VersionNum INT NOT NULL,
-	 TableID INT,
-	 EntityID INT NOT NULL,
-	 FrameworkID INT,	 
-	 FullSchemaJSON VARCHAR(MAX)'
-	 
+	 VersionNum INT NOT NULL,	 
+	 TableInstanceID INT'
 	 
 	 DROP TABLE IF EXISTS #TMP_DATA
-    	 
 
 	 SELECT TOB.Element_ID, TOB.NAME,TA.StringValue, CAST(NULL AS VARCHAR(50)) AS DataType,
 			CAST(NULL AS VARCHAR(50)) AS DataTypeLength,
