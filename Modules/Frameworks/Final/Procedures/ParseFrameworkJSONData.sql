@@ -856,15 +856,40 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
 		
 		----INSERT INTO FrameworksEntityGridMapping & FrameworkAttributesMappig:------------------------------------------------
-			INSERT INTO dbo.FrameworksEntityGridMapping (UserCreated,DateCreated ,UserModified,	DateModified, VersionNum,FrameworkID,StepItemID,Label,APIKey)
-				SELECT @UserID,GETUTCDATE(),@UserID,GETUTCDATE(),@VersionNum, @FrameworkID,FSI.StepItemID, FSI.StepItemName,FSI.StepItemKey
+			
+			UPDATE FEGM
+				SET UserModified = @UserID,	
+					DateModified = GETUTCDATE(),
+					StepItemID = FSI.StepItemID,
+					Label = FSI.StepItemName,
+					StepName = FSI.StepItemName
+			FROM dbo.FrameworkSteps FS
+				 INNER JOIN FrameworkStepItems FSI ON FSI.StepID = FS.StepID
+				 INNER JOIN dbo.FrameworksEntityGridMapping FEGM ON FEGM.FrameworkID = @FrameworkID AND FEGM.StepItemID = FSI.StepItemKey
+				WHERE FS.FrameworkID = @FrameworkID					  
+					  AND FSI.StepItemType IN ('entityLinkGrid','datagrid','tableTemplate');				  
+			
+			INSERT INTO dbo.FrameworksEntityGridMapping (UserCreated,DateCreated ,UserModified,	DateModified, VersionNum,FrameworkID,StepItemID,Label,APIKey,StepName)
+				SELECT @UserID,GETUTCDATE(),@UserID,GETUTCDATE(),@VersionNum, @FrameworkID,FSI.StepItemID, FSI.StepItemName,FSI.StepItemKey,FSI.StepItemName
 				FROM dbo.FrameworkSteps FS
 					 INNER JOIN FrameworkStepItems FSI ON FSI.StepID = FS.StepID
 				WHERE FS.FrameworkID = @FrameworkID
 					  --AND FS.StepName = 'entitylinks'
 					  AND FSI.StepItemType IN ('entityLinkGrid','datagrid','tableTemplate')
-					  AND NOT EXISTS(SELECT 1 FROM dbo.FrameworksEntityGridMapping WHERE FrameworkID = @FrameworkID AND StepItemID = @StepItemID AND VersionNum = @VersionNum)
+					  AND NOT EXISTS(SELECT 1 FROM dbo.FrameworksEntityGridMapping WHERE FrameworkID = @FrameworkID AND StepItemID = FSI.StepItemKey)
 			
+				DELETE FEGM
+				FROM dbo.FrameworksEntityGridMapping FEGM
+				WHERE FrameworkID = @FrameworkID
+					  AND NOT EXISTS (
+										SELECT 1
+										FROM dbo.FrameworkSteps FS
+											 INNER JOIN FrameworkStepItems FSI ON FSI.StepID = FS.StepID
+										WHERE FS.FrameworkID = FEGM.FrameworkID										  
+											  AND FEGM.StepItemID = FSI.StepItemKey
+											  AND FSI.StepItemType IN ('entityLinkGrid','datagrid','tableTemplate')											  
+								      )
+
 			INSERT INTO dbo.FrameworkAttributesMapping (UserCreated,DateCreated ,UserModified,	DateModified, VersionNum,FrameworkID,APIkey,AttributeName,AttributeType)
 				SELECT @UserID,GETUTCDATE(),@UserID,GETUTCDATE(),@VersionNum, @FrameworkID,TblKey.StringValue,FSI.Name,FSI.StringValue
 				FROM #TMP_ALLSTEPS FS

@@ -400,3 +400,17 @@ exec parseCustomFormData @name=N'Table Def',@description=N'Table Des',
 @EntityId=-1,@Entitytypeid=12,@UserloginId=3648,@MethodName=NULL
 
 --ROLLBACK
+
+SET XACT_ABORT ON;
+BEGIN TRAN;
+exec SaveEntityDetail @EntityId=101,@EntitytypeId=13,
+@InputJson=N'{"checklist":{"audit":[{"checklistitem":"a","comply":"yes","comments":"test"},{"checklistitem":"b","comply":"yes","comments":"test2"},{"checklistitem":"c","comply":"no","comments":"no comment"}]},"submit":false}',
+@MethodName=NULL,@UserLoginID=3723
+
+SELECT * FROM TEMPLATETABLE_template1_data
+SELECT * FROM CustomFormsInstance
+
+ALTER TABLE CustomFormsInstance ADD CONSTRAINT UQ_CustomFormsInstance_APIKey UNIQUE(APIKey)
+
+
+exec GetTemplateTableData @EntityId=101,@MethodName=NULL,@UserLoginID=3723
