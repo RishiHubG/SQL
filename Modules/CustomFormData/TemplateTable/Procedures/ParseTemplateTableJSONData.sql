@@ -209,26 +209,27 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								DateModified DATETIME2(0),
 								ColumnName VARCHAR(500),
 								IsActive BIT,
-								VersionNum INT NOT NULL) 
+								VersionNum INT NOT NULL,
+								CustomFormsInstanceID INT NOT NULL) 
 
-	INSERT INTO dbo.TemplateTableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
-		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum
-			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
-		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,@VersionNum
+	INSERT INTO dbo.TemplateTableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum,CustomFormsInstanceID)
+		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum,INSERTED.CustomFormsInstanceID
+			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum,CustomFormsInstanceID)
+		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,@VersionNum,CustomFormsInstanceID
 		FROM #TMP_DATA
 	
 	--CHECKING FOR ISACTIVE
-	INSERT INTO dbo.TemplateTableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
-		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum
-			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
-		SELECT ColumnName,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),0,@VersionNum
+	INSERT INTO dbo.TemplateTableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum,CustomFormsInstanceID)
+		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum,INSERTED.CustomFormsInstanceID
+			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum,CustomFormsInstanceID)
+		SELECT ColumnName,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),0,@VersionNum,CustomFormsInstanceID
 		FROM dbo.TemplateTableColumnMaster TCM
 		WHERE VersionNum = @VersionNum - 1
 		      AND NOT EXISTS(SELECT 1 FROM #TMP_DATA WHERE Name = TCM.ColumnName)
 			  			  
 
-	INSERT INTO dbo.TemplateTableColumnMaster_history (ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum)
-		SELECT ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum
+	INSERT INTO dbo.TemplateTableColumnMaster_history (ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum,CustomFormsInstanceID)
+		SELECT ID, ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum,CustomFormsInstanceID
 		FROM @TBL_HISTORY
 	
 

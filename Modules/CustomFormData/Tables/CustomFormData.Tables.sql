@@ -12,7 +12,8 @@ UserModified INT,
 DateModified DATETIME2(0),
 ColumnName VARCHAR(500),
 IsActive BIT,
-VersionNum INT NOT NULL
+VersionNum INT NOT NULL,
+CustomFormsInstanceID INT
 )
 
 DROP TABLE IF EXISTS TableColumnMaster_history
@@ -29,7 +30,8 @@ VersionNum INT NOT NULL,
 PeriodIdentifierID INT NULL,
 OperationType VARCHAR(50),
 ColumnName VARCHAR(500),
-IsActive BIT
+IsActive BIT,
+CustomFormsInstanceID INT
 )
 
 
@@ -44,7 +46,8 @@ UserModified INT,
 DateModified DATETIME2(0),
 ColumnName VARCHAR(500),
 IsActive BIT,
-VersionNum INT NOT NULL
+VersionNum INT NOT NULL,
+CustomFormsInstanceID INT
 )
 
 DROP TABLE IF EXISTS TemplateTableColumnMaster_history
@@ -61,7 +64,8 @@ VersionNum INT NOT NULL,
 PeriodIdentifierID INT NULL,
 OperationType VARCHAR(50),
 ColumnName VARCHAR(500),
-IsActive BIT
+IsActive BIT,
+CustomFormsInstanceID INT
 )
 
 
@@ -78,7 +82,8 @@ CREATE TABLE [dbo].[Table_EntityMapping](
 	[FrameworkID] [int] NULL,
 	[FullSchemaJSON] [varchar](MAX) NULL,
 	EntityTypeID INT,
-	APIKey INT
+	APIKey INT,
+	TableInstanceID INT IDENTITY(1,1) PRIMARY KEY
 )  
  
 
