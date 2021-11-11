@@ -398,12 +398,14 @@ SELECT * FROM EntityMetaData WHERE EntityTypeId IN (12,13)
 
 SELECT * FROM ObjectLog WHERE ID=22899
 
-
+--ROLLBACK
+SET XACT_ABORT ON;
+BEGIN TRAN
 EXEC dbo.SaveFrameworkJSONData 
 @InputJSON='{"general":{},"auditdetails":{"name":"aafa","auditreference":"adfa","scopeofaudit":"adfa","typeOfAudit":"Other audit","auditStatus":"In reporting (Auditor)","auditobjective":"adfa","otherauditobjective":"","plannedstartdate":"","actualstartdate":"","periodunderreviewfrom":"","plannedcompletiondate":"","actualcompletiondate":"","periodunderreviewto":"","comments":"","TemplateKey_checklist":{"audit":[{"checklistitem":"b","comply":"yes","comments":"ada"},{"checklistitem":"b","comply":"yes","comments":"ada"},{"checklistitem":"a","comply":"no","comments":"afda"},{"checklistitem":"c","comply":"yes","comments":"adfafa"}]},"submit":false},"entitylinks":{"riskandaontrols":{"jsonData":{"a":1}},"auditplans":{"jsonData":{"a":1}},"components":{"jsonData":{"a":1}},"auditrating":{"selectVal":"#b7e0b7"}},"managerDetails":{"nameOfTheManager":"adfaf","dateOfMeeting":"2021-11-03T00:00:00+05:30","reviewNotes":""},"systemdescription":{"highleveldescriptionoftheoverallprocess":"adfa","adhocComponentsApproved":"adfafa","commentsOnAdhocComments":"adfaa"},"auditreporting":{"dateDraftReportIssued":"","dateFinalReportIssued":"","initialRiskRating":"","suggestedOverallRiskRating":"","executivesummary":"","goodPractices":""},"auditDetails":{"allcomponents":[{}]}}',
 @UserLoginID=3739,@EntityID=-1,@EntityTypeID=9,@ParentEntityID=173,@ParentEntityTypeID=3,@Name='',@Description='',@MethodName=NULL,@LogRequest=1
 
-
+ 
 SELECT * FROM dbo.CustomFormsInstance
 SELECT * FROM dbo.TableColumnMaster -- Add Reference to the Table
 SELECT * FROM dbo.TemplateTable_TableTemplate1_data -- Table as a part of Parse
@@ -413,6 +415,8 @@ SELECT * FROM dbo.TemplateTable_TableTemplate1_data -- Table as a part of Parse
 
 Framwork -- Table
 
-SELECT * FROM dbo.Table_EntityMapping -- Tableinstanceid
+SELECT * FROM dbo.Table_EntityMapping WITH (NOLOCK)-- Tableinstanceid
+
+SELECT * FROM dbo.Table_EntityMapping_history WITH (NOLOCK)
 SELECT * FROM dbo.TemplateTable_TableTemplate1_data
 

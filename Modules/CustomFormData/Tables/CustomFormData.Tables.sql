@@ -82,7 +82,7 @@ CREATE TABLE [dbo].[Table_EntityMapping](
 	[FrameworkID] [int] NULL,
 	[FullSchemaJSON] [varchar](MAX) NULL,
 	EntityTypeID INT,
-	APIKey INT,
+	APIKey NVARCHAR(4000),
 	TableInstanceID INT IDENTITY(1,1) PRIMARY KEY
 )  
  
@@ -93,7 +93,7 @@ DROP TABLE IF EXISTS [Table_EntityMapping_history]
 
 CREATE TABLE [dbo].[Table_EntityMapping_history](
 	[HistoryID] [int] IDENTITY(1,1) NOT NULL,
-	[ID] [int] NULL,
+	TableInstanceID INT NULL,
 	[UserCreated] [int] NOT NULL,
 	[DateCreated] [datetime2](0) NOT NULL,
 	[UserModified] [int] NULL,
@@ -103,7 +103,7 @@ CREATE TABLE [dbo].[Table_EntityMapping_history](
 	[EntityID] [int] NOT NULL,
 	[FrameworkID] [int] NULL,
 	EntityTypeID INT,
-	APIKey INT,
+	APIKey NVARCHAR(4000),
 	[FullSchemaJSON] [varchar](MAX) NULL,
 	[OperationType] [varchar](50) NULL
 ) 
