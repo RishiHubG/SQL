@@ -240,7 +240,46 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	UPDATE dbo.TableColumnMaster_history
 		SET PeriodIdentifierID = 1
 	WHERE VersionNum = @VersionNum
-	---------------------------------------------------
+					
+					--CREATE TRIGGER------------------------------------------------------------------------------------------------------------------------------------------
+					DECLARE @cols VARCHAR(MAX) = ''
+
+					SELECT @cols = CONCAT(@cols,N', [',name,'] ')
+					FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM ',@FrameWorkTblName), NULL, 1)
+					
+					SET @cols = STUFF(@cols, 1, 1, N'');
+
+					SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME=',CHAR(39),@FrameWorkTblName,CHAR(39),' SET @IsAvailable = 1;' )
+					EXEC sp_executesql @SQL,N'@IsAvailable BIT OUTPUT',@IsAvailable OUTPUT
+
+					IF @IsAvailable = 1						
+						SET @SQL = N'ALTER TRIGGER '
+					ELSE
+						SET @SQL = N'CREATE TRIGGER '
+
+					SET @SQL = CONCAT(@SQL,N' <TableName>_Insert
+									   ON  <TableName>
+									   AFTER INSERT, UPDATE
+									AS 
+									BEGIN
+										SET NOCOUNT ON;
+																				
+										IF EXISTS(SELECT 1 FROM INSERTED) AND  NOT EXISTS(SELECT 1 FROM DELETED) --INSERT
+											INSERT INTO <HISTTABLENAME>(<ColumnList>)
+												SELECT <columnList>
+												FROM INSERTED
+										ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
+											INSERT INTO <HISTTABLENAME>(<ColumnList>)
+												SELECT <columnList>
+												FROM DELETED
+									END;',CHAR(10))
+					SET @SQL = REPLACE(@SQL,'<columnList>',@cols)
+					SET @SQL = REPLACE(@SQL,'<TableName>',@FrameWorkTblName)
+					SET @SQL = REPLACE(@SQL,'<HISTTABLENAME>',@FrameWorkHistTblName)
+					
+					PRINT @SQL	
+					EXEC sp_executesql @SQL	
+				---TRIGGER ENDS HERE-------------------------------------------------------------------------------------------------------------------------------
 	 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
