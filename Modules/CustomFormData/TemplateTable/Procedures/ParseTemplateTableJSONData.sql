@@ -211,11 +211,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								IsActive BIT,
 								VersionNum INT NOT NULL,
 								CustomFormsInstanceID INT NOT NULL) 
-
+							 
 	INSERT INTO dbo.TemplateTableColumnMaster (ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum,CustomFormsInstanceID)
 		OUTPUT INSERTED.ID,INSERTED.ColumnName,INSERTED.UserCreated,INSERTED.DateCreated,INSERTED.UserModified,INSERTED.DateModified,INSERTED.IsActive,INSERTED.VersionNum,INSERTED.CustomFormsInstanceID
 			INTO @TBL_HISTORY (ID,ColumnName,UserCreated,DateCreated,UserModified,DateModified,IsActive,VersionNum,CustomFormsInstanceID)
-		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,@VersionNum,CustomFormsInstanceID
+		SELECT Name,@UserID,GETUTCDATE(),@UserID,GETUTCDATE(),1,@VersionNum,@TableID
 		FROM #TMP_DATA
 	
 	--CHECKING FOR ISACTIVE
@@ -249,16 +249,18 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					
 					SET @cols = STUFF(@cols, 1, 1, N'');
 
-					SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME=',CHAR(39),@FrameWorkTblName,CHAR(39),' SET @IsAvailable = 1;' )
+					SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME=',CHAR(39),@FrameWorkTblName,CHAR(39),') SET @IsAvailable = 1;' )
 					EXEC sp_executesql @SQL,N'@IsAvailable BIT OUTPUT',@IsAvailable OUTPUT
 
 					IF @IsAvailable = 1						
 						SET @SQL = N'ALTER TRIGGER '
 					ELSE
 						SET @SQL = N'CREATE TRIGGER '
+					
+					SET @FrameWorkTblName = REPLACE(REPLACE(@FrameWorkTblName,']','') ,'[','')	
 
-					SET @SQL = CONCAT(@SQL,N' <TableName>_Insert
-									   ON  <TableName>
+					SET @SQL = CONCAT(@SQL,N' [<TableName>_Insert]
+									   ON  [<TableName>]
 									   AFTER INSERT, UPDATE
 									AS 
 									BEGIN

@@ -249,16 +249,19 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					
 					SET @cols = STUFF(@cols, 1, 1, N'');
 
-					SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME=',CHAR(39),@FrameWorkTblName,CHAR(39),' SET @IsAvailable = 1;' )
+					SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME=',CHAR(39),@FrameWorkTblName,CHAR(39),') SET @IsAvailable = 1;' )
+					PRINT @SQL
 					EXEC sp_executesql @SQL,N'@IsAvailable BIT OUTPUT',@IsAvailable OUTPUT
-
+										
 					IF @IsAvailable = 1						
 						SET @SQL = N'ALTER TRIGGER '
 					ELSE
 						SET @SQL = N'CREATE TRIGGER '
-
-					SET @SQL = CONCAT(@SQL,N' <TableName>_Insert
-									   ON  <TableName>
+					
+					SET @FrameWorkTblName = REPLACE(REPLACE(@FrameWorkTblName,']','') ,'[','')					 
+					 
+					SET @SQL = CONCAT(@SQL,N' [<TableName>_Insert]
+									   ON  [<TableName>]
 									   AFTER INSERT, UPDATE
 									AS 
 									BEGIN
@@ -290,7 +293,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				ELSE
 					SET @MethodName = 'NULL'
 
-			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),'@Entityid=',@Entityid,'@TableID=',@TableID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
+			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@Entityid=',@Entityid,',@TableID=',@TableID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
 			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 
@@ -315,7 +318,7 @@ BEGIN CATCH
 				ELSE
 					SET @MethodName = 'NULL'
 
-			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),'@Entityid=',@Entityid,'@TableID=',@TableID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
+			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@Entityid=',@Entityid,',@TableID=',@TableID,',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)
 			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 			
