@@ -3169,3 +3169,8 @@ entityId:data.entityId, entityTypeId:data.entityTypeId, frameworkId:data.framewo
 
 
 SELECT * FROM OBJECTLOG WHERE ID =18830
+
+
+exec SaveFrameworkJSONData @EntityId=3,@EntitytypeId=9,@ParentEntityID=1,@ParentEntityTypeID=3,
+@InputJSON=N'{"general":{},"compliance":{"name":"test9","referenceNumber":123,"type":{},"referenceUrl":"","tags":"","sectionHeading":"","regulatoryRequirement":"","plainLanguage":"","guidelines":"","wfStatus":"","changeSummary":"","publishStatus":""}}',
+@MethodName=NULL,@UserLoginID=61
