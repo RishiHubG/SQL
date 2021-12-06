@@ -178,9 +178,9 @@ BEGIN TRY
 		 
 
 		--BUILD THE UPDATE STATEMENTS-------------------------------------------------------------------------------------------------------
-		DECLARE @UpdStmt VARCHAR(MAX) = CONCAT('IF EXISTS(SELECT 1 FROM dbo.ContactInst WHERE EntityID = <EntityID> AND ContactID=<ContactID>)',CHAR(10),
+		DECLARE @UpdStmt VARCHAR(MAX) = CONCAT('IF EXISTS(SELECT 1 FROM dbo.ContactInst WHERE EntityID = <EntityID> AND ContactID=<ContactID> AND RoleTypeID=<RoleTypeID>)',CHAR(10),
 												' UPDATE dbo.ContactInst SET UserModified=', @UserID,', DateModified = GETUTCDATE(),')
-		DECLARE @UpdWhereClauseStmt VARCHAR(MAX) = CONCAT(' WHERE EntityID=',@UniverseID, CHAR(10), ' AND ContactID=<ContactID>')
+		DECLARE @UpdWhereClauseStmt VARCHAR(MAX) = CONCAT(' WHERE EntityID=',@RegisterID, CHAR(10), ' AND ContactID=<ContactID>', CHAR(10), ' AND RoleTypeID=<RoleTypeID>')
 		
 		 SELECT 
 			ParentID,
@@ -197,7 +197,8 @@ BEGIN TRY
 			ORDER BY Element_ID
 			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
 			,1,2,'') AS UpdString,
-			(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID
+			(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID,
+			(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'Role') AS RoleTypeID
 			INTO #TMP_UpdateStmt	
 		FROM #TMP TMP
 		GROUP BY ParentID
@@ -206,7 +207,7 @@ BEGIN TRY
 			SET UpdString = CONCAT(@UpdStmt,UpdString, CHAR(10),@UpdWhereClauseStmt)
 
 		UPDATE	TMP 
-			SET UpdString =  REPLACE( REPLACE(UpdString,'<EntityID>',@UniverseID),'<ContactID>',ContactID)
+			SET UpdString =  REPLACE(REPLACE( REPLACE(UpdString,'<EntityID>',@RegisterID),'<ContactID>',ContactID),'<RoleTypeID>',RoleTypeID)
 		FROM #TMP_UpdateStmt TMP
 			 
 		SET @SQL = STUFF
@@ -253,7 +254,8 @@ BEGIN TRY
 			ORDER BY Element_ID
 			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
 			,1,2,'') AS ColumnValues,
-			(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID
+			(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID,
+			(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'Role') AS RoleTypeID
 			INTO #TMP_ColumnValues
 		FROM #TMP TMP
 		GROUP BY ParentID
@@ -264,22 +266,23 @@ BEGIN TRY
 									   CHAR(39),@CurrentDate,CHAR(39),',',
 								  	   CHAR(39),@UserLoginID,CHAR(39),',',
 									   CHAR(39),@CurrentDate,CHAR(39),',',
-									   @UniverseID,',', @EntityTypeID,',-1'
+									   @RegisterID,',', @EntityTypeID,',-1'
 									   )		 
 			
 		--BUILD THE INSERT
 		SELECT Cols.ParentID,			  
-			  CONCAT('IF NOT EXISTS(SELECT 1 FROM dbo.ContactInst WHERE EntityID = <EntityID> AND ContactID=<ContactID>)',CHAR(10),
+			  CONCAT('IF NOT EXISTS(SELECT 1 FROM dbo.ContactInst WHERE EntityID = <EntityID> AND ContactID=<ContactID> AND RoleTypeID = <RoleTypeID>)',CHAR(10),
 					  'INSERT INTO dbo.ContactInst (',ColumnNames,',',@FixedColumns, ')',
 					  'VALUES (', ColumnValues,',',@FixedColumnValues,')'		
 				     ) AS TableInsert,
-				Val.ContactID
+				Val.ContactID,
+				Val.RoleTypeID
 			INTO #TMP_ContactInst
 		FROM #TMP_Columns Cols
 			 INNER JOIN #TMP_ColumnValues Val ON VAL.ParentID = Cols.ParentID			 
 		 
 		UPDATE #TMP_ContactInst
-			SET TableInsert = REPLACE( REPLACE(TableInsert,'<EntityID>',@UniverseID),'<ContactID>',ContactID)
+			SET TableInsert = REPLACE(REPLACE( REPLACE(TableInsert,'<EntityID>',@RegisterID),'<ContactID>',ContactID),'<RoleTypeID>',RoleTypeID)
 
 		SET @SQL = STUFF
 					((SELECT CONCAT(' ', TableInsert,'; ', CHAR(10))
