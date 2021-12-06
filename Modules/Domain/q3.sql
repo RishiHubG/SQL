@@ -400,6 +400,10 @@ exec SaveUniverseJSONData @EntityId=-1,@EntitytypeId=2,@ParentEntityID=-1,@Paren
 
 SELECT * FROM UniverseFrameworksXref
 SELECT * FROM ContactInst
+SELECT * FROM dbo.RoleType
+
+The INSERT statement conflicted with the FOREIGN KEY constraint "RoleType_ContactInst_FK1". 
+The conflict occurred in database "agsqa", table "dbo.RoleType", column 'RoleTypeID'.
 
 exec SaveUniverseJSONData @EntityId=212,@EntitytypeId=2,@ParentEntityID=-1,@ParentEntityTypeID=2,
 @name=N'1. New 
