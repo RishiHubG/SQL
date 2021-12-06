@@ -1,6 +1,4 @@
 --https://www.red-gate.com/simple-talk/blogs/consuming-hierarchical-json-documents-sql-server-using-openjson/
-USE junk
-GO
 
 IF Object_Id('dbo.HierarchyFromJSON', 'TF') IS NOT NULL DROP FUNCTION dbo.HierarchyFromJSON;
 GO
@@ -64,7 +62,8 @@ AS
       (Element_ID, SequenceNo, Parent_ID, Object_ID, Name, StringValue, ValueType)
       SELECT element_id, element_id - sequenceNo, parent_ID,
         CASE WHEN ValueType IN ('object', 'array') THEN Object_ID ELSE NULL END,
-        CASE WHEN NAME LIKE '[0-9]%' THEN NULL ELSE NAME END,
+        --CASE WHEN NAME LIKE '[0-9]%' THEN NULL ELSE NAME END, --Modified By Rishi on 6/12 to accommodate FrameworkList changes
+		Name,
         CASE WHEN ValueType IN ('object', 'array') THEN '' ELSE StringValue END, ValueType
       FROM @TheHierarchy;
  

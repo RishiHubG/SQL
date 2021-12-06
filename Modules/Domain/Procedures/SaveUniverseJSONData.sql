@@ -57,7 +57,8 @@ BEGIN TRY
 					@AccessControlID INT,
 					@WorkflowID INT,
 					@CurrentDate DATETIME2(3) =  GETUTCDATE()
-			
+			DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
+
 			BEGIN TRAN
 
 			IF @EntityID = -1 AND @ParentEntityID IS NULL
@@ -106,9 +107,206 @@ BEGIN TRY
 					INTO #TMP_ALLSTEPS
 			 FROM dbo.HierarchyFromJSON(@inputJSON) 
 	
-			--SELECT * FROM #TMP_ALLSTEPS
+		--SELECT * FROM #TMP_ALLSTEPS
+			
+		--INSERT INTO UniverseFrameworksXref---------------------------------------------------------
+			;WITH CTE_FrameworkList
+			AS
+			(		
+				SELECT T.Element_ID,
+					   T.Name AS ColumnName, 
+					   T.Parent_ID,	   
+					   T.StringValue,
+					   T.ValueType
+				 FROM #TMP_ALLSTEPS T			  
+				 WHERE Name ='FrameworkList'
 
-				--RETURN
+				 UNION ALL
+
+				 SELECT T.Element_ID,
+					   T.Name, 
+					   T.Parent_ID,			   
+					   T.StringValue,
+					   T.ValueType
+				 FROM CTE_FrameworkList C
+					  INNER JOIN #TMP_ALLSTEPS T ON T.Parent_ID = C.Element_ID
+		
+			)
+
+			SELECT * 
+				INTO #TMP_FrameworkList
+			FROM CTE_FrameworkList WHERE ValueType ='boolean' AND  StringValue = 'true'
+	
+			DELETE UF FROM dbo.UniverseFrameworksXref UF
+			WHERE EXISTS(SELECT 1 FROM #TMP_FrameworkList TMP WHERE UF.UniverseID = TMP.ColumnName)
+				
+			INSERT INTO dbo.UniverseFrameworksXref(universeid,usercreated,datecreated,usermodified,datemodified,frameworkid)
+				SELECT @UniverseID,@UserLoginID,@CurrentDate,@UserLoginID,@CurrentDate,ColumnName
+				FROM #TMP_FrameworkList
+		----------------------------------------------------------------------------------------------------------------------------------
+		
+		--CONTACT LIST--------------------------------------------------------------------------------------------------------------------
+		;WITH CTE 
+		AS
+		(
+			SELECT Element_ID, Name,Parent_ID,StringValue,OBJECT_ID AS ObjectID
+			FROM #TMP_ALLSTEPS
+			WHERE Name = 'contactscontainer'
+				  AND Parent_ID = 0
+
+			UNION ALL
+
+			SELECT TA.Element_ID, TA.Name,TA.Parent_ID,TA.StringValue,TA.OBJECT_ID AS ObjectID
+			FROM CTE C
+				 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = C.Element_ID			
+		),
+		CTE_Assigned AS	--FETCH ALL PERMISSIONS UNDER ""ASSIGNED"" NODE
+		(
+			SELECT Element_ID, Name,Parent_ID,StringValue,ObjectID
+			FROM CTE
+			WHERE Name = 'Assigned'
+
+			UNION ALL
+
+			SELECT TA.Element_ID, TA.Name,TA.Parent_ID,TA.StringValue,TA.OBJECT_ID AS ObjectID
+			FROM CTE_Assigned C
+				 INNER JOIN #TMP_ALLSTEPS TA ON TA.Parent_ID = C.Element_ID
+		
+		)
+
+		SELECT * 
+			INTO #TMP_AssignedPermissions
+		FROM CTE_Assigned
+		
+		DELETE FROM #TMP_AssignedPermissions WHERE Name = 'Assigned' OR Name IS NULL OR ObjectID IS NOT NULL
+		--SELECT * FROM #TMP_AssignedPermissions
+		 DROP TABLE IF EXISTS #TMP
+		
+		SELECT TD.Element_ID,
+			   TD.Name AS ColumnName,
+			   TD.StringValue,
+			   TD.Parent_ID AS ParentID
+			INTO #TMP
+		FROM #TMP_AssignedPermissions TD
+		 
+
+		--BUILD THE UPDATE STATEMENTS-------------------------------------------------------------------------------------------------------
+		DECLARE @UpdStmt VARCHAR(MAX) = CONCAT('IF EXISTS(SELECT 1 FROM dbo.ContactInst WHERE EntityID = <EntityID> AND ContactID=<ContactID>)',CHAR(10),
+												' UPDATE dbo.ContactInst SET UserModified=', @UserID,', DateModified = GETUTCDATE(),')
+		DECLARE @UpdWhereClauseStmt VARCHAR(MAX) = CONCAT(' WHERE EntityID=',@UniverseID, CHAR(10), ' AND ContactID=<ContactID>')
+		
+		 SELECT 
+			ParentID,
+			STUFF((
+			SELECT  CONCAT(', ',CHAR(10),
+								CASE WHEN ColumnName = 'id' THEN '[ContactID]' 
+								     WHEN ColumnName = 'role' THEN '[RoleTypeID]' 
+								ELSE QUOTENAME(ColumnName) END,'=''',							 
+							  StringValue
+							,'''')
+			FROM #TMP 
+			WHERE ParentID = TMP.ParentID
+			AND ColumnName <> 'name'
+			ORDER BY Element_ID
+			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+			,1,2,'') AS UpdString,
+			(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID
+			INTO #TMP_UpdateStmt	
+		FROM #TMP TMP
+		GROUP BY ParentID
+		
+		UPDATE #TMP_UpdateStmt 
+			SET UpdString = CONCAT(@UpdStmt,UpdString, CHAR(10),@UpdWhereClauseStmt)
+
+		UPDATE	TMP 
+			SET UpdString =  REPLACE( REPLACE(UpdString,'<EntityID>',@UniverseID),'<ContactID>',ContactID)
+		FROM #TMP_UpdateStmt TMP
+			 
+		SET @SQL = STUFF
+					((SELECT CONCAT(' ', UpdString,'; ', CHAR(10))
+					FROM #TMP_UpdateStmt 	
+					FOR XML PATH ('')								
+					),1,1,'')	
+		 
+		PRINT @SQL
+		EXEC (@SQL)
+		--UPDATE STATEMENTS ENDS HERE--------------------------------------------------------------------------------------------------------
+ 
+
+		---BUILD INSERT------------------------------
+		--BUILD THE COLUMNS
+		SELECT 
+			ParentID,
+			STUFF((
+			SELECT  CONCAT(', ',
+								CASE WHEN ColumnName = 'id' THEN '[ContactID]' 
+									 WHEN ColumnName = 'role' THEN '[RoleTypeID]' 	
+								ELSE QUOTENAME(ColumnName) END
+						  )
+			FROM #TMP 
+			WHERE ParentID = TMP.ParentID
+				  AND ColumnName <> 'name'
+			ORDER BY Element_ID
+			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+			,1,2,'') AS ColumnNames
+		 INTO #TMP_Columns
+		FROM #TMP TMP
+		GROUP BY ParentID
+		 
+		--BUILD THE COLUMN VALUES
+		SELECT 
+			ParentID,
+			STUFF((
+			SELECT CONCAT(', ',CHAR(39),							  
+							  StringValue,	
+							  CHAR(39))
+			FROM #TMP T
+			WHERE ParentID = TMP.ParentID
+				  AND ColumnName <> 'name'
+			ORDER BY Element_ID
+			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+			,1,2,'') AS ColumnValues,
+			(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID
+			INTO #TMP_ColumnValues
+		FROM #TMP TMP
+		GROUP BY ParentID
+	 
+		DECLARE @FixedColumns VARCHAR(1000) = 'UserCreated,DateCreated,UserModified,DateModified,EntityID,EntityTypeID,FrameWorkID'
+		DECLARE @FixedColumnValues VARCHAR(1000) =  CONCAT(
+									   CHAR(39),@UserLoginID,CHAR(39),',',
+									   CHAR(39),@CurrentDate,CHAR(39),',',
+								  	   CHAR(39),@UserLoginID,CHAR(39),',',
+									   CHAR(39),@CurrentDate,CHAR(39),',',
+									   @UniverseID,',', @EntityTypeID,',-1'
+									   )		 
+			
+		--BUILD THE INSERT
+		SELECT Cols.ParentID,			  
+			  CONCAT('IF NOT EXISTS(SELECT 1 FROM dbo.ContactInst WHERE EntityID = <EntityID> AND ContactID=<ContactID>)',CHAR(10),
+					  'INSERT INTO dbo.ContactInst (',ColumnNames,',',@FixedColumns, ')',
+					  'VALUES (', ColumnValues,',',@FixedColumnValues,')'		
+				     ) AS TableInsert,
+				Val.ContactID
+			INTO #TMP_ContactInst
+		FROM #TMP_Columns Cols
+			 INNER JOIN #TMP_ColumnValues Val ON VAL.ParentID = Cols.ParentID			 
+		 
+		UPDATE #TMP_ContactInst
+			SET TableInsert = REPLACE( REPLACE(TableInsert,'<EntityID>',@UniverseID),'<ContactID>',ContactID)
+
+		SET @SQL = STUFF
+					((SELECT CONCAT(' ', TableInsert,'; ', CHAR(10))
+					FROM #TMP_ContactInst 	
+					FOR XML PATH ('')								
+					),1,1,'')	
+		 
+		PRINT @SQL
+		EXEC (@SQL)
+		---INSERT ENDS HERE--------------------------
+		
+		--CONTACT LIST ENDS HERE--------------------------------------------------------------------------------------------------------------------------------
+
+		
 				;WITH CTE
 				AS
 				(
@@ -167,7 +365,7 @@ BEGIN TRY
 							 --SELECT * FROM #TMP_INSERT
 						  -- RETURN			
 
- 	 			DECLARE @SQL NVARCHAR(MAX),	@ColumnNames VARCHAR(MAX), @ColumnValues VARCHAR(MAX)
+ 	 			
 
 				IF @EntityID = -1
 				BEGIN
@@ -314,7 +512,9 @@ BEGIN TRY
 		
 				--DROP TEMP TABLES--------------------------------------	
 				 DROP TABLE IF EXISTS #TMP_INSERT
-				 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME		 
+				 DROP TABLE IF EXISTS #TMP_DATA_KEYNAME		
+				 DROP TABLE IF EXISTS #TMP_FrameworkList
+				 DROP TABLE IF EXISTS #TMP_UpdateStmt
 				 --------------------------------------------------------
 
 				 SELECT NULL AS ErrorMessage

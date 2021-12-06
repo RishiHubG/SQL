@@ -1,0 +1,39 @@
+1) Upate Domain and Register Save
+2) Update the permissions logic
+3) UniverseFrameworks - UniverseFrameworksXref - entityid=universeid=insert the ones which are True, delete remaining from table
+4) Universe Contacts - ContactInst - frameworkid is null
+5) Register Contacts - ContactInst - frameworkid is null
+
+Save Json's attached.
+
+Additional Requirements
+1) check for Updates and Update Record
+2) Validations - In the same level, duplicate name should not be allowed.(Trim lead and lag spaces)
+3) Delete Register
+	1) Provide a Summary of the dependent entities
+		1) Count of entities in this Register
+		2) Count of direct Sub Registers
+		3) Views Dependent on this Register
+		4) Dashboards dependent on this Register (make a provision will be coded shorly)
+	2) Delete Proc
+
+	
+4) Delete Universe
+	1) Provide count total Sub Universe under this one
+	2) Provide of total Registers in the hierarchy
+	
+	3) Delete Universe proc
+	4) Recalculate Height and Depth
+
+5) Move Universe
+	1) Validation : Destination cannot be child in hierarch of the current Universe
+	2) Move Proc
+	3) Recalculate Height and Depth
+	4) Recalculate permissions.
+
+
+
+
+
+
+
