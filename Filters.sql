@@ -47,7 +47,7 @@
 				   MAX(CASE WHEN ColumnName = 'value1' THEN StringValue END) AS value1,
 				   MAX(CASE WHEN ColumnName = 'value2' THEN StringValue END) AS value2,
 				   CAST(NULL AS VARCHAR(50)) AS MatchCondition,
-				   CAST(NULL AS VARCHAR(50)) AS SubMatchCondition
+				   CAST(NULL AS VARCHAR(100)) AS OperatorType
 				INTO #TMP_FiltersWithMatchCondition
 			FROM #TMP_FiltersData
 			--WHERE StringValue IS NOT NULL
@@ -79,7 +79,8 @@
 			 
 
 		DROP TABLE IF EXISTS #TMP_ItemsWithMatchCondition
-
+		
+		--THESE ARE CHILD CONDITIONS
 		;WITH CTE_ItemsFiltersData
 			AS
 			(		
@@ -112,7 +113,8 @@
 				   MAX(CASE WHEN ColumnName = 'value1' THEN StringValue END) AS value1,
 				   MAX(CASE WHEN ColumnName = 'value2' THEN StringValue END) AS value2,
 				   CAST(NULL AS VARCHAR(50)) AS MatchCondition,
-				   CAST(NULL AS INT) AS ItemID
+				   CAST(NULL AS INT) AS ItemID,
+				   CAST(NULL AS VARCHAR(100)) AS OperatorType
 				INTO #TMP_ItemsWithMatchCondition
 			FROM CTE_ItemsFiltersData
 			--WHERE StringValue IS NOT NULL
@@ -123,15 +125,44 @@
 
 			SELECT * FROM #TMP_ItemsWithMatchCondition
 
-			SELECT * FROM #TMP_FiltersData WHERE Element_ID IN (112,113)
-			SELECT * FROM #TMP_FiltersData WHERE Element_ID IN (88)
+			--SELECT * FROM #TMP_FiltersData WHERE Element_ID IN (112,113)
+			--SELECT * FROM #TMP_FiltersData WHERE Element_ID IN (88)
 
-			SELECT TMC.Parent_ID, T4.StringValue
+			DROP TABLE IF EXISTS #TMP_Items
+
+			SELECT TMC.Parent_ID, 
+				   T4.StringValue,
+				   CASE WHEN T4.StringValue = -200 THEN 'AND' ELSE 'OR' END AS MatchCondition,
+				   T4.Parent_ID AS ItemID,
+				   CAST(NULL AS VARCHAR(100)) AS OperatorType
+				INTO #TMP_Items
 			FROM #TMP_ItemsWithMatchCondition TMC
 				 INNER JOIN #TMP_FiltersData T2 ON T2.Element_ID = TMC.Parent_ID
 				 INNER JOIN #TMP_FiltersData T3 ON T3.Element_ID = T2.Parent_ID
 				 INNER JOIN #TMP_FiltersData T4 ON T4.Parent_ID = T3.Parent_ID
 			WHERE T4.ColumnName = 'columnId'
+
+			UPDATE TMP
+				SET MatchCondition = TI.MatchCondition,
+					ItemID = TI.ItemID					
+			FROM #TMP_ItemsWithMatchCondition TMP
+				 INNER JOIN #TMP_Items TI ON TI.Parent_ID = TMP.Parent_ID
+
+			UPDATE TMP
+				SET OperatorType = FCM.OperatorType					 		
+			FROM #TMP_ItemsWithMatchCondition TMP
+				 INNER JOIN dbo.Filterconditions_Master FCM ON FCM.FilterTypeID = TMP.conditionId
+			
+			UPDATE TMP
+				SET OperatorType = FCM.OperatorType					 		
+			FROM #TMP_FiltersWithMatchCondition TMP
+				 INNER JOIN dbo.Filterconditions_Master FCM ON FCM.FilterTypeID = TMP.conditionId
+			
+			DELETE TMP FROM #TMP_FiltersWithMatchCondition TMP
+			WHERE EXISTS(SELECT 1 FROM #TMP_ItemsWithMatchCondition WHERE Parent_ID = TMP.Parent_ID)
+
+			SELECT * FROM #TMP_FiltersWithMatchCondition
+			SELECT * FROM #TMP_ItemsWithMatchCondition
 
 			/*ALTERNATE FOR THE ABOVE WOULD BE A RECURSIVE CTE AS BELOW': WE STILL NEED TO APPLY ONE MORE LAST JOIN/FILTER FOR ColumnName = 'columnId' TO REACH THE ABOVE RESULT
 			;WITH CTE_ItemsFiltersData
