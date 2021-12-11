@@ -1,7 +1,8 @@
 	--DECLARE @inputJSON VARCHAR(MAX)=N'{"viewName":"Testing Filtesr","EntityTypeId":9,"EntityId":-1,"ParentEntityTypeId":1,"ParentEntityId":40,"viewId":-1,"viewType":1,"filtersData":{"matchCondition":-200,"filters":[{"columnId":"14","colDataType":"textfield","colKey":"contactname","conditionId":"3","items":[],"noOfValuesRequired":1,"value1":"Haz"},{"columnId":"-5","colDataType":"datetime","colKey":"DateCreated","conditionId":"55","value1":"","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"-6","colDataType":"datetime","colKey":"Datemodified","conditionId":"56","value1":"","value2":"","items":[],"noOfValuesRequired":2},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-1,"value1":"","value2":"","items":[{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"21","value1":"b","value2":"","items":[],"noOfValuesRequired":1}]},{"columnId":"12","colDataType":"select","colKey":"causalSubCategory","conditionId":"14","value1":"b","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"16","colDataType":"checkbox","colKey":"notify","conditionId":70,"value1":"True","value2":"","items":[]},{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"12","value1":"b","value2":"","items":[],"noOfValuesRequired":1}],"currentUser":false,"topRecords":"ALL","orderByColumn":"","sortBy":"desc"},"columns":[{"colName":"Component - Weighted Audit Error %","colId":"componentweightedauditerror","isSelected":1,"orderid":1},{"colName":"Component Name","colId":"name","isSelected":1,"orderid":2},{"colName":"Component Weight","colId":"componentweight","isSelected":1,"orderid":3},{"colName":"Overall Weight","colId":"overallweight","isSelected":1,"orderid":4},{"colName":"Test Error","colId":"testerror","isSelected":1,"orderid":5},{"colName":"Total Errors","colId":"totalerrors","isSelected":false,"orderid":6},{"colName":"Total Sample Size","colId":"totalsamplesize","isSelected":1,"orderid":7}]}'
 
 	DECLARE @inputJSON VARCHAR(MAX)=N'{"viewName":"Testing Filtesr","EntityTypeId":9,"EntityId":-1,"ParentEntityTypeId":1,"ParentEntityId":40,"viewId":-1,"viewType":1,"filtersData":{"matchCondition":-200,"filters":[{"columnId":"14","colDataType":"textfield","colKey":"contactname","conditionId":"3","items":[],"noOfValuesRequired":1,"value1":"Haz"},{"columnId":"-5","colDataType":"datetime","colKey":"DateCreated","conditionId":"55","value1":"","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"-6","colDataType":"datetime","colKey":"Datemodified","conditionId":"56","value1":"","value2":"","items":[],"noOfValuesRequired":2},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-1,"value1":"","value2":"","items":[{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"21","value1":"b","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation1","conditionId":"21","value1":"b1","value2":"","items":[],"noOfValuesRequired":1}]},{"columnId":"12","colDataType":"select","colKey":"causalSubCategory","conditionId":"14","value1":"b","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"16","colDataType":"checkbox","colKey":"notify","conditionId":70,"value1":"True","value2":"","items":[]},{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"12","value1":"b","value2":"","items":[],"noOfValuesRequired":1}],"currentUser":false,"topRecords":"ALL","orderByColumn":"","sortBy":"desc"},"columns":[{"colName":"Component - Weighted Audit Error %","colId":"componentweightedauditerror","isSelected":1,"orderid":1},{"colName":"Component Name","colId":"name","isSelected":1,"orderid":2},{"colName":"Component Weight","colId":"componentweight","isSelected":1,"orderid":3},{"colName":"Overall Weight","colId":"overallweight","isSelected":1,"orderid":4},{"colName":"Test Error","colId":"testerror","isSelected":1,"orderid":5},{"colName":"Total Errors","colId":"totalerrors","isSelected":false,"orderid":6},{"colName":"Total Sample Size","colId":"totalsamplesize","isSelected":1,"orderid":7}]}'
-	
+	SET @inputJSON = '{"viewName":"filterSave","EntityTypeId":9,"EntityId":-1,"ParentEntityTypeId":1,"ParentEntityId":34,"viewId":-1,"viewType":1,"filtersData":{"matchCondition":-200,"filters":[{"columnId":"-5","colDataType":"datetime","colKey":"DateCreated","conditionId":"57","items":[],"noOfValuesRequired":2,"daysRequired":null,"currentDateRequired":1,"currentDateSelected2":true,"currentDateSelected1":false,"value2":"2021-12-18","value1":"2021-12-12"},{"columnId":"5","colDataType":"select","colKey":"controlstatus","conditionId":"14","value1":"archive","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-1,"value1":"","value2":"","items":[{"columnId":"19","colDataType":"select","colKey":"controlfrequency","conditionId":"18","value1":"monthly","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"1","colDataType":"textfield","colKey":"name","conditionId":"5","value1":"f","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-100","colDataType":"any","colKey":"any","conditionId":-1,"value1":"","value2":"","items":[{"columnId":"16","colDataType":"checkbox","colKey":"notify","conditionId":"70","value1":"","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"4","colDataType":"textfield","colKey":"purposeofthecontrol","conditionId":"3","value1":"f","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-1,"value1":"","value2":"","items":[{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"19","value1":"manual","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"3","colDataType":"textarea","colKey":"description","conditionId":"42","value1":"","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null}]}]}]}],"currentUser":false,"topRecords":"ALL","orderByColumn":"","sortBy":"desc"},"columns":[{"colName":"Actual Completion Date","colId":"actualcompletiondate","isSelected":1,"orderid":0},{"colName":"Actual Start Date","colId":"actualstartdate","isSelected":1,"orderid":0},{"colName":"Adhoc Components Approved?","colId":"adhocComponentsApproved","isSelected":1,"orderid":0},{"colName":"Audit Objective","colId":"auditobjective","isSelected":1,"orderid":0},{"colName":"Audit Reference","colId":"auditreference","isSelected":1,"orderid":0},{"colName":"Audit Status","colId":"auditStatus","isSelected":1,"orderid":0},{"colName":"Comments","colId":"comments","isSelected":1,"orderid":0},{"colName":"Comments on Adhoc Components","colId":"commentsOnAdhocComments","isSelected":1,"orderid":0},{"colName":"Date Draft Report Issued","colId":"dateDraftReportIssued","isSelected":1,"orderid":0},{"colName":"Date Final Report Issued","colId":"dateFinalReportIssued","isSelected":1,"orderid":0},{"colName":"Date of Meeting","colId":"dateOfMeeting","isSelected":1,"orderid":0},{"colName":"Executive Summary","colId":"executivesummary","isSelected":1,"orderid":0},{"colName":"Good Practices","colId":"goodPractices","isSelected":1,"orderid":0},{"colName":"High-level description of the overall process","colId":"highleveldescriptionoftheoverallprocess","isSelected":1,"orderid":0},{"colName":"Initial Risk Rating","colId":"initialRiskRating","isSelected":1,"orderid":0},{"colName":"Name of the Manager","colId":"nameOfTheManager","isSelected":1,"orderid":0},{"colName":"Other Audit Objective","colId":"otherauditobjective","isSelected":1,"orderid":0},{"colName":"Period Under Review From","colId":"periodunderreviewfrom","isSelected":1,"orderid":0},{"colName":"Period Under Review To","colId":"periodunderreviewto","isSelected":1,"orderid":0},{"colName":"Planned Completion Date","colId":"plannedcompletiondate","isSelected":1,"orderid":0},{"colName":"Planned Start Date","colId":"plannedstartdate","isSelected":1,"orderid":0},{"colName":"Review Notes","colId":"reviewNotes","isSelected":1,"orderid":0},{"colName":"Scope of Audit","colId":"scopeofaudit","isSelected":1,"orderid":0},{"colName":"Suggested Overall Risk Rating","colId":"suggestedOverallRiskRating","isSelected":1,"orderid":0},{"colName":"Type of Audit","colId":"typeOfAudit","isSelected":1,"orderid":0},{"colName":"Audit Name","colId":"auditname","isSelected":1,"orderid":1}]}'
+
 	DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	DROP TABLE IF EXISTS #TMP_FiltersData
 	DROP TABLE IF EXISTS #TMP_FiltersWithMatchCondition
@@ -47,7 +48,8 @@
 				   MAX(CASE WHEN ColumnName = 'value1' THEN StringValue END) AS value1,
 				   MAX(CASE WHEN ColumnName = 'value2' THEN StringValue END) AS value2,
 				   CAST(NULL AS VARCHAR(50)) AS MatchCondition,
-				   CAST(NULL AS VARCHAR(100)) AS OperatorType
+				   CAST(NULL AS VARCHAR(100)) AS OperatorType,
+				   CAST(NULL AS VARCHAR(100)) AS OperatorType2
 				INTO #TMP_FiltersWithMatchCondition
 			FROM #TMP_FiltersData
 			--WHERE StringValue IS NOT NULL
@@ -114,7 +116,8 @@
 				   MAX(CASE WHEN ColumnName = 'value2' THEN StringValue END) AS value2,
 				   CAST(NULL AS VARCHAR(50)) AS MatchCondition,
 				   CAST(NULL AS INT) AS ItemID,
-				   CAST(NULL AS VARCHAR(100)) AS OperatorType
+				   CAST(NULL AS VARCHAR(100)) AS OperatorType,
+				   CAST(NULL AS VARCHAR(100)) AS OperatorType2
 				INTO #TMP_ItemsWithMatchCondition
 			FROM CTE_ItemsFiltersData
 			--WHERE StringValue IS NOT NULL
@@ -161,8 +164,37 @@
 			DELETE TMP FROM #TMP_FiltersWithMatchCondition TMP
 			WHERE EXISTS(SELECT 1 FROM #TMP_ItemsWithMatchCondition WHERE Parent_ID = TMP.Parent_ID)
 
+			--NEED SINGLE QUOTES FOR DATE OPERATIONS-------------------------------
+			UPDATE #TMP_FiltersWithMatchCondition 
+				SET value1 = CONCAT(CHAR(39),value1,CHAR(39)),
+					value2 = CONCAT(CHAR(39),value2,CHAR(39))
+			WHERE OperatorType IN ('Between','Not Between','<','<=','>','>=')			
+			------------------------------------------------------------------------
+			
+			--REPLACE <COLVALUE>,<COLNAME> WITH ACTUAL VALUE--------------------------------------------------------
+			UPDATE #TMP_FiltersWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLVALUE>',value1),value1='' WHERE OperatorType LIKE '%<COLVALUE>%'
+			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLVALUE>',value1),value1='' WHERE OperatorType LIKE '%<COLVALUE>%'
+			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLNAME>',colKey),colKey='' WHERE OperatorType LIKE '%<COLNAME>%'
+
+			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLVALUE>',value1),value1='' WHERE OperatorType LIKE '%<COLVALUE>%'
+			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLVALUE>',value1),value1='' WHERE OperatorType LIKE '%<COLVALUE>%'
+			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLNAME>',colKey),colKey='' WHERE OperatorType LIKE '%<COLNAME>%'
+			---------------------------------------------------------------------------------------------------------
+
+			--UPDATE FOR OperatorType2 FOR BETWEEN----------------------------------------
+			UPDATE #TMP_FiltersWithMatchCondition 
+				SET OperatorType2 = 'AND'
+			WHERE OperatorType IN ('Between','Not Between')						
+			-------------------------------------------------------------------------------
+
 			SELECT * FROM #TMP_FiltersWithMatchCondition
 			SELECT * FROM #TMP_ItemsWithMatchCondition
+			
+			SELECT CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) 
+			FROM #TMP_FiltersWithMatchCondition
+
+			SELECT ItemID, CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) 
+			FROM #TMP_ItemsWithMatchCondition
 
 			/*ALTERNATE FOR THE ABOVE WOULD BE A RECURSIVE CTE AS BELOW': WE STILL NEED TO APPLY ONE MORE LAST JOIN/FILTER FOR ColumnName = 'columnId' TO REACH THE ABOVE RESULT
 			;WITH CTE_ItemsFiltersData
