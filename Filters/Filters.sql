@@ -83,6 +83,7 @@
 			 
 
 		DROP TABLE IF EXISTS #TMP_ItemsWithMatchCondition
+		DROP TABLE IF EXISTS #TMP_CTE_ItemsFiltersData
 		
 		--THESE ARE CHILD CONDITIONS
 		;WITH CTE_ItemsFiltersData
@@ -111,8 +112,32 @@
 			--SELECT *				 
 			--FROM CTE_ItemsFiltersData 
 
+			SELECT DISTINCT *, CAST(NULL AS VARCHAR(50)) AS MatchCondition
+				INTO #TMP_CTE_ItemsFiltersData
+			FROM CTE_ItemsFiltersData 
+			 
+
+			--SELECT * FROM #TMP_CTE_ItemsFiltersData WHERE ColumnName NOT LIKE '%[^0-9]%' ORDER BY Element_ID
+			
+			UPDATE TMP 
+				SET MatchCondition = CASE TF2.StringValue
+										WHEN -200 THEN 'AND'
+										WHEN -100 THEN 'OR' 
+									  END
+			FROM #TMP_CTE_ItemsFiltersData TMP
+				 INNER JOIN #TMP_FiltersData TF1 ON TF1.Element_ID = TMP.Parent_ID
+				 INNER JOIN #TMP_FiltersData TF2 ON TF2.Parent_ID = TF1.Parent_ID
+			WHERE TMP.ColumnName NOT LIKE '%[^0-9]%' 
+				  AND TF2.ColumnName = 'columnId'
+				  AND TF1.ColumnName = 'items'
+			
+			SELECT * FROM #TMP_CTE_ItemsFiltersData WHERE ColumnName NOT LIKE '%[^0-9]%' ORDER BY Element_ID
+			--RETURN
+
+			--WRITING CROSS TAB/PIVOT QUERY
 			SELECT Parent_ID,
 				   MAX(CASE WHEN ColumnName = 'colKey' THEN StringValue END) AS colKey,
+				   --MAX(CASE WHEN ColumnName = 'columnId' THEN StringValue END) AS columnId,
 				   MAX(CASE WHEN ColumnName = 'conditionId' THEN StringValue END) AS conditionId,
 				   MAX(CASE WHEN ColumnName = 'value1' THEN StringValue END) AS value1,
 				   MAX(CASE WHEN ColumnName = 'value2' THEN StringValue END) AS value2,
@@ -122,7 +147,7 @@
 				   CAST(NULL AS VARCHAR(100)) AS OperatorType2,
 				   CAST(NULL AS VARCHAR(50)) AS ParentMatchCondition
 				INTO #TMP_ItemsWithMatchCondition
-			FROM CTE_ItemsFiltersData
+			FROM #TMP_CTE_ItemsFiltersData
 			--WHERE StringValue IS NOT NULL
 			--	  AND StringValue <> 'all'
 			GROUP BY Parent_ID
@@ -134,7 +159,7 @@
 			--UPDATE #TMP_ItemsWithMatchCondition SET ParentMatchCondition = @matchCondition
 
 			SELECT * FROM #TMP_ItemsWithMatchCondition
-
+			--RETURN
 			--SELECT * FROM #TMP_FiltersData WHERE Element_ID IN (112,113)
 			--SELECT * FROM #TMP_FiltersData WHERE Element_ID IN (88)
 
@@ -152,6 +177,8 @@
 				 INNER JOIN #TMP_FiltersData T4 ON T4.Parent_ID = T3.Parent_ID
 			WHERE T4.ColumnName = 'columnId'
 
+			--SELECT * FROM #TMP_Items
+			--RETURN
 			UPDATE TMP
 				SET MatchCondition = TI.MatchCondition,
 					ItemID = TI.ItemID					
