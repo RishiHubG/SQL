@@ -58,12 +58,14 @@
 
 			DELETE FROM #TMP_FiltersWithMatchCondition
 			WHERE colKey IS NULL
-				  OR colKey ='all'
+				  OR colKey IN ('any','all')
 
 			DECLARE @matchCondition VARCHAR(10) = (SELECT CASE WHEN StringValue = -200 THEN 'AND' ELSE 'OR' END FROM #TMP_FiltersData WHERE ColumnName ='matchCondition')
 			--SELECT @matchCondition
 
 			UPDATE #TMP_FiltersWithMatchCondition SET MatchCondition = @matchCondition
+
+			--DELETE FROM #TMP_FiltersWithMatchCondition WHERE (colKey IS NULL OR colKey IN ('any','all'))
 
 			SELECT * FROM #TMP_FiltersWithMatchCondition
 
@@ -117,14 +119,19 @@
 				   CAST(NULL AS VARCHAR(50)) AS MatchCondition,
 				   CAST(NULL AS INT) AS ItemID,
 				   CAST(NULL AS VARCHAR(100)) AS OperatorType,
-				   CAST(NULL AS VARCHAR(100)) AS OperatorType2
+				   CAST(NULL AS VARCHAR(100)) AS OperatorType2,
+				   CAST(NULL AS VARCHAR(50)) AS ParentMatchCondition
 				INTO #TMP_ItemsWithMatchCondition
 			FROM CTE_ItemsFiltersData
 			--WHERE StringValue IS NOT NULL
 			--	  AND StringValue <> 'all'
 			GROUP BY Parent_ID
 
-			DELETE FROM #TMP_ItemsWithMatchCondition WHERE colKey IS NULL
+			DELETE FROM #TMP_ItemsWithMatchCondition WHERE (colKey IS NULL OR colKey IN ('any','all'))
+
+			--SELECT @matchCondition = CASE WHEN StringValue = -200 THEN 'AND' ELSE 'OR' END FROM #TMP_FiltersData WHERE ColumnName ='matchCondition'
+
+			--UPDATE #TMP_ItemsWithMatchCondition SET ParentMatchCondition = @matchCondition
 
 			SELECT * FROM #TMP_ItemsWithMatchCondition
 
@@ -192,10 +199,32 @@
 			
 			SELECT CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) 
 			FROM #TMP_FiltersWithMatchCondition
+			
+			DROP TABLE IF EXISTS #TMP_FilterItems
+			DROP TABLE IF EXISTS #TMP_JoinStmt
 
-			SELECT ItemID, CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) 
+			SELECT ItemID, MatchCondition, CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) AS ColName
+				INTO #TMP_FilterItems
 			FROM #TMP_ItemsWithMatchCondition
 
+			SELECT 
+			ItemID,
+			STUFF((
+			SELECT  CONCAT(' ',MatchCondition,CHAR(10),ColName)
+			FROM #TMP_FilterItems 
+			WHERE ItemID = TMP.ItemID			
+			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+			,1,1,'') AS JoinString
+			--(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID,
+			--(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'Role') AS RoleTypeID
+			INTO #TMP_JoinStmt	
+		FROM #TMP_FilterItems TMP
+		GROUP BY ItemID
+
+		--REPLACING THE 1ST AND/OR WITH EMPTY STRING
+		UPDATE #TMP_JoinStmt SET JoinString = CONCAT('(',STUFF(JoinString,1,3,''),')')
+
+		SELECT * FROM #TMP_JoinStmt
 			/*ALTERNATE FOR THE ABOVE WOULD BE A RECURSIVE CTE AS BELOW': WE STILL NEED TO APPLY ONE MORE LAST JOIN/FILTER FOR ColumnName = 'columnId' TO REACH THE ABOVE RESULT
 			;WITH CTE_ItemsFiltersData
 			AS
