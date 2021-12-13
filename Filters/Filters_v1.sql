@@ -84,7 +84,7 @@
 
 		DROP TABLE IF EXISTS #TMP_ItemsWithMatchCondition
 		DROP TABLE IF EXISTS #TMP_CTE_ItemsFiltersData
-		
+
 		--THESE ARE CHILD CONDITIONS
 		;WITH CTE_ItemsFiltersData
 			AS
@@ -93,7 +93,9 @@
 					   T.ColumnName, 
 					   T.Parent_ID,	   
 					   T.StringValue,
-					   T.ValueType
+					   T.ValueType,
+					  CAST(ROW_NUMBER()OVER(PARTITION BY Parent_ID ORDER BY Element_ID) AS VARCHAR(MAX)) AS Path,
+					  CAST('' AS VARCHAR(MAX)) AS Parents
 				 FROM #TMP_FiltersData T			  
 				 WHERE ColumnName ='items'
 
@@ -103,7 +105,12 @@
 					   T.ColumnName, 
 					   T.Parent_ID,			   
 					   T.StringValue,
-					   T.ValueType
+					   T.ValueType,
+					   CAST(CONCAT(C.Path ,'.' , ROW_NUMBER()OVER(PARTITION BY T.Parent_ID ORDER BY T.Element_ID)) AS VARCHAR(MAX)),
+					   CAST(CASE WHEN C.Parents = ''
+							THEN(CAST(T.Parent_ID AS VARCHAR(MAX)))
+							ELSE(C.Parents + '.' + CAST(T.Parent_ID AS VARCHAR(MAX)))
+					   END AS VARCHAR(MAX))
 				 FROM CTE_ItemsFiltersData C
 					  INNER JOIN #TMP_FiltersData T ON T.Parent_ID = C.Element_ID
 		
@@ -146,7 +153,9 @@
 				   CAST(NULL AS INT) AS ItemID,
 				   CAST(NULL AS VARCHAR(100)) AS OperatorType,
 				   CAST(NULL AS VARCHAR(100)) AS OperatorType2,
-				   CAST(NULL AS VARCHAR(50)) AS ParentMatchCondition
+				   CAST(NULL AS VARCHAR(50)) AS ParentMatchCondition,
+				   CAST(NULL AS VARCHAR(MAX)) AS Path,
+				   CAST(NULL AS VARCHAR(MAX)) AS Parents
 				INTO #TMP_ItemsWithMatchCondition
 			FROM #TMP_CTE_ItemsFiltersData
 			--WHERE StringValue IS NOT NULL
@@ -222,9 +231,27 @@
 			WHERE OperatorType IN ('Between','Not Between')						
 			-------------------------------------------------------------------------------
 
+			;WITH CTE 
+			AS(
+			SELECT *,
+				  ROW_NUMBER()OVER(PARTITION BY Element_ID ORDER BY ELEMENT_ID, Path DESC) AS ROWNUM
+			FROM #TMP_CTE_ItemsFiltersData
+			)
+
+			DELETE FROM CTE WHERE ROWNUM > 1
+
+			UPDATE TMP
+				SET Path = CTE.Path,
+				    Parents = CTE.Parents
+			FROM #TMP_ItemsWithMatchCondition TMP
+				 INNER JOIN #TMP_CTE_ItemsFiltersData CTE ON CTE.StringValue = TMP.colKey AND CTE.Parent_ID = TMP.Parent_ID
+			WHERE CTE.ColumnName='colKey'		
+
 			SELECT * FROM #TMP_FiltersWithMatchCondition
 			SELECT * FROM #TMP_ItemsWithMatchCondition
-			
+			--SELECT * FROM #TMP_CTE_ItemsFiltersData WHERE ColumnName='colKey' AND StringValue='controlfrequency' AND Parent_ID=179 ORDER BY Element_ID
+		  
+
 			SELECT CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) 
 			FROM #TMP_FiltersWithMatchCondition
 			
