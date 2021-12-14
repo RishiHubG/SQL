@@ -277,7 +277,8 @@
 			WHERE ItemID = TMP.ItemID			
 			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
 			,1,1,'') AS JoinString,
-			MAX(Parents) AS Parents
+			MAX(Parents) AS Parents,
+			MAX(MatchCondition) AS MatchCondition
 			--(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID,
 			--(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'Role') AS RoleTypeID
 			INTO #TMP_JoinStmt	
@@ -291,10 +292,11 @@
 
 		--IF ItemID(THIS IS THE IMMEDIATE PARENTID OF THE ELEMENT) IS ALSO PART OF "PARENTS" THEN THOSE ELEMENTS ARE PART OF THE SAME HIERARCHY
 		UPDATE TMP
-			SET GroupID = ISNULL(TAB.ItemID,TMP.ItemID)
+			SET GroupID = ISNULL(TAB.ItemID,TMP.ItemID),
+				JoinCondition = ISNULL(TAB.MatchCondition,TMP.MatchCondition)
 		FROM #TMP_JoinStmt TMP
 			 OUTER APPLY (	
-							SELECT ItemID 
+							SELECT ItemID, MatchCondition
 							FROM #TMP_JoinStmt
 							WHERE TMP.Parents LIKE CONCAT('%',ItemID,'%')								   
 						 )TAB
