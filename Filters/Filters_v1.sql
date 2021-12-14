@@ -302,6 +302,54 @@
 						 )TAB
 
 		SELECT * FROM #TMP_JoinStmt
+
+		DROP TABLE IF EXISTS #TMP_FinalItemsJoin
+
+		SELECT 
+			GroupID,
+			STUFF((
+			SELECT  CONCAT(' ',JoinCondition,CHAR(10),JoinString,CHAR(10))
+			FROM #TMP_JoinStmt 
+			WHERE GroupID = TMP.GroupID			
+			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+			,1,1,'') AS JoinString
+			INTO #TMP_FinalItemsJoin
+		FROM #TMP_JoinStmt TMP
+		GROUP BY GroupID
+		HAVING COUNT(*)>1
+
+		--REPLACING THE 1ST AND/OR WITH EMPTY STRING
+		UPDATE #TMP_FinalItemsJoin SET JoinString = CONCAT('(',STUFF(JoinString,1,3,''),')')
+
+		--SELECT STRING_AGG(JoinString,@matchCondition)
+		--FROM
+		--(
+
+		DROP TABLE IF EXISTS #TMP
+
+		--CLUB TOGETHER ALL FILTER CONDITIONS
+		SELECT 1 AS NUM, CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) AS JoinString
+			INTO #TMP
+		FROM #TMP_FiltersWithMatchCondition
+		UNION
+		SELECT 2,JoinString FROM #TMP_FinalItemsJoin		 
+		ORDER BY NUM
+		--)TAB
+		
+		ALTER TABLE #TMP ADD ID INT IDENTITY(1,1) PRIMARY KEY
+
+		SELECT * FROM #TMP
+
+		SET @matchCondition =  CONCAT(' ',@matchCondition,' ')
+		
+		SELECT STRING_AGG(JoinString,@matchCondition) AS QueryCondition
+		FROM #TMP
+		
+
+		--(
+
+		
+
 			/*ALTERNATE FOR THE ABOVE WOULD BE A RECURSIVE CTE AS BELOW': WE STILL NEED TO APPLY ONE MORE LAST JOIN/FILTER FOR ColumnName = 'columnId' TO REACH THE ABOVE RESULT
 			;WITH CTE_ItemsFiltersData
 			AS
