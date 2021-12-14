@@ -94,7 +94,7 @@
 					   T.Parent_ID,	   
 					   T.StringValue,
 					   T.ValueType,
-					  CAST(ROW_NUMBER()OVER(PARTITION BY Parent_ID ORDER BY Element_ID) AS VARCHAR(MAX)) AS Path,
+					  --CAST(ROW_NUMBER()OVER(PARTITION BY Parent_ID ORDER BY Element_ID) AS VARCHAR(MAX)) AS Path,
 					  CAST('' AS VARCHAR(MAX)) AS Parents
 				 FROM #TMP_FiltersData T			  
 				 WHERE ColumnName ='items'
@@ -106,7 +106,7 @@
 					   T.Parent_ID,			   
 					   T.StringValue,
 					   T.ValueType,
-					   CAST(CONCAT(C.Path ,'.' , ROW_NUMBER()OVER(PARTITION BY T.Parent_ID ORDER BY T.Element_ID)) AS VARCHAR(MAX)),
+					  -- CAST(CONCAT(C.Path ,'.' , ROW_NUMBER()OVER(PARTITION BY T.Parent_ID ORDER BY T.Element_ID)) AS VARCHAR(MAX)),
 					   CAST(CASE WHEN C.Parents = ''
 							THEN(CAST(T.Parent_ID AS VARCHAR(MAX)))
 							ELSE(C.Parents + '.' + CAST(T.Parent_ID AS VARCHAR(MAX)))
@@ -117,8 +117,8 @@
 			)
 
 			--SELECT *				 
-			--FROM CTE_ItemsFiltersData 
-
+			--FROM CTE_ItemsFiltersData ORDER BY Element_ID
+			--RETURN
 			SELECT DISTINCT *, CAST(NULL AS VARCHAR(50)) AS MatchCondition
 				INTO #TMP_CTE_ItemsFiltersData
 			FROM CTE_ItemsFiltersData 
@@ -154,7 +154,7 @@
 				   CAST(NULL AS VARCHAR(100)) AS OperatorType,
 				   CAST(NULL AS VARCHAR(100)) AS OperatorType2,
 				   CAST(NULL AS VARCHAR(50)) AS ParentMatchCondition,
-				   CAST(NULL AS VARCHAR(MAX)) AS Path,
+				   --CAST(NULL AS VARCHAR(MAX)) AS Path,
 				   CAST(NULL AS VARCHAR(MAX)) AS Parents
 				INTO #TMP_ItemsWithMatchCondition
 			FROM #TMP_CTE_ItemsFiltersData
@@ -218,11 +218,11 @@
 			--REPLACE <COLVALUE>,<COLNAME> WITH ACTUAL VALUE--------------------------------------------------------
 			UPDATE #TMP_FiltersWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLVALUE>',value1),value1='' WHERE OperatorType LIKE '%<COLVALUE>%'
 			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLVALUE>',value1),value1='' WHERE OperatorType LIKE '%<COLVALUE>%'
-			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLNAME>',colKey),colKey='' WHERE OperatorType LIKE '%<COLNAME>%'
-
+			--UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLNAME>',colKey),colKey='' WHERE OperatorType LIKE '%<COLNAME>%'
+			
 			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLVALUE>',value1),value1='' WHERE OperatorType LIKE '%<COLVALUE>%'
 			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLVALUE>',value1),value1='' WHERE OperatorType LIKE '%<COLVALUE>%'
-			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLNAME>',colKey),colKey='' WHERE OperatorType LIKE '%<COLNAME>%'
+			--UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLNAME>',colKey),colKey='' WHERE OperatorType LIKE '%<COLNAME>%'			
 			---------------------------------------------------------------------------------------------------------
 
 			--UPDATE FOR OperatorType2 FOR BETWEEN----------------------------------------
@@ -230,25 +230,31 @@
 				SET OperatorType2 = 'AND'
 			WHERE OperatorType IN ('Between','Not Between')						
 			-------------------------------------------------------------------------------
+			
+			--;WITH CTE 
+			--AS(
+			--SELECT *,
+			--	  ROW_NUMBER()OVER(PARTITION BY Element_ID ORDER BY ELEMENT_ID, Path DESC) AS ROWNUM
+			--FROM #TMP_CTE_ItemsFiltersData
+			--)
 
-			;WITH CTE 
-			AS(
-			SELECT *,
-				  ROW_NUMBER()OVER(PARTITION BY Element_ID ORDER BY ELEMENT_ID, Path DESC) AS ROWNUM
-			FROM #TMP_CTE_ItemsFiltersData
-			)
-
-			DELETE FROM CTE WHERE ROWNUM > 1
+			--DELETE FROM CTE WHERE ROWNUM > 1
 
 			UPDATE TMP
-				SET Path = CTE.Path,
-				    Parents = CTE.Parents
+				SET Parents = CTE.Parents
+					--Path = CTE.Path
 			FROM #TMP_ItemsWithMatchCondition TMP
 				 INNER JOIN #TMP_CTE_ItemsFiltersData CTE ON CTE.StringValue = TMP.colKey AND CTE.Parent_ID = TMP.Parent_ID
 			WHERE CTE.ColumnName='colKey'		
 
+			--MAKING colKey EMPTY IN CASE COLUMN IS USED WITHIN OPERATOR EX. ISNULL(COLUMN,1)
+			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLNAME>',colKey),colKey='' WHERE OperatorType LIKE '%<COLNAME>%'
+			UPDATE #TMP_ItemsWithMatchCondition SET OperatorType =REPLACE(OperatorType,'<COLNAME>',colKey),colKey='' WHERE OperatorType LIKE '%<COLNAME>%'
+
 			SELECT * FROM #TMP_FiltersWithMatchCondition
+			--IF ItemID(THIS IS THE IMMEDIATE PARENTID OF THE ELEMENT) IS ALSO PART OF "PARENTS" THEN THOSE ELEMENTS ARE PART OF THE SAME HIERARCHY
 			SELECT * FROM #TMP_ItemsWithMatchCondition
+			--RETURN
 			--SELECT * FROM #TMP_CTE_ItemsFiltersData WHERE ColumnName='colKey' AND StringValue='controlfrequency' AND Parent_ID=179 ORDER BY Element_ID
 		  
 
@@ -258,7 +264,8 @@
 			DROP TABLE IF EXISTS #TMP_FilterItems
 			DROP TABLE IF EXISTS #TMP_JoinStmt
 
-			SELECT ItemID, MatchCondition, CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) AS ColName
+			SELECT ItemID, MatchCondition, CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) AS ColName, 
+				   Parents
 				INTO #TMP_FilterItems
 			FROM #TMP_ItemsWithMatchCondition
 
@@ -269,7 +276,8 @@
 			FROM #TMP_FilterItems 
 			WHERE ItemID = TMP.ItemID			
 			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
-			,1,1,'') AS JoinString
+			,1,1,'') AS JoinString,
+			MAX(Parents) AS Parents
 			--(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'ID') AS ContactID,
 			--(SELECT MAX(StringValue) FROM #TMP WHERE ParentID = TMP.ParentID AND ColumnName = 'Role') AS RoleTypeID
 			INTO #TMP_JoinStmt	
@@ -278,6 +286,18 @@
 
 		--REPLACING THE 1ST AND/OR WITH EMPTY STRING
 		UPDATE #TMP_JoinStmt SET JoinString = CONCAT('(',STUFF(JoinString,1,3,''),')')
+
+		ALTER TABLE #TMP_JoinStmt ADD JoinCondition VARCHAR(50),GroupID INT
+
+		--IF ItemID(THIS IS THE IMMEDIATE PARENTID OF THE ELEMENT) IS ALSO PART OF "PARENTS" THEN THOSE ELEMENTS ARE PART OF THE SAME HIERARCHY
+		UPDATE TMP
+			SET GroupID = ISNULL(TAB.ItemID,TMP.ItemID)
+		FROM #TMP_JoinStmt TMP
+			 OUTER APPLY (	
+							SELECT ItemID 
+							FROM #TMP_JoinStmt
+							WHERE TMP.Parents LIKE CONCAT('%',ItemID,'%')								   
+						 )TAB
 
 		SELECT * FROM #TMP_JoinStmt
 			/*ALTERNATE FOR THE ABOVE WOULD BE A RECURSIVE CTE AS BELOW': WE STILL NEED TO APPLY ONE MORE LAST JOIN/FILTER FOR ColumnName = 'columnId' TO REACH THE ABOVE RESULT
