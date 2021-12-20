@@ -361,6 +361,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				UserModified = 1,
 				DateModified = GETUTCDATE(),
 				FullSchemaJSON=@FullSchemaJSON,
+				FrameworkFile= @InputJSON,
 				Frameworkstatus='Active'
 		WHERE FrameworkID = @FrameworkID --AND Name = @Name
  --==================================================================================================================================

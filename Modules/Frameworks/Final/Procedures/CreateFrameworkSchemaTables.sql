@@ -168,11 +168,11 @@ BEGIN
 		EXEC sp_executesql @SQL 
 
 		--UPDATE VERSION NUMBER		
-		SET @SQL = CONCAT('UPDATE dbo.[',@NewTableName,']',CHAR(10))		
-		SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, CHAR(10))
-		PRINT @SQL
-		EXEC sp_executesql @SQL
+		--SET @SQL = CONCAT('UPDATE dbo.[',@NewTableName,']',CHAR(10))		
+		--SET @SQL = CONCAT(@SQL, 'SET VersionNum = ',@VersionNum, CHAR(10))
+		--SET @SQL = CONCAT(@SQL, 'WHERE FrameworkID = ',@FrameworkID, CHAR(10))
+		--PRINT @SQL
+		--EXEC sp_executesql @SQL
 		---------------------------------------------------------------------------------------------------------------------------
 	
 		SELECT @SQL = '', @cols = ''
