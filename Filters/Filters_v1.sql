@@ -69,7 +69,7 @@
 			--SELECT @matchCondition
 
 			UPDATE #TMP_FiltersWithMatchCondition SET MatchCondition = @matchCondition
-
+					 
 			--DELETE FROM #TMP_FiltersWithMatchCondition WHERE (colKey IS NULL OR colKey IN ('any','all'))
 
 			SELECT * FROM #TMP_FiltersWithMatchCondition
@@ -214,10 +214,10 @@
 			WHERE EXISTS(SELECT 1 FROM #TMP_ItemsWithMatchCondition WHERE Parent_ID = TMP.Parent_ID)
 
 			--NEED SINGLE QUOTES FOR DATE OPERATIONS-------------------------------
-			UPDATE #TMP_FiltersWithMatchCondition 
-				SET value1 = CONCAT(CHAR(39),value1,CHAR(39)),
-					value2 = CASE WHEN ISNULL(value2,'')<>'' THEN CONCAT(CHAR(39),value2,CHAR(39)) ELSE value2 END
-			WHERE OperatorType IN ('Between','Not Between','<','<=','>','>=')			
+			--UPDATE #TMP_FiltersWithMatchCondition 
+			--	SET value1 = CONCAT(CHAR(39),value1,CHAR(39)),
+			--		value2 = CASE WHEN ISNULL(value2,'')<>'' THEN CONCAT(CHAR(39),value2,CHAR(39)) ELSE value2 END
+			--WHERE OperatorType IN ('Between','Not Between','<','<=','>','>=')			
 			------------------------------------------------------------------------
 			
 			--REPLACE <COLVALUE>,<COLNAME> WITH ACTUAL VALUE--------------------------------------------------------
@@ -272,16 +272,21 @@
 			--SELECT CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) 
 			--FROM #TMP_FiltersWithMatchCondition
 		
-			--SINGLE QUOTES FOR DATES--------------------------------------------------------------------------------------
-			UPDATE #TMP_FiltersWithMatchCondition
-				SET value1 = CONCAT(CHAR(39),value1,CHAR(39)),
-					value2 = CASE WHEN ISNULL(value2,'') <> ''  THEN CONCAT(CHAR(39),value2,CHAR(39)) ELSE value2 END
-			WHERE colKey LIKE '%Date%' --IN (('Between','Not Between','>','>=',,'<','<=')
+			--SINGLE QUOTES FOR STRING--------------------------------------------------------------------------------------
+			UPDATE #TMP_FiltersWithMatchCondition SET value1 = CONCAT(CHAR(39),value1, CHAR(39)) WHERE value1 LIKE '%[^0-9]%'
+			UPDATE #TMP_FiltersWithMatchCondition SET value2 = CONCAT(CHAR(39),value2, CHAR(39)) WHERE value2 LIKE '%[^0-9]%'
+
+			UPDATE #TMP_ItemsWithMatchCondition SET value1 = CONCAT(CHAR(39),value1, CHAR(39)) WHERE value1 LIKE '%[^0-9]%'
+			UPDATE #TMP_ItemsWithMatchCondition SET value2 = CONCAT(CHAR(39),value2, CHAR(39)) WHERE value2 LIKE '%[^0-9]%'
+			--UPDATE #TMP_FiltersWithMatchCondition
+			--	SET value1 = CONCAT(CHAR(39),value1,CHAR(39)),
+			--		value2 = CASE WHEN ISNULL(value2,'') <> ''  THEN CONCAT(CHAR(39),value2,CHAR(39)) ELSE value2 END
+			--WHERE colKey LIKE '%Date%' --IN (('Between','Not Between','>','>=',,'<','<=')
 			
-			UPDATE #TMP_ItemsWithMatchCondition
-				SET value1 = CONCAT(CHAR(39),value1,CHAR(39)),
-					value2 = CASE WHEN ISNULL(value2,'') <> ''  THEN CONCAT(CHAR(39),value2,CHAR(39)) ELSE value2 END
-			WHERE colKey LIKE '%Date%' --IN (('Between','Not Between','>','>=',,'<','<=')			
+			--UPDATE #TMP_ItemsWithMatchCondition
+			--	SET value1 = CONCAT(CHAR(39),value1,CHAR(39)),
+			--		value2 = CASE WHEN ISNULL(value2,'') <> ''  THEN CONCAT(CHAR(39),value2,CHAR(39)) ELSE value2 END
+			--WHERE colKey LIKE '%Date%' --IN (('Between','Not Between','>','>=',,'<','<=')			
 			-----------------------------------------------------------------------------------------------------------------
 
 			DROP TABLE IF EXISTS #TMP_FilterItems
