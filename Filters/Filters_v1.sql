@@ -12,11 +12,31 @@
 	DROP TABLE IF EXISTS #TMP_FiltersData
 	DROP TABLE IF EXISTS #TMP_FiltersWithMatchCondition
 
+	DECLARE @FrameworkID INT, @ParentEntityId INT, @ParentEntityTypeId INT, @TblName VARCHAR(MAX)
+
 	SELECT *
 			INTO #TMP_ALLSTEPS
 	 FROM dbo.HierarchyFromJSON(@inputJSON) 
 
-	 --SELECT * FROM #TMP_ALLSTEPS
+	-- SELECT * FROM #TMP_ALLSTEPS
+
+	 SELECT @ParentEntityId = StringValue FROM #TMP_ALLSTEPS  WHERE NAME = 'ParentEntityId'
+	 SELECT @ParentEntityTypeId = StringValue FROM #TMP_ALLSTEPS  WHERE NAME = 'ParentEntityTypeId'
+	 
+	 IF @ParentEntityTypeId = 3 --REGISTER
+		SELECT FrameWorkID FROM dbo.Registers WHERE registerid = @ParentEntityId
+	ELSE IF @ParentEntityTypeId = 1 --FRAMEWORK
+		SET @FrameworkID = @ParentEntityId
+
+	SELECT @TblName = Name FROM dbo.Frameworks WHERE FrameworkID = @FrameworkID
+
+	IF @TblName IS NOT NULL
+		SET @TblName = CONCAT(@TblName,'_data')
+	ELSE
+		Raiserror('Table Not Found!',16,1);
+
+	--SELECT @TblName
+	 --RETURN
 
 	 ;WITH CTE_FiltersData
 			AS
@@ -45,7 +65,7 @@
 				INTO #TMP_FiltersData
 			FROM CTE_FiltersData --WHERE ValueType ='boolean' AND  StringValue = 'true'
 
-			SELECT * FROM #TMP_FiltersData ORDER BY ELEMENT_ID--WHERE ColumnName IN ('colKey','conditionId','value1','value2') ORDER BY Element_ID
+			--SELECT * FROM #TMP_FiltersData ORDER BY ELEMENT_ID--WHERE ColumnName IN ('colKey','conditionId','value1','value2') ORDER BY Element_ID
 
 			SELECT Parent_ID,
 				   MAX(CASE WHEN ColumnName = 'colKey' THEN StringValue END) AS colKey,
@@ -72,7 +92,7 @@
 					 
 			--DELETE FROM #TMP_FiltersWithMatchCondition WHERE (colKey IS NULL OR colKey IN ('any','all'))
 
-			SELECT * FROM #TMP_FiltersWithMatchCondition
+			--SELECT * FROM #TMP_FiltersWithMatchCondition
 
 			--SELECT Parent_ID							
 			--FROM #TMP_FiltersData TMP
@@ -173,7 +193,7 @@
 
 			--UPDATE #TMP_ItemsWithMatchCondition SET ParentMatchCondition = @matchCondition
 
-			SELECT * FROM #TMP_ItemsWithMatchCondition
+			--SELECT * FROM #TMP_ItemsWithMatchCondition
 			--RETURN
 			--SELECT * FROM #TMP_FiltersData WHERE Element_ID IN (112,113)
 			--SELECT * FROM #TMP_FiltersData WHERE Element_ID IN (88)
@@ -262,9 +282,9 @@
 			WHERE OperatorType IN ('Between','Not Between')						
 			-------------------------------------------------------------------------------
 
-			SELECT * FROM #TMP_FiltersWithMatchCondition
+			--SELECT * FROM #TMP_FiltersWithMatchCondition
 			--IF ItemID(THIS IS THE IMMEDIATE PARENTID OF THE ELEMENT) IS ALSO PART OF "PARENTS" THEN THOSE ELEMENTS ARE PART OF THE SAME HIERARCHY
-			SELECT * FROM #TMP_ItemsWithMatchCondition
+			--SELECT * FROM #TMP_ItemsWithMatchCondition
 			--RETURN
 			--SELECT * FROM #TMP_CTE_ItemsFiltersData WHERE ColumnName='colKey' AND StringValue='controlfrequency' AND Parent_ID=179 ORDER BY Element_ID
 		  
@@ -332,7 +352,7 @@
 							WHERE TMP.Parents LIKE CONCAT('%',ItemID,'%')								   
 						 )TAB
 
-		SELECT * FROM #TMP_JoinStmt
+		--SELECT * FROM #TMP_JoinStmt
 
 		DROP TABLE IF EXISTS #TMP_FinalItemsJoin
 
@@ -369,13 +389,21 @@
 		
 		ALTER TABLE #TMP ADD ID INT IDENTITY(1,1) PRIMARY KEY
 
-		SELECT * FROM #TMP
+		--SELECT * FROM #TMP
 
 		SET @matchCondition =  CONCAT(' ',@matchCondition,' ')
 		
-		SELECT STRING_AGG(JoinString,@matchCondition) AS QueryCondition
+		DECLARE @QueryCondition VARCHAR(MAX),@SQL VARCHAR(MAX)
+
+		SELECT @QueryCondition = STRING_AGG(JoinString,@matchCondition)
 		FROM #TMP
 		
+		--PRINT @QueryCondition
+
+		SET @SQL = CONCAT('SELECT * FROM ',@TblName,' WHERE ',CHAR(10),@QueryCondition)
+		PRINT @SQL
+
+		EXEC(@SQL)
 
 		--(
 
