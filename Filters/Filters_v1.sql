@@ -224,12 +224,14 @@
 				SET OperatorType = FCM.OperatorType					 		
 			FROM #TMP_ItemsWithMatchCondition TMP
 				 INNER JOIN dbo.Filterconditions_Master FCM ON FCM.FilterTypeID = TMP.conditionId
-			
+			WHERE FCM.Active = 1
+
 			UPDATE TMP
 				SET OperatorType = FCM.OperatorType					 		
 			FROM #TMP_FiltersWithMatchCondition TMP
 				 INNER JOIN dbo.Filterconditions_Master FCM ON FCM.FilterTypeID = TMP.conditionId
-			
+			WHERE FCM.Active = 1
+
 			DELETE TMP FROM #TMP_FiltersWithMatchCondition TMP
 			WHERE EXISTS(SELECT 1 FROM #TMP_ItemsWithMatchCondition WHERE Parent_ID = TMP.Parent_ID)
 
