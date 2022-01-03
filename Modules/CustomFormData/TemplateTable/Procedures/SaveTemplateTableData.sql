@@ -61,7 +61,7 @@ BEGIN TRY
 	 TableInstanceID'
 
 	 SELECT @TableName = CONCAT('[TemplateTable_', [Name],'_data]')		   
-	 FROM CustomFormsInstance WHERE ID = @Entityid
+	 FROM CustomFormsInstance WHERE CustomFormsInstanceID = @Entityid
 	
 	 IF @TableName IS NULL
 	 BEGIN
