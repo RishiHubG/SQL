@@ -1,5 +1,17 @@
 	USE AGSQA
 	GO
+	/*
+	matchCondition=-200=AND
+	matchCondition=-100=OR
+	columnId: -100= OR
+	columnId:-200=AND
+	columnId: -1 = Register -> Search REgister Name or All Register NAmes under the framework
+	columnId: -1 = Role : RoleType-> Search Name-> Get RoleTypeID & Search in ContactInst, put Framework ID filter if available
+	columnId: -1 = Universe -> Search Universe Name or All Universe NAmes under the framework
+	columnId: -1 = Universe Path -> Search Universe Path Name or All Universe Path NAmes under the framework
+	columnId: >=0 then it's the table column
+
+	*/
 	--DECLARE @inputJSON VARCHAR(MAX)=N'{"viewName":"Testing Filtesr","EntityTypeId":9,"EntityId":-1,"ParentEntityTypeId":1,"ParentEntityId":40,"viewId":-1,"viewType":1,"filtersData":{"matchCondition":-200,"filters":[{"columnId":"14","colDataType":"textfield","colKey":"contactname","conditionId":"3","items":[],"noOfValuesRequired":1,"value1":"Haz"},{"columnId":"-5","colDataType":"datetime","colKey":"DateCreated","conditionId":"55","value1":"","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"-6","colDataType":"datetime","colKey":"Datemodified","conditionId":"56","value1":"","value2":"","items":[],"noOfValuesRequired":2},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-1,"value1":"","value2":"","items":[{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"21","value1":"b","value2":"","items":[],"noOfValuesRequired":1}]},{"columnId":"12","colDataType":"select","colKey":"causalSubCategory","conditionId":"14","value1":"b","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"16","colDataType":"checkbox","colKey":"notify","conditionId":70,"value1":"True","value2":"","items":[]},{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"12","value1":"b","value2":"","items":[],"noOfValuesRequired":1}],"currentUser":false,"topRecords":"ALL","orderByColumn":"","sortBy":"desc"},"columns":[{"colName":"Component - Weighted Audit Error %","colId":"componentweightedauditerror","isSelected":1,"orderid":1},{"colName":"Component Name","colId":"name","isSelected":1,"orderid":2},{"colName":"Component Weight","colId":"componentweight","isSelected":1,"orderid":3},{"colName":"Overall Weight","colId":"overallweight","isSelected":1,"orderid":4},{"colName":"Test Error","colId":"testerror","isSelected":1,"orderid":5},{"colName":"Total Errors","colId":"totalerrors","isSelected":false,"orderid":6},{"colName":"Total Sample Size","colId":"totalsamplesize","isSelected":1,"orderid":7}]}'
 
 	DECLARE @inputJSON VARCHAR(MAX)=N'{"viewName":"Testing Filtesr","EntityTypeId":9,"EntityId":-1,"ParentEntityTypeId":1,"ParentEntityId":40,"viewId":-1,"viewType":1,"filtersData":{"matchCondition":-200,"filters":[{"columnId":"14","colDataType":"textfield","colKey":"contactname","conditionId":"3","items":[],"noOfValuesRequired":1,"value1":"Haz"},{"columnId":"-5","colDataType":"datetime","colKey":"DateCreated","conditionId":"55","value1":"","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"-6","colDataType":"datetime","colKey":"Datemodified","conditionId":"56","value1":"","value2":"","items":[],"noOfValuesRequired":2},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-1,"value1":"","value2":"","items":[{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"21","value1":"b","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation1","conditionId":"21","value1":"b1","value2":"","items":[],"noOfValuesRequired":1}]},{"columnId":"12","colDataType":"select","colKey":"causalSubCategory","conditionId":"14","value1":"b","value2":"","items":[],"noOfValuesRequired":1},{"columnId":"16","colDataType":"checkbox","colKey":"notify","conditionId":70,"value1":"True","value2":"","items":[]},{"columnId":"13","colDataType":"select","colKey":"levelOfAutomation","conditionId":"12","value1":"b","value2":"","items":[],"noOfValuesRequired":1}],"currentUser":false,"topRecords":"ALL","orderByColumn":"","sortBy":"desc"},"columns":[{"colName":"Component - Weighted Audit Error %","colId":"componentweightedauditerror","isSelected":1,"orderid":1},{"colName":"Component Name","colId":"name","isSelected":1,"orderid":2},{"colName":"Component Weight","colId":"componentweight","isSelected":1,"orderid":3},{"colName":"Overall Weight","colId":"overallweight","isSelected":1,"orderid":4},{"colName":"Test Error","colId":"testerror","isSelected":1,"orderid":5},{"colName":"Total Errors","colId":"totalerrors","isSelected":false,"orderid":6},{"colName":"Total Sample Size","colId":"totalsamplesize","isSelected":1,"orderid":7}]}'
@@ -357,7 +369,20 @@
 		--SELECT * FROM #TMP_JoinStmt
 
 		DROP TABLE IF EXISTS #TMP_FinalItemsJoin
+		DROP TABLE IF EXISTS #TMP_FinalFiltersWithMatchConditionJoin
 
+		--CONCATENATE NON-CHILD FILTERS
+		SELECT 	DISTINCT		
+			STUFF((
+			SELECT  CONCAT(' (',colKey,CHAR(10),OperatorType,CHAR(10),')')
+			FROM #TMP_FiltersWithMatchCondition 
+			WHERE TMP.Parent_ID = Parent_ID
+			FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+			,1,1,'') AS JoinString
+			INTO #TMP_FinalFiltersWithMatchConditionJoin
+		FROM #TMP_FiltersWithMatchCondition TMP	
+
+		--GET GROUPS WITH MORE THAN 1 RECORD, SO AS TO CLUB THEM TOGETHER
 		SELECT 
 			GroupID,
 			STUFF((
@@ -381,13 +406,16 @@
 		DROP TABLE IF EXISTS #TMP
 
 		--CLUB TOGETHER ALL FILTER CONDITIONS
-		SELECT 1 AS NUM,JoinString
+		SELECT 1 AS NUM, JoinString		
 			INTO #TMP
-		FROM #TMP_JoinStmt --#TMP_FiltersWithMatchCondition
+		FROM #TMP_FinalFiltersWithMatchConditionJoin
 		UNION
-		SELECT 2,JoinString FROM #TMP_FinalItemsJoin		 
+		SELECT 2 AS NUM,JoinString
+		FROM #TMP_JoinStmt TMP --#TMP_FiltersWithMatchCondition
+		WHERE NOT EXISTS(SELECT 1 FROM #TMP_FinalItemsJoin WHERE GroupID = TMP.GroupID)		
+		UNION
+		SELECT 3,JoinString FROM #TMP_FinalItemsJoin		 
 		ORDER BY NUM
-		--)TAB
 		
 		ALTER TABLE #TMP ADD ID INT IDENTITY(1,1) PRIMARY KEY
 
