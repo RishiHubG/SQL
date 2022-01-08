@@ -248,8 +248,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM ',@FrameWorkTblName), NULL, 1)
 					
 					SET @cols = STUFF(@cols, 1, 1, N'');
+										
+					DECLARE @TriggerTblName VARCHAR(500)= REPLACE(REPLACE(@FrameWorkTblName,']','') ,'[','')			
+					SET @TriggerTblName = CONCAT(@TriggerTblName,'_Insert')
 
-					SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME=',CHAR(39),@FrameWorkTblName,CHAR(39),') SET @IsAvailable = 1;' )
+					SET @SQL = CONCAT(N'IF EXISTS(SELECT 1 FROM SYS.triggers WHERE NAME=',CHAR(39),@TriggerTblName,CHAR(39),') SET @IsAvailable = 1;' )
 					PRINT @SQL
 					EXEC sp_executesql @SQL,N'@IsAvailable BIT OUTPUT',@IsAvailable OUTPUT
 										
@@ -260,8 +263,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					
 					SET @FrameWorkTblName = REPLACE(REPLACE(@FrameWorkTblName,']','') ,'[','')					 
 					 
-					SET @SQL = CONCAT(@SQL,N' [<TableName>_Insert]
-									   ON  [<TableName>]
+					SET @SQL = CONCAT(@SQL,N' @TriggerTblName
+									   ON  <TableName>
 									   AFTER INSERT, UPDATE
 									AS 
 									BEGIN
@@ -278,6 +281,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 									END;',CHAR(10))
 					SET @SQL = REPLACE(@SQL,'<columnList>',@cols)
 					SET @SQL = REPLACE(@SQL,'<TableName>',@FrameWorkTblName)
+					SET @SQL = REPLACE(@SQL,'<TriggerTblName>',@TriggerTblName)
 					SET @SQL = REPLACE(@SQL,'<HISTTABLENAME>',@FrameWorkHistTblName)
 					
 					PRINT @SQL	
