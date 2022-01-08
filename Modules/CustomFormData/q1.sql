@@ -465,11 +465,18 @@ SELECT * FROM TEMPLATETABLE_NDTemplate5_DATA
 SELECT * FROM [TemplateTable_NDTemplate5_data]
 
 --3.
-EXEC dbo.SaveFrameworkJSONData @InputJSON='{"general":{},"container":{"name":"Nitin","multiselect":{"a":true,"b":true,"c":true,"d":false}}}',
+EXEC dbo.SaveFrameworkJSONData @InputJSON='{"general":{},"container":{"name":"Nitin","multiselect":{"a":true,"b":true,"c":false,"d":false}}}',
 @UserLoginID=4949,@EntityID=-1,@EntityTypeID=9,@ParentEntityID=198,@ParentEntityTypeID=3,@Description='',@MethodName=NULL,@LogRequest=1
+
+SELECT * FROM MultiSelect_FrameworkStepItems
+
 
 New table FrameworkMultiselectStepItemValues:
 frameworkid entityid stepItemid value Iselected
+
+TRUNCATE TABLE FrameworkMultiselectStepItemValues
+
+SELECT * FROM DBO.FrameworkMultiselectStepItemValues
 
 SELECT * FROM multiselect_data 
 SP_TABLES '%multiselect%'
@@ -478,3 +485,14 @@ SELECT * FROM MultiSelect_FrameworkStepItems
 --4. REFERENCENUM
 SELECT * FROM SYS.objects WHERE NAME LIKE '%REFERENCE%'
 getreferenceNo <FRAMEWORKID>
+
+DROP TABLE IF EXISTS FrameworkMultiSelectStepItemValues
+CREATE TABLE dbo.FrameworkMultiSelectStepItemValues
+(
+ID INT IDENTITY(1,1),
+FrameworkID INT NOT NULL,
+Entityid INT NOT NULL, 
+StepItemID  INT NOT NULL,
+Name NVARCHAR(500) NOT NULL,
+IsSelected BIT NOT NULL
+)

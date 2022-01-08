@@ -83,7 +83,7 @@ BEGIN TRY
 		IF @OperationType = '1'
 			SET @OperationType = 'UPDATE'
 	-----------------------------------------------------------------------------	
-
+	
 
 	DROP TABLE IF EXISTS #TMP_ALLSTEPS 
 
@@ -103,7 +103,7 @@ BEGIN TRY
 			   T.StringValue,
 			   T.ValueType
 		 FROM #TMP_ALLSTEPS T			  
-		 WHERE Name ='audit'
+		 WHERE Name IN ('audit','dataGrid')
 
 		 UNION ALL
 
@@ -133,14 +133,16 @@ BEGIN TRY
 
 	 SET @StaticColValues = CONCAT(@UserID,',',CHAR(39),@UTCDATE,CHAR(39),',',@UserID,',',CHAR(39),@UTCDATE,CHAR(39),',',@VersionNum,',',@EntityID)
 	 PRINT @StaticColValues
-	 
+	
 	  IF @OperationType = 'INSERT'
 	  BEGIN
 			 SELECT CONCAT('INSERT INTO dbo.<TABLENAME>(',@StaticCols,',',A1.ColumnName,') VALUES (',@StaticColValues,',',A2.StringValue,')') AS InsertString
 				INTO #TMP_InsertString
 			 FROM #TMP_AllCols A1
 				  INNER JOIN #TMP_AllColValues A2 ON A1.Parent_ID = A2.Parent_ID
-
+				  SELECT * FROM #TMP_InsertString
+				  SELECT * FROM #TMP_AllCols
+				  SELECT * FROM #TMP_AllColValues
 			SET @SQL = (SELECT STRING_AGG(InsertString,CONCAT(';',CHAR(10))) FROM #TMP_InsertString);
 			SET @SQL = REPLACE(@SQL,'<TABLENAME>',@TableName)
 			PRINT @SQL
