@@ -459,6 +459,7 @@ EXEC dbo.ParseTemplateTableJSONData @Name='NDTemplate5',@Entityid=1123,@TableID=
 EXEC dbo.SaveTemplateTableData @Entityid=1123,@InputJSON='{"container":{"dataGrid":[{"status":"accept","sno":1},{"status":"reject","sno":2}]},"submit":false}',
 @UserLoginID=4949,@MethodName=NULL,@LogRequest=1
 
+SELECT TOP 10 * FROM OBJECTLOG order by id desc
 SELECT TOP 10 * FROM OBJECTLOG WHERE ID IN (28810) order by id desc
 
 SELECT * FROM TEMPLATETABLE_NDTemplate5_DATA

@@ -150,3 +150,16 @@ CREATE TABLE dbo.FrameworkAttributesMapping
 	)
 	ALTER TABLE [dbo].FrameworkAttributesMapping ADD CONSTRAINT DF_FrameworkAttributesMapping_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
 GO
+
+
+DROP TABLE IF EXISTS FrameworkMultiSelectStepItemValues
+CREATE TABLE dbo.FrameworkMultiSelectStepItemValues
+(
+ID INT IDENTITY(1,1),
+FrameworkID INT NOT NULL,
+Entityid INT NOT NULL, 
+EntityTypeID INT,
+StepItemID  INT NOT NULL,
+Name NVARCHAR(500) NOT NULL,
+IsSelected BIT NOT NULL
+)
