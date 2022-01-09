@@ -38,7 +38,7 @@ BEGIN TRY
 								 @MethodName = @MethodName,
 								 @UserID = @UserID	OUTPUT							     
 
-	IF @UserID IS NOT NULL
+	IF @UserID IS NOT  NULL
 	BEGIN
 
 	 
@@ -263,7 +263,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					
 					SET @FrameWorkTblName = REPLACE(REPLACE(@FrameWorkTblName,']','') ,'[','')					 
 					 
-					SET @SQL = CONCAT(@SQL,N' @TriggerTblName
+					SET @SQL = CONCAT(@SQL,N' <TriggerTblName>
 									   ON  <TableName>
 									   AFTER INSERT, UPDATE
 									AS 
