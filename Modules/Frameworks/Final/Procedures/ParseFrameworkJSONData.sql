@@ -41,7 +41,7 @@ BEGIN TRY
 	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
 								 @MethodName = @MethodName,
 								 @UserID = @UserID	OUTPUT							     
-
+	SET @UserID=100
 	IF @UserID IS NOT NULL
 	BEGIN
 
@@ -955,6 +955,38 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			  AND VersionNum = @VersionNum
 		------------------------------------------------------------------------------------------------------------------------
 
+		--CODE TO UPDATE Steps & StepItems TABLE: RETAIN THE SAME STEPID,STEPITEMSID PK BUT ONLY INCREMENT THE VERSION NO. IN CASE OF AN UPDATE
+		--CURRENT LOGIC INSERTS A NEW RECORD FOR STEPS & STEPITEMS DURING EACH UPDATE AND WITH AN INCREMENTAL VERSION NO.
+		--WE WILL LET THIS CONTINUE JUST THAT TOWARDS THE END OF THE LOGIC WE WILL REMOVE THE EXTRA STEPS/STEPITEMS THAT WERE ADDED, AS BELOW
+		--NOTE: FRAMEWORK TABLES (FrameworkSteps/FrameworkStepItems) WILL ALWAYS HOLD THE LATEST RECORDS THAT WE ARE PROCESSING, SO WE WILL USE THOSE TABLES TO DO THE FOLLOWING ACTIVITY
+		----------------------------------------------------------------------------------------------------------------------------------
+		  --REMOVE THE EXTRA STEPS
+		  SET @SQL = CONCAT(@SQL, N' DELETE TBL FROM dbo.[', @Name , '_FrameworkSteps] TBL', CHAR(10))
+		  SET @SQL = CONCAT(@SQL, N' WHERE NOT EXISTS (SELECT 1 FROM dbo.FrameworkSteps WHERE FrameWorkID=TBL.FrameWorkID AND StepID=TBL.StepID)', CHAR(10))
+		  PRINT @SQL		
+	      EXEC sp_executesql @SQL 
+
+		  ----REMOVE THE EXTRA STEPITEMS
+		  SET @SQL = CONCAT(@SQL, N' DELETE TBL FROM dbo.[', @Name , '_FrameworkStepItems] TBL', CHAR(10))
+		  SET @SQL = CONCAT(@SQL, N' WHERE NOT EXISTS (SELECT 1 FROM dbo.FrameworkStepItems WHERE FrameWorkID=TBL.FrameWorkID AND StepID=TBL.StepID AND StepItemID=TBL.StepItemID)', CHAR(10))
+		  PRINT @SQL		
+	      EXEC sp_executesql @SQL 
+		  
+		  --UPDATE THE STEP FIELDS
+		  SET @SQL = CONCAT(@SQL, N' UPDATE TBL SET DateModified = FRM.DateModified, VersionNum = FRM.VersionNum', CHAR(10))
+		  SET @SQL = CONCAT(@SQL, N' FROM dbo.[', @Name , '_FrameworkSteps] TBL', CHAR(10))
+		  SET @SQL = CONCAT(@SQL, N' INNER JOIN dbo.FrameworkSteps FRM ON FRM.FrameWorkID=TBL.FrameWorkID AND FRM.StepID=TBL.StepID', CHAR(10))
+		  PRINT @SQL		
+	      EXEC sp_executesql @SQL	 
+
+		  --UPDATE THE STEPITEMS FIELDS
+		  SET @SQL = CONCAT(@SQL, N' UPDATE TBL SET DateModified = FRM.DateModified, VersionNum = FRM.VersionNum', CHAR(10))
+		  SET @SQL = CONCAT(@SQL, N' , StepItemName = FRM.StepItemName, StepItemType = FRM.StepItemType, StepItemKey = FRM.StepItemKey', CHAR(10))
+		  SET @SQL = CONCAT(@SQL, N' FROM dbo.[', @Name , '_FrameworkStepItems] TBL', CHAR(10))
+		  SET @SQL = CONCAT(@SQL, N' INNER JOIN dbo.FrameworkStepItems FRM ON FRM.FrameWorkID=TBL.FrameWorkID AND FRM.StepID=TBL.StepID AND FRM.StepItemID=TBL.StepItemID', CHAR(10))
+		  PRINT @SQL		
+	      EXEC sp_executesql @SQL	 
+		----------------------------------------------------------------------------------------------------------------------------------
 
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
