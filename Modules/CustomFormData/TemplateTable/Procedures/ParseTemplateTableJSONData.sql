@@ -112,7 +112,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 UserModified INT,
 	 DateModified DATETIME2(0),
 	 VersionNum INT NOT NULL,	 
-	 TableInstanceID INT'
+	 TableInstanceID INT,
+	 ApiKey NVARCHAR(500) NULL'
 	 
 	 DROP TABLE IF EXISTS #TMP_DATA
 

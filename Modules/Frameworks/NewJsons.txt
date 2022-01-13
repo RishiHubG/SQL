@@ -1,0 +1,19 @@
+exec SaveFrameworkJSONData @EntityId=-1,@EntitytypeId=9,@ParentEntityID=200,@ParentEntityTypeID=3,
+@SpecialInputJSON=N'{"templates":[{"apiKey":"table1","data":{"container":{"dataGrid":[{"fieldDescription":"abc","comments":"<p>abcdefg</p>","sno":1},{"fieldDescription":"adfafda","comments":"<p>adfdasfafdafa</p>","sno":2}],"TemplateKey":"NDT_1"},"submit":false},"dataType":"TableTemplate"},{"apiKey":"table2","data":{"container":{"dataGrid":[{"controlDescription":"adfafda","compliance":"yes","comments":"adfafda","sno":1},{"controlDescription":"adfafa","compliance":"no","comments":"adfa","sno":2}],"TemplateKey":"NDT_2"},"submit":false},"dataType":"TableTemplate"}]}',
+@InputJSON=N'{"general":{},"container":{"name":"Name","reference":"REferemce","table1":{"container":{"dataGrid":[{"fieldDescription":"abc","comments":"<p>abcdefg</p>","sno":1},{"fieldDescription":"adfafda","comments":"<p>adfdasfafdafa</p>","sno":2}],"TemplateKey":"NDT_1"},"submit":false},"table2":{"container":{"dataGrid":[{"controlDescription":"adfafda","compliance":"yes","comments":"adfafda","sno":1},{"controlDescription":"adfafa","compliance":"no","comments":"adfa","sno":2}],"TemplateKey":"NDT_2"},"submit":false}}}',
+@MethodName=NULL,@UserLoginID=4996
+
+
+
+exec SaveFrameworkJSONData @EntityId=-1,@EntitytypeId=9,@ParentEntityID=200,@ParentEntityTypeID=3,
+@SpecialInputJSON=N'{"templates":[{"apiKey":"table1","data":{"container":{"dataGrid":[{"fieldDescription":"1111","comments":"<p>1111</p>","sno":1}],"TemplateKey":"NDT_1"},"submit":false},"dataType":"TableTemplate"},{"apiKey":"table2","data":{"container":{"dataGrid":[{"controlDescription":"111","compliance":"yes","comments":"1111","sno":1}],"TemplateKey":"NDT_2"},"submit":false},"dataType":"TableTemplate"}]}',
+@InputJSON=N'{"general":{},"container":{"name":"abc","reference":"aaa","table1":{"container":{"dataGrid":[{"fieldDescription":"1111","comments":"<p>1111</p>","sno":1}],"TemplateKey":"NDT_1"},"submit":false},"table2":{"container":{"dataGrid":[{"controlDescription":"111","compliance":"yes","comments":"1111","sno":1}],"TemplateKey":"NDT_2"},"submit":false}}}',
+@MethodName=NULL,
+@UserLoginID=4996
+
+
+
+exec SaveFrameworkJSONData @EntityId=1,@EntitytypeId=9,@ParentEntityID=198,@ParentEntityTypeID=3,
+@SpecialInputJSON=N'{"templates":[{"apiKey":"tt","data":{"TT123":"","container":{"dataGrid":[{"fieldDescription":"a","comments":"<p>aaa</p>","sno":1},{"fieldDescription":"222","comments":"<p>2222</p>","sno":2}],"TemplateKey":"NDT_1"},"submit":false},"dataType":"TableTemplate"}]}',
+@InputJSON=N'{"general":{},"container":{"tt":{"TT123":"","container":{"dataGrid":[{"fieldDescription":"a","comments":"<p>aaa</p>","sno":1},{"fieldDescription":"222","comments":"<p>2222</p>","sno":2}],"TemplateKey":"NDT_1"},"submit":false},"name":"nitinu","multiselect":{"a":false,"b":true,"c":true,"d":false}},"container2":{}}',
+@MethodName=NULL,@UserLoginID=4996

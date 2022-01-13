@@ -19,9 +19,32 @@ In User Role","labelPosition":"top","placeholder":"","description":"","tooltip":
 in User Group","labelPosition":"top","placeholder":"","description":"","tooltip":"","prefix":"","suffix":"","widget":{"type":"input"},"inputMask":"","allowMultipleMasks":false,"customClass":"","tabindex":"","autocomplete":"","hidden":false,"hideLabel":false,"showWordCount":false,"showCharCount":false,"mask":false,"autofocus":false,"spellcheck":true,"disabled":false,"tableView":true,"modalEdit":false,"multiple":false,"persistent":true,"inputFormat":"plain","protected":false,"dbIndex":false,"case":"","encrypted":false,"redrawOn":"","clearOnHide":true,"customDefaultValue":"","calculateValue":"","calculateServer":false,"allowCalculateOverride":false,"validateOn":"change","validate":{"required":false,"pattern":"","customMessage":"","custom":"","customPrivate":false,"json":"","minLength":"","maxLength":"","strictDateValidation":false,"multiple":false,"unique":false},"unique":false,"errorLabel":"","key":"loggedinusergroup","tags":[],"properties":{},"conditional":{"show":null,"when":null,"eq":"","json":""},"customConditional":"","logic":[],"attributes":{},"overlay":{"style":"","page":"","left":"","top":"","width":"","height":""},"type":"textfield","input":true,"refreshOn":"","inputType":"text","id":"epm364","defaultValue":"","hideOnChildrenHidden":false}],"width":6,"offset":0,"push":0,"pull":0,"size":"md"}],"autoAdjust":false,"hideOnChildrenHidden":false,"customClass":"","hidden":false,"hideLabel":false,"modalEdit":false,"key":"columns","tags":[],"properties":{},"conditional":{"show":null,"when":null,"eq":"","json":""},"customConditional":"","logic":[],"attributes":{},"overlay":{"style":"","page":"","left":"","top":"","width":"","height":""},"type":"columns","input":false,"placeholder":"","prefix":"","suffix":"","multiple":false,"defaultValue":null,"protected":false,"unique":false,"persistent":false,"clearOnHide":false,"refreshOn":"","redrawOn":"","tableView":false,"labelPosition":"top","description":"","errorLabel":"","tooltip":"","tabindex":"","disabled":false,"autofocus":false,"dbIndex":false,"customDefaultValue":"","calculateValue":"","calculateServer":false,"widget":null,"validateOn":"change","validate":{"required":false,"custom":"","customPrivate":false,"strictDateValidation":false,"multiple":false,"unique":false},"allowCalculateOverride":false,"encrypted":false,"showCharCount":false,"showWordCount":false,"allowMultipleMasks":false,"tree":false,"id":"elbn4s"}],"id":"eqe9tyk"}],"placeholder":"","prefix":"","suffix":"","multiple":false,"defaultValue":null,"protected":false,"unique":false,"persistent":false,"clearOnHide":false,"refreshOn":"","redrawOn":"","labelPosition":"top","description":"","errorLabel":"","autofocus":false,"dbIndex":false,"customDefaultValue":"","calculateValue":"","calculateServer":false,"widget":null,"validateOn":"change","validate":{"required":false,"custom":"","customPrivate":false,"strictDateValidation":false,"multiple":false,"unique":false},"allowCalculateOverride":false,"encrypted":false,"showCharCount":false,"showWordCount":false,"allowMultipleMasks":false,"tree":false,"id":"ebv2z2q"}],"display":"wizard"}',@UserLoginID=3321
 
 
+ 
+ exec SaveFrameworkJSONData @EntityId=-1,@EntitytypeId=9,@ParentEntityID=200,@ParentEntityTypeID=3,
+@SpecialInputJSON=N'{"templates":[{"apiKey":"table1","data":{"container":{"dataGrid":[{"fieldDescription":"abc","comments":"<p>abcdefg</p>","sno":1},{"fieldDescription":"adfafda","comments":"<p>adfdasfafdafa</p>","sno":2}],"TemplateKey":"NDT_1"},"submit":false},"dataType":"TableTemplate"},{"apiKey":"table2","data":{"container":{"dataGrid":[{"controlDescription":"adfafda","compliance":"yes","comments":"adfafda","sno":1},{"controlDescription":"adfafa","compliance":"no","comments":"adfa","sno":2}],"TemplateKey":"NDT_2"},"submit":false},"dataType":"TableTemplate"}]}',
+@InputJSON=N'{"general":{},"container":{"name":"Name","reference":"REferemce","table1":{"container":{"dataGrid":[{"fieldDescription":"abc","comments":"<p>abcdefg</p>","sno":1},{"fieldDescription":"adfafda","comments":"<p>adfdasfafdafa</p>","sno":2}],"TemplateKey":"NDT_1"},"submit":false},"table2":{"container":{"dataGrid":[{"controlDescription":"adfafda","compliance":"yes","comments":"adfafda","sno":1},{"controlDescription":"adfafa","compliance":"no","comments":"adfa","sno":2}],"TemplateKey":"NDT_2"},"submit":false}}}',
+@MethodName=NULL,@UserLoginID=4996
 
 
+SET XACT_ABORT ON;
+--ROLLBACK
+BEGIN TRAN
+exec SaveSpecialInputJSON 
+@SpecialInputJSON=N'{"templates":[{"apiKey":"table1","data":{"container":{"dataGrid":[{"fieldDescription":"abc","comments":"<p>abcdefg</p>","sno":1},{"fieldDescription":"adfafda","comments":"<p>adfdasfafdafa</p>","sno":2}],"TemplateKey":"NDT_1"},"submit":false},"dataType":"TableTemplate"},{"apiKey":"table2","data":{"container":{"dataGrid":[{"controlDescription":"adfafda","compliance":"yes","comments":"adfafda","sno":1},{"controlDescription":"adfafa","compliance":"no","comments":"adfa","sno":2}],"TemplateKey":"NDT_2"},"submit":false},"dataType":"TableTemplate"}]}',
+@MethodName=NULL,@UserLoginID=4996
+rollback
 
-exec SaveFrameworkJSONData @EntityId=1,@EntitytypeId=9,@ParentEntityID=198,@ParentEntityTypeID=3,
-@SpecialInputJSON=N'{"templates":[{"apiKey":"container1","data":{"textField":"","container":{"dataGrid":[{"fieldDescription":"desc1","comments":"<p>para1</p>","sno":1},{"fieldDescription":"desc2","comments":"<p>para2</p>","sno":2}]},"submit":false},"dataType":"TableTemplate"}]}',@InputJSON=N'{"general":{},"container":{"container1":{"textField":"","container":{"dataGrid":[{"fieldDescription":"desc1","comments":"<p>para1</p>","sno":1},{"fieldDescription":"desc2","comments":"<p>para2</p>","sno":2}]},"submit":false},"name":"nitinu","multiselect":{" a, b, c, ":true,"a":false,"b":false,"c":false,"d":false}}}',
-@MethodName=NULL,@UserLoginID=4961
+ALTER TABLE [TemplateTable_NDT_2_data] ADD ApiKey NVARCHAR(MAX)
+
+INSERT INTO dbo.[TemplateTable_NDT_2_data](UserCreated, 
+	 DateCreated, 
+	 UserModified,
+	 DateModified,
+	 VersionNum,	 
+	 TableInstanceID,controlDescription,compliance,comments,sno,apiKey) VALUES (100,'2022-01-13 12:21:07.737',100,'2022-01-13 12:21:07.737',2,NULL,'adfafda','yes','adfafda','1','table2');
+INSERT INTO dbo.[TemplateTable_NDT_2_data](UserCreated, 
+	 DateCreated, 
+	 UserModified,
+	 DateModified,
+	 VersionNum,	 
+	 TableInstanceID,controlDescription,compliance,comments,sno,apiKey) VALUES (100,'2022-01-13 12:21:07.737',100,'2022-01-13 12:21:07.737',2,NULL,'adfafa','no','adfa','2','table2')

@@ -140,9 +140,9 @@ BEGIN TRY
 				INTO #TMP_InsertString
 			 FROM #TMP_AllCols A1
 				  INNER JOIN #TMP_AllColValues A2 ON A1.Parent_ID = A2.Parent_ID
-				  SELECT * FROM #TMP_InsertString
-				  SELECT * FROM #TMP_AllCols
-				  SELECT * FROM #TMP_AllColValues
+				  --SELECT * FROM #TMP_InsertString
+				  --SELECT * FROM #TMP_AllCols
+				  --SELECT * FROM #TMP_AllColValues
 			SET @SQL = (SELECT STRING_AGG(InsertString,CONCAT(';',CHAR(10))) FROM #TMP_InsertString);
 			SET @SQL = REPLACE(@SQL,'<TABLENAME>',@TableName)
 			PRINT @SQL
