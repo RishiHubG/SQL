@@ -1,14 +1,16 @@
 	USE AGSQA
 	GO
 	/*
+	--ParentEntityTypeID:1=framework;ParentEntityId=frameworkid
+	--ParentEntityTypeID:3=register;ParentEntityId=frameworkid
 	matchCondition=-200=AND
 	matchCondition=-100=OR
 	columnId: -100= OR
 	columnId:-200=AND
-	columnId: -1 = Register -> Search REgister Name or All Register NAmes under the framework
-	columnId: -1 = Role : RoleType-> Search Name-> Get RoleTypeID & Search in ContactInst, put Framework ID filter if available
-	columnId: -1 = Universe -> Search Universe Name or All Universe NAmes under the framework
-	columnId: -1 = Universe Path -> Search Universe Path Name or All Universe Path NAmes under the framework
+	columnId: -1 = Register -> Search Register Name or All Register NAmes under the framework: Search in Registers TABLOE & GET THE REGISTERID RegisterID; NAME COLUMN IN _DATA
+	columnId: -3 = Role : RoleType-> Search Name-> Get RoleTypeID & Search in ContactInst, put Framework ID filter if available
+	columnId: -2 = Universe -> Search Universe Name or All Universe NAmes under the framework
+	columnId: -4 = Universe Path -> Search Universe Path Name or All Universe Path NAmes under the framework
 	columnId: >=0 then it's the table column
 
 	*/
