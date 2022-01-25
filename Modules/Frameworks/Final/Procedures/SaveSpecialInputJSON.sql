@@ -1,5 +1,3 @@
-USE AGSQA
-GO
 
 SET ANSI_NULLS ON
 GO
@@ -65,7 +63,10 @@ BEGIN TRY
 	 SELECT *
 			INTO #TMP_ALLSTEPS
 	 FROM dbo.HierarchyFromJSON(@SpecialInputJSON)
- 	   	
+ 	 
+	--REPLACE SINGLE QUOTES WITH DOUBLE QUOTES
+	UPDATE #TMP_ALLSTEPS SET StringValue = REPLACE(StringValue,'''','''''') WHERE ValueType ='string'
+
  --SELECT * FROM #TMP_ALLSTEPS
  --RETURN
 
@@ -254,7 +255,8 @@ BEGIN TRY
 					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
 				ELSE
 					SET @MethodName = 'NULL'
-
+			
+			SET @SpecialInputJSON = REPLACE(@SpecialInputJSON,'''','''''')
 			SET @Params = CONCAT('@SpecialInputJSON=',CHAR(39),@SpecialInputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)			
 			SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 			
@@ -280,7 +282,8 @@ BEGIN CATCH
 					SET @MethodName= CONCAT(CHAR(39),@MethodName,CHAR(39))
 				ELSE
 					SET @MethodName = 'NULL'
-
+			
+			SET @SpecialInputJSON = REPLACE(@SpecialInputJSON,'''','''''')
 			SET @Params = CONCAT('@SpecialInputJSON=',CHAR(39),@SpecialInputJSON,CHAR(39),',@UserLoginID=',@UserLoginID)		
 			SET @Params = CONCAT(@Params,',@MethodName=',@MethodName,',@LogRequest=',@LogRequest)
 			
