@@ -87,12 +87,13 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   --AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
-	   AND Name NOT IN ('userCreated','dateCreated','userModified','dateModified','submit')
+	   AND NOT (Name LIKE '%userCreated' OR NAME LIKE '%dateModified' 
+			OR NAME LIKE '%dateCreated' OR NAME LIKE '%userModified'
+			OR NAME LIKE '%dateModified' OR NAME LIKE '%submit' 
+			OR NAME LIKE '%referencenum' OR NAME LIKE '%registerReference' OR NAME LIKE '%knowledgebasereference')
 	  -- AND NAME IN ('Name','riskCategory1')
 	    
  
--- SELECT * FROM #TMP_Objects
- --RETURN
 	 	DECLARE @ID INT,		
 			@StepID INT,
 			@StepName VARCHAR(500), --='XYZ',
@@ -123,7 +124,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 VersionNum INT NOT NULL,
 	 registerid INT,
 	 referencenum nvarchar(250) NULL,
-	 registerreferenece nvarchar(250) NULL,
+	 registerReference nvarchar(250) NULL,
      knowledgebasereference nvarchar(250)  NULL'
 	 
 	 DROP TABLE IF EXISTS #TMP_DATA
@@ -140,7 +141,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 WHERE TA.Name = 'type'
 	
 	 UPDATE #TMP_DATA
-		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid','checkbox','radio','tableTemplate') THEN 'NVARCHAR' 
+		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid','checkbox','radio','tableTemplate','dynamicTable','rangecolored') THEN 'NVARCHAR' 
 							WHEN StringValue = 'number' THEN 'INT'
 							WHEN StringValue = 'datetime' THEN 'DATETIME' 							
 							WHEN StringValue = 'currency' THEN 'FLOAT'
@@ -214,13 +215,56 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			colouredddl_Colour		 
 	*/
 	------------------------------------------------------------------------------------
-		INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType,DataTypeLength)
-			SELECT Element_ID, CONCAT(NAME,'_',TAB.TName),'colored_DELETE',DataType,DataTypeLength
-			FROM #TMP_DATA
-				 CROSS APPLY (SELECT 'Color')TAB(TName)
-			WHERE StringValue = 'colored'			
+		--INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType,DataTypeLength)
+		--	SELECT Element_ID, CONCAT(NAME,'_',TAB.TName),'colored_DELETE',DataType,DataTypeLength
+		--	FROM #TMP_DATA
+		--		 CROSS APPLY (SELECT 'Color')TAB(TName)
+		--	WHERE StringValue = 'colored'			
 	------------------------------------------------------------------------------------
+
+	/*IF "type": "colored" OR "rangecolored", THEN CREATE 3 ADDITIONAL COLUMNS IN _DATA:
+			Name nvarchar(500), Color nvarchar(500),Value - decimal(18,2)		 
+	*/
+	------------------------------------------------------------------------------------------------------------------------------------
+		INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType,DataTypeLength, StepName)
+			SELECT Element_ID, CONCAT(NAME,'_',TAB.TName),StringValue,DataType,DataTypeLength, StepName
+			FROM #TMP_DATA
+				 CROSS APPLY (SELECT 'Name' UNION SELECT 'Color' UNION SELECT 'Value')TAB(TName)
+			WHERE StringValue  IN ('colored','rangecolored')
+		
+		UPDATE #TMP_DATA
+			SET DataType = 'FLOAT',
+			    DataTypeLength = NULL
+		WHERE StringValue  IN ('colored','rangecolored')
+			  AND NAME LIKE '%_Value'
+	------------------------------------------------------------------------------------------------------------------------------------
+
+	--REMOVE THESE STATIC COLUMNS IF THEY ARE PART OF JSON AS THEY HAVE ALREADY BEEN CREATED/HARD-CODED---
+		DECLARE @TBL_DELETECOLUMNS TABLE(NAME VARCHAR(100))
+		
+		--ADD TO THIS LIST ANY COLUMNS WHICH HAVE BEEN HARD-CODED BEFORE
+		INSERT INTO @TBL_DELETECOLUMNS(NAME)
+			SELECT 'DateCreated'
+			UNION
+			SELECT 'DateModified'
+			UNION
+			SELECT 'UserCreated'
+			UNION
+			SELECT 'UsermModified'
+			UNION
+			SELECT 'referencenum'
+			UNION
+			SELECT 'registerReference'
+			UNION
+			SELECT 'knowledgebasereference'
+
+		DELETE TMP FROM #TMP_DATA TMP
+		WHERE EXISTS (SELECT 1 FROM @TBL_DELETECOLUMNS WHERE NAME = TMP.Name)
+	------------------------------------------------------------------------------------------------------
 	
+	--SELECT * FROM #TMP_DATA
+	--RETURN
+
 	 DECLARE @DataCols VARCHAR(MAX), @HistDataCols VARCHAR(MAX), @MainDataCols VARCHAR(MAX), @NewDataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(
 					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
@@ -461,7 +505,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					DateModified = GETUTCDATE()
 			WHERE StepID = @StepID			
 		--===========================================================================================================================================
-
+	
 		IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkSteps_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND VersionNum=@VersionNum AND StepName=@StepName)
 			INSERT INTO [dbo].[FrameworkSteps_history]
 					   (StepID,
@@ -713,7 +757,67 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 									--						  AND LookupName= T.LookupName
 									--				)					
 							
+				END				
+				ELSE IF @StepItemType = 'colored'
+				BEGIN	
+				
+				--SELECT @id,* FROM  #TMP T WHERE keyName IN ('Name','Value','Color') AND ValueType = 'string'
+
+						SELECT Parent_ID,
+							   MAX(CASE WHEN KeyName='Color' THEN StringValue ELSE '' END) AS LookupColor,
+							   MAX(CASE WHEN KeyName='Value' THEN StringValue ELSE '' END) AS LookupValue,
+							   CAST(NULL AS VARCHAR(50)) AS LookupType
+							INTO #TMP_ColorLookups
+						FROM #TMP 
+						WHERE KeyName IN ('Color','value')
+							 GROUP BY Parent_ID
+
+						INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum, Color,MaxValue)
+									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
+										   @FrameworkID,
+										   @StepItemID,
+										   @StepItemKey,
+										   @StepItemType,
+										   Parent_ID,
+										   GETUTCDATE(),
+										   @UserLoginID,
+										   @VersionNum,
+										   LookupColor,
+										   LookupValue
+									FROM #TMP_ColorLookups
+			 
 				END
+				ELSE IF @StepItemType= 'rangecolored'
+				BEGIN	
+				
+				--SELECT @id,* FROM  #TMP T WHERE keyName IN ('Name','Value','Color') AND ValueType = 'string'
+
+						SELECT Parent_ID,
+							   MAX(CASE WHEN KeyName='Color' THEN StringValue ELSE '' END) AS LookupColor,
+							   MAX(CASE WHEN KeyName='MinValue' THEN StringValue ELSE '' END) AS LookupMinValue,
+							   MAX(CASE WHEN KeyName='MaxValue' THEN StringValue ELSE '' END) AS LookupMaxValue,
+							   CAST(NULL AS VARCHAR(50)) AS LookupType
+							INTO #TMP_RangeColorLookups
+						FROM #TMP 
+						WHERE KeyName IN ('Color','Minvalue','MaxValue')
+							 GROUP BY Parent_ID
+
+						INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum, Color,MinValue,MaxValue)
+									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
+										   @FrameworkID,
+										   @StepItemID,
+										   @StepItemKey,
+										   @StepItemType,
+										   Parent_ID,
+										   GETUTCDATE(),
+										   @UserLoginID,
+										   @VersionNum,
+										   LookupColor,
+										   LookupMinValue,
+										   LookupMaxValue
+									FROM #TMP_RangeColorLookups
+			 
+				END				
 				ELSE
 								INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
 									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
@@ -746,6 +850,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
 		DROP TABLE IF EXISTS #TMP
 		DROP TABLE IF EXISTS #TMP_Lookups
+		DROP TABLE IF EXISTS #TMP_ColorLookups
+		DROP TABLE IF EXISTS #TMP_RangeColorLookups
 
 		SELECT @StepID = NULL, @StepItemID = NULL, @IsAvailable = NULL, @SQL = NULL, @TemplateTableName = NULL,
 			   @AttributeID = NULL, @LookupID = NULL
@@ -856,7 +962,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			 
 		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
 		
-		----INSERT INTO FrameworksEntityGridMapping & FrameworkAttributesMappig:------------------------------------------------
+		----INSERT INTO FrameworksEntityGridMapping & FrameworkAttributesMapping:------------------------------------------------
 			
 			UPDATE FEGM
 				SET UserModified = @UserID,	
@@ -877,7 +983,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				WHERE FS.FrameworkID = @FrameworkID
 					  --AND FS.StepName = 'entitylinks'
 					  AND FSI.StepItemType IN ('entityLinkGrid','datagrid','tableTemplate')
-					  AND NOT EXISTS(SELECT 1 FROM dbo.FrameworksEntityGridMapping WHERE FrameworkID = @FrameworkID AND StepItemID = FSI.StepItemKey)
+					  AND NOT EXISTS(SELECT 1 FROM dbo.FrameworksEntityGridMapping WHERE FrameworkID = @FrameworkID AND StepItemID = FSI.StepItemID)
 			
 				DELETE FEGM
 				FROM dbo.FrameworksEntityGridMapping FEGM
@@ -887,7 +993,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										FROM dbo.FrameworkSteps FS
 											 INNER JOIN FrameworkStepItems FSI ON FSI.StepID = FS.StepID
 										WHERE FS.FrameworkID = FEGM.FrameworkID										  
-											  AND FEGM.StepItemID = FSI.StepItemKey
+											  AND FEGM.StepItemID = FSI.StepItemID
 											  AND FSI.StepItemType IN ('entityLinkGrid','datagrid','tableTemplate')											  
 								      )
 
@@ -1016,6 +1122,8 @@ BEGIN CATCH
 			ROLLBACK;
 
 			DECLARE @ErrorMessage VARCHAR(MAX)= ERROR_MESSAGE()
+			DECLARE @Error INT = ERROR_line()
+
 			SET @Params = CONCAT('@Name=', CHAR(39),@Name, CHAR(39),',@InputJSON=',CHAR(39),@InputJSON,CHAR(39),',@UserLoginID=',@UserLoginID,',@LogRequest=1')
 			SET @Params = CONCAT(@Params,',@FullSchemaJSON=',CHAR(39),@FullSchemaJSON,CHAR(39))
 			
@@ -1026,7 +1134,7 @@ BEGIN CATCH
 									 @UserLoginID = @UserLoginID,
 									 @ErrorMessage = @ErrorMessage
 			
-			SELECT @ErrorMessage AS ErrorMessage
+			SELECT @ErrorMessage AS ErrorMessage,@Error AS Errorline
 END CATCH
 
 		--DROP TEMP TABLES--------------------------------------
