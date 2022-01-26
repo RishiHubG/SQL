@@ -166,3 +166,10 @@ StepItemID  INT NOT NULL,
 Name NVARCHAR(500) NOT NULL,
 IsSelected BIT NOT NULL
 )
+
+GO
+
+DROP TABLE IF EXISTS Frameworks_ExtendedValues
+CREATE TABLE dbo.Frameworks_ExtendedValues 
+	(FrameworkID INT, EntityID INT, RegisterID INT,showAdminTab NVARCHAR(500),loggedInUserRole NVARCHAR(500),loggedInUserGroup NVARCHAR(500),
+	isModuleAdmin NVARCHAR(500),isSystemAdmin NVARCHAR(500),isModuleAdminGroup NVARCHAR(500), CurrentStateowner NVARCHAR(500))

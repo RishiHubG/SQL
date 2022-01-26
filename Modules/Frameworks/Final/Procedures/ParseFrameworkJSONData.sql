@@ -78,21 +78,58 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
  --SELECT * FROM #TMP_ALLSTEPS
  --RETURN
+	
+		------------------------------------------------------------------------------
+		DECLARE @TBL_DELETECOLUMNS TABLE(NAME VARCHAR(100))
+		
+		--ADD TO THIS LIST ANY COLUMNS WHICH WERE ARE HARD-CODED/EXCLUDED
+		INSERT INTO @TBL_DELETECOLUMNS(NAME)
+			SELECT 'DateCreated'
+			UNION
+			SELECT 'DateModified'
+			UNION
+			SELECT 'UserCreated'
+			UNION
+			SELECT 'UsermModified'
+			UNION
+			SELECT 'referencenum'
+			UNION
+			SELECT 'registerReference'
+			UNION
+			SELECT 'knowledgebasereference'
+			UNION
+			SELECT 'showAdminTab'
+			UNION
+			SELECT 'loggedInUserRole'
+			UNION
+			SELECT 'loggedInUserGroup'
+			UNION
+			SELECT 'isModuleAdmin'
+			UNION
+			SELECT 'isSystemAdmin'
+			UNION
+			SELECT 'isModuleAdminGroup'
+			UNION
+			SELECT 'CurrentStateowner'
+			UNION
+			SELECT 'submit'
+		------------------------------------------------------------------------------
 
  DROP TABLE IF EXISTS #TMP_Objects
 
  SELECT Element_ID,SequenceNo,Parent_ID,[Object_ID] AS ObjectID,Name,StringValue,ValueType 
 	INTO #TMP_Objects
- FROM #TMP_ALLSTEPS
+ FROM #TMP_ALLSTEPS T
  WHERE ValueType='Object'
 	   AND Parent_ID = 0 --ONLY ROOT ELEMENTS
 	   --AND Element_ID<=12 --FILTERING OUT USERCREATED,DATECREATED,SUBMIT ETC.
+	   AND NOT EXISTS(SELECT 1 FROM @TBL_DELETECOLUMNS WHERE T.NAME LIKE CONCAT('%',NAME))
+	   /*
 	   AND NOT (Name LIKE '%userCreated' OR NAME LIKE '%dateModified' 
 			OR NAME LIKE '%dateCreated' OR NAME LIKE '%userModified'
 			OR NAME LIKE '%dateModified' OR NAME LIKE '%submit' 
 			OR NAME LIKE '%referencenum' OR NAME LIKE '%registerReference' OR NAME LIKE '%knowledgebasereference')
-	  -- AND NAME IN ('Name','riskCategory1')
-	    
+	 	*/	    
  
 	 	DECLARE @ID INT,		
 			@StepID INT,
@@ -240,24 +277,6 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	------------------------------------------------------------------------------------------------------------------------------------
 
 	--REMOVE THESE STATIC COLUMNS IF THEY ARE PART OF JSON AS THEY HAVE ALREADY BEEN CREATED/HARD-CODED---
-		DECLARE @TBL_DELETECOLUMNS TABLE(NAME VARCHAR(100))
-		
-		--ADD TO THIS LIST ANY COLUMNS WHICH HAVE BEEN HARD-CODED BEFORE
-		INSERT INTO @TBL_DELETECOLUMNS(NAME)
-			SELECT 'DateCreated'
-			UNION
-			SELECT 'DateModified'
-			UNION
-			SELECT 'UserCreated'
-			UNION
-			SELECT 'UsermModified'
-			UNION
-			SELECT 'referencenum'
-			UNION
-			SELECT 'registerReference'
-			UNION
-			SELECT 'knowledgebasereference'
-
 		DELETE TMP FROM #TMP_DATA TMP
 		WHERE EXISTS (SELECT 1 FROM @TBL_DELETECOLUMNS WHERE NAME = TMP.Name)
 	------------------------------------------------------------------------------------------------------
