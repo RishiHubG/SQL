@@ -81,6 +81,8 @@ CREATE TABLE dbo.Frameworks_ExtendedValues
 
 SELECT * FROM Frameworks_ExtendedValues
 
+ALTER TABLE dbo.Frameworks_ExtendedValues ADD CONSTRAINT UQ_Frameworks_ExtendedValues UNIQUE (FrameworkID, EntityID,RegisterID)
+
 ControlsNew_DATA
 
 exec SaveFrameworkJSONData @EntityId=-1,@EntitytypeId=9,@ParentEntityID=57,@ParentEntityTypeID=3,

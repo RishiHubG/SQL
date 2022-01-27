@@ -173,3 +173,5 @@ DROP TABLE IF EXISTS Frameworks_ExtendedValues
 CREATE TABLE dbo.Frameworks_ExtendedValues 
 	(FrameworkID INT, EntityID INT, RegisterID INT,showAdminTab NVARCHAR(500),loggedInUserRole NVARCHAR(500),loggedInUserGroup NVARCHAR(500),
 	isModuleAdmin NVARCHAR(500),isSystemAdmin NVARCHAR(500),isModuleAdminGroup NVARCHAR(500), CurrentStateowner NVARCHAR(500))
+
+	ALTER TABLE dbo.Frameworks_ExtendedValues ADD CONSTRAINT UQ_Frameworks_ExtendedValues UNIQUE (FrameworkID, EntityID,RegisterID);
