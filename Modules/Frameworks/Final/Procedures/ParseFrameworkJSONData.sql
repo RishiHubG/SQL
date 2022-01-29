@@ -991,7 +991,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					StepName = FSI.StepItemName
 			FROM dbo.FrameworkSteps FS
 				 INNER JOIN FrameworkStepItems FSI ON FSI.StepID = FS.StepID
-				 INNER JOIN dbo.FrameworksEntityGridMapping FEGM ON FEGM.FrameworkID = @FrameworkID AND FEGM.StepItemID = FSI.StepItemKey
+				 INNER JOIN dbo.FrameworksEntityGridMapping FEGM ON FEGM.FrameworkID = @FrameworkID AND FEGM.StepItemID = FSI.StepItemID
 				WHERE FS.FrameworkID = @FrameworkID					  
 					  AND FSI.StepItemType IN ('entityLinkGrid','datagrid','tableTemplate');				  
 			
