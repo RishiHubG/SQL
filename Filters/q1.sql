@@ -4,8 +4,12 @@ exec SaveCustomViewJSONData
 @MethodName=NULL,@UserLoginID=3840
 
 select * from Filterconditions_Master WHERE criteria NOT like '%equals%'
+
 ALTER TABLE Filterconditions_Master ADD OperatorType VARCHAR(50)
+
 SELECT * FROM Filterconditions_Master
+SELECT * FROM Filterconditions_Master WHERE FiltertypeId =88
+
 UPDATE Filterconditions_Master SET OperatorType ='=' WHERE Criteria='Equals'
 UPDATE Filterconditions_Master SET OperatorType ='<>' WHERE Criteria='Not Equals'
 UPDATE Filterconditions_Master SET OperatorType ='LIKE ''%<COLVALUE>%''' WHERE Criteria='contains'

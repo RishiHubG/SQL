@@ -46,7 +46,7 @@
 	SELECT @TblName = Name FROM dbo.Frameworks WHERE FrameworkID = @FrameworkID
 
 	IF @TblName IS NOT NULL
-		SET @TblName = CONCAT(@TblName,'_data')
+		SET @TblName = CONCAT('dbo.',@TblName,'_data')
 	ELSE
 		Raiserror('Table Not Found!',16,1);
 
