@@ -31,12 +31,19 @@
 	SET @inputJSON = '{"EntityTypeId":9,"EntityId":-1,"ParentEntityTypeId":1,"ParentEntityId":38,"viewId":-1,"viewType":1,"filtersData":{"matchCondition":"-100","filters":[{"columnId":"-100","colDataType":"any","colKey":"any","conditionId":-99,"items":[{"columnId":"1","colDataType":"textfield","colKey":"name","conditionId":"3","value1":"abc","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"3","colDataType":"number","colKey":"componentweight","conditionId":"64","value1":"10","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"8","colDataType":"select","colKey":"controlsOperatingEffectively","conditionId":"12","value1":"No","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-99,"value1":"","value2":"","items":[{"columnId":"5","colDataType":"number","colKey":"overallweight","conditionId":"62","value1":"5","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"7","colDataType":"number","colKey":"testerror","conditionId":"63","value1":"0","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"13","colDataType":"number","colKey":"totalsamplesize","conditionId":"66","value1":"1","value2":"100","items":[],"noOfValuesRequired":2,"daysRequired":null,"currentDateRequired":null}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0,"value1":"","value2":""},{"columnId":"21","colDataType":"textarea","colKey":"objective","conditionId":"36","value1":"under","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"10","colDataType":"textarea","colKey":"objective","conditionId":"36","value1":"New","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"21","colDataType":"textarea","colKey":"objective","conditionId":"38","value1":"Billing","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"1","colDataType":"textfield","colKey":"name","conditionId":"5","value1":"Errors","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-100","colDataType":"any","colKey":"any","conditionId":-99,"value1":"","value2":"","items":[{"columnId":"-5","colDataType":"datetime","colKey":"DateCreated","conditionId":"54","value1":"2021-11-30","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":1},{"columnId":"-6","colDataType":"datetime","colKey":"Datemodified","conditionId":"56","value1":"2021-11-29","value2":"2021-12-15","items":[],"noOfValuesRequired":2,"daysRequired":null,"currentDateRequired":1},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-99,"value1":"","value2":"","items":[{"columnId":"7","colDataType":"number","colKey":"testerror","conditionId":"64","value1":"1","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"4","colDataType":"number","colKey":"totalerrors","conditionId":"64","value1":"10","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"2","colDataType":"number","colKey":"totalsamplesize","conditionId":"62","value1":"100","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-100","colDataType":"any","colKey":"any","conditionId":-99,"value1":"","value2":"","items":[{"columnId":"12","colDataType":"textfield","colKey":"name","conditionId":"4","value1":"rrr","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"2","colDataType":"number","colKey":"totalsamplesize","conditionId":"65","value1":"50","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"7","colDataType":"number","colKey":"testerror","conditionId":"67","value1":"8","value2":"30","items":[],"noOfValuesRequired":2,"daysRequired":null,"currentDateRequired":null}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0}],"currentUser":true,"topRecords":"150","orderByColumn":"1","sortBy":"desc"},"columns":[{"colName":"Component - Weighted Audit Error %","colId":"componentweightedauditerror","isSelected":1,"orderid":0},{"colName":"Component Weight","colId":"componentweight","isSelected":1,"orderid":0},{"colName":"Controls Operating Effectively?","colId":"controlsOperatingEffectively","isSelected":1,"orderid":0},{"colName":"Objective","colId":"objective","isSelected":1,"orderid":0},{"colName":"Overall Weight","colId":"overallweight","isSelected":1,"orderid":0},{"colName":"Risk Assessment","colId":"riskAssessment","isSelected":1,"orderid":0},{"colName":"Sub Component Name","colId":"name","isSelected":1,"orderid":0},{"colName":"Test Error","colId":"testerror","isSelected":1,"orderid":0},{"colName":"Total Errors","colId":"totalerrors","isSelected":1,"orderid":0},{"colName":"Total Sample Size","colId":"totalsamplesize","isSelected":1,"orderid":0}]}'
 	SET @inputJSON = '{"viewName":"Filter View - 1","EntityTypeId":9,"EntityId":-1,"ParentEntityTypeId":1,"ParentEntityId":1,"viewId":-1,"viewType":1,"filtersData":{"matchCondition":-200,"filters":[{"columnId":"-100","colDataType":"any","colKey":"any","conditionId":-99,"items":[{"columnId":"-1","colDataType":"Customtext","colKey":"Register","conditionId":"76","value1":"Basic Conditions Of Employment Act No. 75 Of 1997","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-1","colDataType":"Customtext","colKey":"Register","conditionId":"76","value1":"Carbon Tax Act No. 15 of 2019","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-1","colDataType":"Customtext","colKey":"Register","conditionId":"76","value1":"Explosives Act No. 26 of 1956","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0,"value1":"","value2":""},{"columnId":"1","colDataType":"textfield","colKey":"chapterid","conditionId":"1","value1":"0000","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"9","colDataType":"textfield","colKey":"name","conditionId":"3","value1":"Carbon Tax Act","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-5","colDataType":"datetime","colKey":"DateCreated","conditionId":"54","value1":"2021-12-01","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":1},{"columnId":"18","colDataType":"datetime","colKey":"lastModifiedDate","conditionId":"78","value1":"60","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":1,"currentDateRequired":null}],"currentUser":false,"topRecords":"100","orderByColumn":"9","sortBy":"asc"},"columns":[{"colName":"Chapter Name","colId":"chaptername","isSelected":1,"orderid":1},{"colName":"Chapter ID","colId":"chapterid","isSelected":1,"orderid":2},{"colName":"Item ID","colId":"itemid","isSelected":1,"orderid":3},{"colName":"Item Name","colId":"name","isSelected":1,"orderid":4},{"colName":"Item Number","colId":"itemnumber","isSelected":1,"orderid":5},{"colName":"Item Type","colId":"type","isSelected":1,"orderid":6},{"colName":"Part ID","colId":"partid","isSelected":1,"orderid":7},{"colName":"Part Name","colId":"partname","isSelected":1,"orderid":8},{"colName":"Publish Status","colId":"publishStatus","isSelected":1,"orderid":9},{"colName":"Tags","colId":"tags","isSelected":1,"orderid":10},{"colName":"Change Summary","colId":"changeSummary","isSelected":1,"orderid":101},{"colName":"Guidelines","colId":"guidelines","isSelected":1,"orderid":102},{"colName":"Item URL","colId":"itemUrl","isSelected":1,"orderid":103},{"colName":"Last Modified Date","colId":"lastModifiedDate","isSelected":1,"orderid":104},{"colName":"Plain Language","colId":"plainLanguage","isSelected":1,"orderid":105},{"colName":"Regulatory Requirement","colId":"regulatoryRequirement","isSelected":1,"orderid":106},{"colName":"Related Checklist Questions","colId":"relatedChecklistQuestions","isSelected":1,"orderid":107},{"colName":"Section Heading","colId":"sectionHeading","isSelected":1,"orderid":108}]}'
 	SET @inputJSON = '{"viewName":"All Controls","EntityTypeId":9,"EntityId":-1,"ParentEntityTypeId":3,"ParentEntityId":55,"viewId":-1,"viewType":1,"filtersData":{"matchCondition":-200,"filters":[{"columnId":"-100","colDataType":"any","colKey":"any","conditionId":-99,"items":[{"columnId":"7","colDataType":"checkbox","colKey":"addressingregulatoryrequirement","conditionId":"88","value1":"true","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-100","colDataType":"any","colKey":"any","conditionId":-99,"value1":"","value2":"","items":[{"columnId":"11","colDataType":"select","colKey":"causalctegory","conditionId":"12","value1":"External","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"11","colDataType":"select","colKey":"causalctegory","conditionId":"12","value1":"Internal","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"11","colDataType":"select","colKey":"causalctegory","conditionId":"12","value1":"People","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0},{"columnId":"-100","colDataType":"any","colKey":"any","conditionId":-99,"value1":"","value2":"","items":[{"columnId":"5","colDataType":"select","colKey":"controlstatus","conditionId":"12","value1":"active","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"5","colDataType":"select","colKey":"controlstatus","conditionId":"12","value1":"draft","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-200","colDataType":"all","colKey":"all","conditionId":-99,"value1":"","value2":"","items":[{"columnId":"1","colDataType":"textfield","colKey":"name","conditionId":"3","value1":"test","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"18","colDataType":"select","colKey":"controlfrequency","conditionId":"12","value1":"monthly","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0},{"columnId":"9","colDataType":"select","colKey":"controlLevel","conditionId":"12","value1":"businessControl","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0},{"columnId":"1","colDataType":"textfield","colKey":"name","conditionId":"3","value1":"abc","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-4","colDataType":"Customtext","colKey":"Role","conditionId":"76","value1":"Owner","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-3","colDataType":"Customtext","colKey":"universe","conditionId":"76","value1":"Library","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-1","colDataType":"Customtext","colKey":"Register","conditionId":"76","value1":"Controls","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":null},{"columnId":"-5","colDataType":"datetime","colKey":"DateCreated","conditionId":"56","value1":"2021-12-01","value2":"2022-02-05","items":[],"noOfValuesRequired":2,"daysRequired":null,"currentDateRequired":1},{"columnId":"-6","colDataType":"datetime","colKey":"Datemodified","conditionId":"54","value1":"2021-12-31","value2":"","items":[],"noOfValuesRequired":1,"daysRequired":null,"currentDateRequired":1}],"noOfValuesRequired":0,"daysRequired":0,"currentDateRequired":0,"value1":"","value2":""}],"currentUser":true,"topRecords":"50","orderByColumn":"-1","sortBy":"desc"},"columns":[{"colName":"Name","colId":"name","isSelected":1,"orderid":1},{"colName":"Reference","colId":"reference","isSelected":1,"orderid":2},{"colName":"Control Category","colId":"controlCategory","isSelected":1,"orderid":3},{"colName":"Control Frequency","colId":"controlfrequency","isSelected":1,"orderid":4},{"colName":"Control Level","colId":"controlLevel","isSelected":1,"orderid":5},{"colName":"Control Type","colId":"controlType","isSelected":1,"orderid":6},{"colName":"Addressing Regulatory Requirement","colId":"addressingregulatoryrequirement","isSelected":1,"orderid":99},{"colName":"Causal Category","colId":"causalctegory","isSelected":1,"orderid":99},{"colName":"Causal sub-category","colId":"causalSubCategory","isSelected":1,"orderid":99},{"colName":"Control Assessment Frequency","colId":"controlAssessmentFrequency","isSelected":1,"orderid":99},{"colName":"Control Closure Reason","colId":"controlclosurereason","isSelected":1,"orderid":99},{"colName":"Control Coordinator (Free Text):","colId":"controlcoordinatorfreetext","isSelected":false,"orderid":99},{"colName":"Control Effectiveness (Owner)","colId":"controlEffectivenessOwner","isSelected":false,"orderid":99},{"colName":"Control Owner (Free Text):","colId":"controlownerfreetext","isSelected":1,"orderid":99},{"colName":"Control Status","colId":"controlstatus","isSelected":1,"orderid":99},{"colName":"Description","colId":"description","isSelected":1,"orderid":99},{"colName":"Level of Automation","colId":"levelOfAutomation","isSelected":1,"orderid":99},{"colName":"Purpose of the control:","colId":"purposeofthecontrol","isSelected":1,"orderid":99}]}'
+	--EXEC dbo.SaveFilterExpression @inputJSON = @inputJSON,@MethodName=NULL,@UserLoginID=1143,@LogRequest=1
 
 	DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	DROP TABLE IF EXISTS #TMP_FiltersData
 	DROP TABLE IF EXISTS #TMP_FiltersWithMatchCondition
 
 	DECLARE @FrameworkID INT, @ParentEntityId INT, @ParentEntityTypeId INT, @TblName VARCHAR(MAX)
+
+	DECLARE @RoleSQL VARCHAR(MAX) = 'EXISTS (SELECT 1 FROM dbo.RoleType RT INNER JOIN dbo.ContactInst CI ON CI.RoleTypeID = RT.RoleTypeID WHERE RT.name'
+	
+	DECLARE @RegisterSQL VARCHAR(MAX) = 'EXISTS (SELECT 1 FROM dbo.Registers WHERE Name'
+
+	DECLARE @UniverseSQL VARCHAR(MAX) = 'EXISTS (SELECT 1 FROM dbo.Universe WHERE Name'
 
 	SELECT *
 			INTO #TMP_ALLSTEPS
@@ -332,15 +339,52 @@
 		
 			DROP TABLE IF EXISTS #TMP_FilterItems
 			DROP TABLE IF EXISTS #TMP_JoinStmt
+						
+			--CONDITIONS FOR Role,Register,Universe============================================================
+			UPDATE #TMP_ItemsWithMatchCondition
+				SET ColKey = REPLACE(ColKey,'Role', @RoleSQL),
+					OperatorType = CONCAT(OperatorType,')') -- ADDING THE LAST BRACKET FOR EXISTS CLAUSE
+			WHERE ColKey = 'Role'
+
+			UPDATE #TMP_ItemsWithMatchCondition
+				SET ColKey = REPLACE(ColKey,'Universe', @UniverseSQL),
+					OperatorType = CONCAT(OperatorType,')') -- ADDING THE LAST BRACKET FOR EXISTS CLAUSE
+			WHERE ColKey = 'Universe'
+
+			UPDATE #TMP_ItemsWithMatchCondition
+				SET ColKey = REPLACE(ColKey,'Register', @RegisterSQL),
+					OperatorType = CONCAT(OperatorType,')') -- ADDING THE LAST BRACKET FOR EXISTS CLAUSE
+			WHERE ColKey = 'Register'
+						
+			UPDATE #TMP_FiltersWithMatchCondition
+				SET ColKey = REPLACE(ColKey,'Role', @RoleSQL),
+					OperatorType = CONCAT(OperatorType,')') -- ADDING THE LAST BRACKET FOR EXISTS CLAUSE
+			WHERE ColKey = 'Role'
+
+			UPDATE #TMP_FiltersWithMatchCondition
+				SET ColKey = REPLACE(ColKey,'Universe', @UniverseSQL),
+					OperatorType = CONCAT(OperatorType,')') -- ADDING THE LAST BRACKET FOR EXISTS CLAUSE
+			WHERE ColKey = 'Universe'
+
+			UPDATE #TMP_FiltersWithMatchCondition
+				SET ColKey = REPLACE(ColKey,'Register', @RegisterSQL),
+					OperatorType = CONCAT(OperatorType,')') -- ADDING THE LAST BRACKET FOR EXISTS CLAUSE
+			WHERE ColKey = 'Register'
+			--=====================================================================================================
+
+			--SELECT * FROM #TMP_ItemsWithMatchCondition
+			--SELECT * FROM #TMP_FiltersWithMatchCondition			
+			--RETURN
 
 			SELECT ItemID, MatchCondition, CONCAT(colKey,CHAR(32),OperatorType,CHAR(32),value1, CHAR(32),OperatorType2,CHAR(32), value2) AS ColName, 
 				   Parents
 				INTO #TMP_FilterItems
 			FROM #TMP_ItemsWithMatchCondition			
+					
 
-			
-			--SELECT * FROM #TMP_ItemsWithMatchCondition
+			--SELECT * FROM #TMP_FilterItems
 			--RETURN
+
 			SELECT 
 			ItemID,
 			STUFF((
@@ -390,6 +434,7 @@
 			INTO #TMP_FinalFiltersWithMatchConditionJoin
 		FROM #TMP_FiltersWithMatchCondition TMP	
 		
+		--SELECT * FROM #TMP_FiltersWithMatchCondition
 		--SELECT * FROM #TMP_FinalFiltersWithMatchConditionJoin
 
 		--GET GROUPS WITH MORE THAN 1 RECORD, SO AS TO CLUB THEM TOGETHER
@@ -433,7 +478,7 @@
 
 		SET @matchCondition =  CONCAT(' ',@matchCondition,' ')
 		
-		DECLARE @QueryCondition VARCHAR(MAX),@SQL VARCHAR(MAX)
+		DECLARE @QueryCondition VARCHAR(MAX),@SQL NVARCHAR(MAX)
 
 		SELECT @QueryCondition = STRING_AGG(JoinString,@matchCondition)
 		FROM #TMP
@@ -443,7 +488,16 @@
 		SET @SQL = CONCAT('SELECT * FROM ',@TblName,' WHERE ',CHAR(10),@QueryCondition)
 		PRINT @SQL
 
-		EXEC(@SQL)
+		--EXEC(@SQL)
+		IF @TblName IS NOT NULL
+		BEGIN
+			IF EXISTS(SELECT 1 FROM sys.dm_exec_describe_first_result_set(@SQL,NULL, 0) WHERE error_message IS NOT NULL)
+				Raiserror('Error in Filter Query!',16,1);
+		ELSE			
+			 EXEC(@SQL);
+		END 
+
+	
 
 		--(
 
