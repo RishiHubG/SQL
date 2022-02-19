@@ -41,7 +41,7 @@ BEGIN TRY
 	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
 								 @MethodName = @MethodName,
 								 @UserID = @UserID	OUTPUT							     
-	SET @UserID=100
+	
 	IF @UserID IS NOT NULL
 	BEGIN
 
@@ -178,7 +178,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	 WHERE TA.Name = 'type'
 	
 	 UPDATE #TMP_DATA
-		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid','checkbox','radio','tableTemplate','dynamicTable','rangecolored') THEN 'NVARCHAR' 
+		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid','checkbox','radio','tableTemplate','dynamicTable','rangecolored','entityTab','queryGrid','customTreeSelection') THEN 'NVARCHAR' 
 							WHEN StringValue = 'number' THEN 'INT'
 							WHEN StringValue = 'datetime' THEN 'DATETIME' 							
 							WHEN StringValue = 'currency' THEN 'FLOAT'
