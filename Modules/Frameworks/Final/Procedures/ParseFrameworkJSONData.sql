@@ -135,7 +135,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			@StepID INT,
 			@StepName VARCHAR(500), --='XYZ',
 			@StepItemType VARCHAR(500),		 
-			@StepItemName VARCHAR(500),
+			@StepItemName VARCHAR(MAX),
 			@LookupValues VARCHAR(1000),
 			@StepItemID INT,			
 			@VersionNum INT,
