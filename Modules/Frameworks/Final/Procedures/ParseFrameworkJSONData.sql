@@ -179,9 +179,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	
 	 UPDATE #TMP_DATA
 		SET DataType = CASE WHEN StringValue IN ('textfield','selectboxes','select','textarea','email','URL','phoneNumber','tags','signature','password','button','colorPicker','colored','entityLinkGrid','datagrid','checkbox','radio','tableTemplate','dynamicTable','rangecolored','entityTab','queryGrid','customTreeSelection') THEN 'NVARCHAR' 
-							WHEN StringValue = 'number' THEN 'INT'
+							WHEN StringValue = 'number' THEN 'BIGINT'
 							WHEN StringValue = 'datetime' THEN 'DATETIME' 							
-							WHEN StringValue = 'currency' THEN 'FLOAT'
+							WHEN StringValue = 'currency' THEN 'DECIMAL(18,2)'
 							WHEN StringValue = 'time' THEN 'TIME'
 					   END
 	
@@ -260,7 +260,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	------------------------------------------------------------------------------------
 
 	/*IF "type": "colored" OR "rangecolored", THEN CREATE 3 ADDITIONAL COLUMNS IN _DATA:
-			Name nvarchar(500), Color nvarchar(500),Value - decimal(18,2)		 
+			Name nvarchar(500), Color nvarchar(500),Value - decimal(18,2)	
+	For ""rangecolored"" CREATE 2 MORE COLUMNS (APART FROM THE ABOVE 3): MinValue DECIMAL(18,2) , MaxValue DECIMAL(18,2)
 	*/
 	------------------------------------------------------------------------------------------------------------------------------------
 		INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType,DataTypeLength, StepName)
@@ -268,12 +269,25 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			FROM #TMP_DATA
 				 CROSS APPLY (SELECT 'Name' UNION SELECT 'Color' UNION SELECT 'Value')TAB(TName)
 			WHERE StringValue  IN ('colored','rangecolored')
-		
+			
+			UNION
+
+			SELECT Element_ID, CONCAT(NAME,'_',TAB.TName),StringValue,DataType,DataTypeLength, StepName
+			FROM #TMP_DATA
+				 CROSS APPLY (SELECT 'MinValue' UNION SELECT 'MaxValue')TAB(TName)
+			WHERE StringValue = 'rangecolored'
+
 		UPDATE #TMP_DATA
-			SET DataType = 'FLOAT',
+			SET DataType = 'DECIMAL(18,2)',
 			    DataTypeLength = NULL
 		WHERE StringValue  IN ('colored','rangecolored')
 			  AND NAME LIKE '%_Value'
+
+		UPDATE #TMP_DATA
+			SET DataType = 'DECIMAL(18,2)',
+			    DataTypeLength = NULL
+		WHERE StringValue  = 'rangecolored'
+			  AND (NAME LIKE '%_MinValue' OR NAME LIKE '%_MaxValue')
 	------------------------------------------------------------------------------------------------------------------------------------
 
 	--REMOVE THESE STATIC COLUMNS IF THEY ARE PART OF JSON AS THEY HAVE ALREADY BEEN CREATED/HARD-CODED---
@@ -286,7 +300,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 	 DECLARE @DataCols VARCHAR(MAX), @HistDataCols VARCHAR(MAX), @MainDataCols VARCHAR(MAX), @NewDataCols VARCHAR(MAX) 
 	 SET @DataCols = --STUFF(
-					 (SELECT CONCAT(', [',[Name],'] [', DataType,'] ', DataTypeLength)
+					 (SELECT CONCAT(', [',[Name],']',
+									CASE WHEN DataType = 'DECIMAL(18,2)' THEN CONCAT(' ', DataType) ELSE CONCAT(' [', DataType,'] ') END
+									, DataTypeLength
+					 
+									)
 					 FROM #TMP_DATA
 					 FOR XML PATH('')
 					 )
@@ -297,7 +315,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	
 	--CHECK IF TABLE IS ALREADY AVAILABLE, THEN GET ANY NEW COLUMNS THAT ARE PART OF THE SCHEMA
 	SET @SQL = CONCAT(N'SELECT @NewDataCols = STUFF(
-						(SELECT CONCAT('', ['',[Name],''] ['', DataType,''] '', DataTypeLength)
+						(SELECT CONCAT('', ['',[Name],'']'', 
+									  CASE WHEN DataType = ''DECIMAL(18,2)'' THEN CONCAT('' '', DataType) ELSE CONCAT('' ['', DataType,''] '') END
+									  , DataTypeLength)
 						FROM #TMP_DATA TA								  
 						WHERE NOT EXISTS(SELECT 1 FROM sys.columns C WHERE C.Name = TA.Name AND C.object_id =OBJECT_ID(',CHAR(39),@FrameWorkTblName,CHAR(39),'))
 						FOR XML PATH('''')
@@ -305,6 +325,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						,1,1,'''')'
 						)
 	EXEC sp_executesql @SQL,N'@NewDataCols VARCHAR(MAX) OUTPUT',@NewDataCols OUTPUT
+	PRINT @SQL
 	--SELECT * from #TMP_DATA
 	--RETURN
 	

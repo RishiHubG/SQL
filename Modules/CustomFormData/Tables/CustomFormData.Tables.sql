@@ -11,6 +11,7 @@ DateCreated DATETIME2(0) NOT NULL DEFAULT GETUTCDATE(),
 UserModified INT,
 DateModified DATETIME2(0),
 ColumnName VARCHAR(500),
+ColumnType VARCHAR(100),
 IsActive BIT,
 VersionNum INT NOT NULL,
 CustomFormsInstanceID INT
@@ -30,6 +31,7 @@ VersionNum INT NOT NULL,
 PeriodIdentifierID INT NULL,
 OperationType VARCHAR(50),
 ColumnName VARCHAR(500),
+ColumnType VARCHAR(100),
 IsActive BIT,
 CustomFormsInstanceID INT
 )
@@ -45,6 +47,7 @@ DateCreated DATETIME2(0) NOT NULL DEFAULT GETUTCDATE(),
 UserModified INT,
 DateModified DATETIME2(0),
 ColumnName VARCHAR(500),
+ColumnType VARCHAR(100),
 IsActive BIT,
 VersionNum INT NOT NULL,
 CustomFormsInstanceID INT
@@ -64,6 +67,7 @@ VersionNum INT NOT NULL,
 PeriodIdentifierID INT NULL,
 OperationType VARCHAR(50),
 ColumnName VARCHAR(500),
+ColumnType VARCHAR(100),
 IsActive BIT,
 CustomFormsInstanceID INT
 )
