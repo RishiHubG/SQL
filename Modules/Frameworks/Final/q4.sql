@@ -138,3 +138,8 @@ ALTER TABLE dbo.FrameworkLookups ALTER COLUMN LookupValue NVARCHAR(MAX) NOT NULL
  --ROLLBACK
  SET XACT_ABORT ON
  BEGIN TRAN;
+
+
+  SELECT * FROM AuditComponents_data
+
+  ALTER TABLE AuditComponents_data_HISTORY DROP COLUMN decimal

@@ -189,6 +189,24 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SET DataTypeLength = CASE WHEN DataType = 'NVARCHAR' THEN '(MAX)'
 							 END
 		
+		--UPDATE FOR DECIMAL DATA TYPE: FIND "decimalLimit" AND MAKE SURE IT'S TYPE IS "NUMBER";IF FOUND CHANGE THE DATA TYPE FROM INT TO DECIMAL========
+		SELECT TA.Parent_ID,
+			  CONCAT('DECIMAL(18,',TA.StringValue,')') AS DecimalDataType
+			INTO #TMP_DecimalDataType
+		FROM #TMP_ALLSTEPS TA
+			 INNER JOIN #TMP_ALLSTEPS TATN ON TATN.Parent_ID = TA.Parent_ID 
+		WHERE TA.NAME LIKE '%decimalLimit%'
+			  AND TATN.NAME = 'type' 
+			  AND TATN.StringValue = 'number'
+			  	
+		UPDATE TMP
+			SET DataType = TD.DecimalDataType
+		FROM #TMP_DATA TMP
+			 INNER JOIN #TMP_DecimalDataType TD ON TD.Parent_ID = TMP.Element_ID
+	 
+		--SELECT * FROM #TMP_DATA
+		--=================================================================================================================================================
+		
 	 SELECT T.Element_ID,T.Name, MAX(TAB.pos) AS Pos
 		INTO #TMP_DATA_DAY
 	 FROM #TMP_DATA T
