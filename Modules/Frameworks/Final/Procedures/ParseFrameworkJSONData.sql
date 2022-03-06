@@ -408,7 +408,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 							ELSE IF EXISTS(SELECT 1 FROM INSERTED) AND  EXISTS(SELECT 1 FROM DELETED) --UPDATE
 								INSERT INTO dbo.',@FrameWorkHistTblName,'(<ColumnList>)
 									SELECT <columnList>
-									FROM DELETED
+									FROM INSERTED
 						END;',CHAR(10))
 		SET @SQL = REPLACE(@SQL,'<columnList>',@cols)
 		EXEC [LongPrint] @SQL	
@@ -627,6 +627,20 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		BEGIN
 						
 					SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
+
+					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAIALABLE IN HISTORY (USING APIKEY)=================================
+						DECLARE @HistStepItemID INT
+
+						SET @SQL = CONCAT('SELECT @HistStepItemID = StepItemID FROM ',@TableName,'_history WHERE FrameworkID=',
+											@FrameworkID,' AND StepID=',@StepID,' AND apiKey=',@StepItemKey	
+										 )
+					   PRINT @SQL  
+					   EXEC sp_executesql @SQL, N'@HistStepItemID INT OUTPUT',@HistStepItemID OUTPUT;
+
+					   --STEP ITEM WAS AVAILABLE, HENCE USE THE SAME STEP ITEM ID
+					   IF @HistStepItemID IS NOT NULL
+						 SET @StepItemID = @HistStepItemID
+					--============================================================================================================
 
 					INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
 						SELECT  @StepItemID,
