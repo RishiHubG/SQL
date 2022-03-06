@@ -648,7 +648,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						IF @IsExistingTable = 1
 						BEGIN
 							
-							SET @SQL = CONCAT('SELECT @HistStepItemID = StepItemID FROM [',@HistTblName,'] WHERE FrameworkID=',
+							SET @SQL = CONCAT('SELECT TOP 1 @HistStepItemID = StepItemID FROM [',@HistTblName,'] WHERE FrameworkID=',
 												@FrameworkID,' AND StepItemKey=''',@StepItemKey,''''
 											 )
 						   PRINT @SQL  
