@@ -278,15 +278,16 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	------------------------------------------------------------------------------------
 
 	/*IF "type": "colored" OR "rangecolored", THEN CREATE 3 ADDITIONAL COLUMNS IN _DATA:
-			Name nvarchar(500), Color nvarchar(500),Value - decimal(18,2)	
+			For "rangecolored": Name nvarchar(500), SelectVal nvarchar(500),inputvalue - decimal(18,2)	
+			For "colored": Name nvarchar(500), SelectVal nvarchar(500),value - decimal(18,2)	
 	For ""rangecolored"" CREATE 2 MORE COLUMNS (APART FROM THE ABOVE 3): MinValue DECIMAL(18,2) , MaxValue DECIMAL(18,2)
 	*/
 	------------------------------------------------------------------------------------------------------------------------------------
 		INSERT INTO #TMP_DATA(Element_ID, NAME,StringValue,DataType,DataTypeLength, StepName)
 			SELECT Element_ID, CONCAT(NAME,'_',TAB.TName),StringValue,DataType,DataTypeLength, StepName
 			FROM #TMP_DATA
-				 CROSS APPLY (SELECT 'Name' UNION SELECT 'Color' UNION SELECT 'Value')TAB(TName)
-			WHERE StringValue  IN ('colored','rangecolored')
+				 CROSS APPLY (SELECT 'Name' UNION SELECT 'SelectVal' UNION SELECT 'Inputvalue')TAB(TName)
+			WHERE StringValue = 'rangecolored'
 			
 			UNION
 
@@ -294,6 +295,13 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			FROM #TMP_DATA
 				 CROSS APPLY (SELECT 'MinValue' UNION SELECT 'MaxValue')TAB(TName)
 			WHERE StringValue = 'rangecolored'
+
+			UNION
+
+			SELECT Element_ID, CONCAT(NAME,'_',TAB.TName),StringValue,DataType,DataTypeLength, StepName
+			FROM #TMP_DATA
+				 CROSS APPLY (SELECT 'Name' UNION SELECT 'SelectVal' UNION SELECT 'value')TAB(TName)
+			WHERE StringValue = 'colored'
 
 		UPDATE #TMP_DATA
 			SET DataType = 'DECIMAL(18,2)',
@@ -627,7 +635,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		BEGIN
 						
 					SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
-					/*
+					
 					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================
 						DECLARE @HistStepItemID INT, @HistTblName VARCHAR(500) = CONCAT(@Name,'_',@TemplateTableName,'_history')
 						DECLARE @IsExistingTable BIT = 0
@@ -641,7 +649,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						BEGIN
 							
 							SET @SQL = CONCAT('SELECT @HistStepItemID = StepItemID FROM [',@HistTblName,'] WHERE FrameworkID=',
-												@FrameworkID,' AND StepID=',@StepID,' AND StepItemKey=''',@StepItemKey,''' AND VersionNum = ', @VersionNum - 1
+												@FrameworkID,' AND StepItemKey=''',@StepItemKey,''''
 											 )
 						   PRINT @SQL  
 						   EXEC sp_executesql @SQL, N'@HistStepItemID INT OUTPUT',@HistStepItemID OUTPUT;
@@ -652,16 +660,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 						 END
 					--============================================================================================================
-					*/
-					--SELECT * FROM FrameworkStepItems
-					--SELECT  @StepItemID,
-					--			@FrameworkID,
-					--			@StepID,								
-					--			@StepItemName,
-					--			@StepItemType,
-					--			@StepItemKey,
-					--			(SELECT SequenceNo FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
-					--			GETUTCDATE(),@UserLoginID,@VersionNum	
+						
 					INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
 						SELECT  @StepItemID,
 								@FrameworkID,
