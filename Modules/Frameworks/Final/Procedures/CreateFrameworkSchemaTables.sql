@@ -66,7 +66,7 @@ DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100),@KeyColName VA
 INSERT INTO @TBL_List(TemplateTableName,PK,KeyColName,ParentTableName,TableType,ConstraintSQL)
 VALUES	('FrameworkLookups','LookupID','LookupValue','FrameworkStepItems','Lookups','ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemsID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]) '),
 		('FrameworkAttributes','AttributeID','AttributeKey','FrameworkStepItems','Attributes','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID); ALTER TABLE [dbo].[<TABLENAME>] ADD CONSTRAINT [FK_<TABLENAME>_StepItemID] FOREIGN KEY ( [StepItemID] ) REFERENCES [dbo].[<ParentTableName>] ([StepItemID]); '),		
-		('FrameworkStepItems','StepItemID','StepItemKey','FrameworkSteps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]) '),
+		('FrameworkStepItems','StepItemID','StepItemKey','FrameworkSteps','StepItems','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepItemID  PRIMARY KEY(StepItemID) ;ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT [FK_<TABLENAME>_StepID] FOREIGN KEY ( [StepID] ) REFERENCES [dbo].[<ParentTableName>] ([StepID]); ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT UQ_<TABLENAME>_StepItemKey UNIQUE(StepItemKey) '),
 		('FrameworkSteps','StepID','StepName','','Steps','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_StepID PRIMARY KEY(StepID)')
 		--,('Frameworks','Name','','','ALTER TABLE [dbo].<TABLENAME> ADD CONSTRAINT PK_<TABLENAME>_ID PRIMARY KEY(ID)')
 
@@ -160,12 +160,38 @@ BEGIN
 		-------------------------------------------------------------------------
 		
 		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))		
-		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))
-		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.[',@NewTableName, '] WHERE VersionNum = ', @VersionNum,' AND FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
+		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))		
+		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.[',@NewTableName, '] WHERE FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
 		--IF @TemplateTableName NOT LIKE '%FrameworkLookups%'
 		SET @SQL = CONCAT('SET IDENTITY_INSERT [',@NewTableName,'] ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT [',@NewTableName,'] OFF ;')
 		PRINT @SQL
-		EXEC sp_executesql @SQL 
+		EXEC sp_executesql @SQL
+
+		------------------------------------------------------------------------------------------------------------------------------------------------
+		--1. KEY MOVED TO A DIFFERENT STEP: UPDATE FROM FrameworkStepItems
+		--2. CREATE UNIQUE CONSTRAINT ON StepItemKey
+		IF @NewTableName LIKE '%_FrameworkStepItems'
+		BEGIN
+			
+			DECLARE @UQ_ConstraintName VARCHAR(100) = CONCAT('ÚQ_',@NewTableName,'_StepItemKey');
+
+			--CREATE UNIQUE CONSTRAINT ON StepItemKey
+			IF NOT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = @NewTableName AND CONSTRAINT_NAME = @UQ_ConstraintName)
+			BEGIN
+				SET @SQL = CONCAT(' ALTER TABLE dbo.[',@NewTableName,'] ADD CONSTRAINT ', @UQ_ConstraintName, ' UNIQUE(StepItemKey)')
+				PRINT @SQL
+				EXEC sp_executesql @SQL
+			END
+
+			--CHECK IF KEY MOVED TO A DIFFERENT STEP
+			SET @SQL = CONCAT('UPDATE TBL',CHAR(10))		
+			SET @SQL = CONCAT(@SQL, 'SET StepID = T.StepID', CHAR(10))
+			SET @SQL = CONCAT(@SQL, 'FROM ', @TemplateTableName,' T INNER JOIN dbo.[',@NewTableName,'] TBL ON T.FrameworkID=TBL.FrameworkID AND T.',@KeyColName,' = TBL.',@KeyColName, CHAR(10)) --@KeyColName=StepItemKey		
+			SET @SQL = CONCAT(@SQL, 'WHERE T.StepID <> TBL.StepID', CHAR(10))
+			PRINT @SQL
+			EXEC sp_executesql @SQL
+		END
+		-----------------------------------------------------------------------------------------------------------------------------------------------
 
 		--UPDATE VERSION NUMBER		
 		--SET @SQL = CONCAT('UPDATE dbo.[',@NewTableName,']',CHAR(10))		

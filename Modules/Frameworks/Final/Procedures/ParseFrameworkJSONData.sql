@@ -636,31 +636,6 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						
 					SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
 					
-					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================
-						DECLARE @HistStepItemID INT, @HistTblName VARCHAR(500) = CONCAT(@Name,'_',@TemplateTableName,'_history')
-						DECLARE @IsExistingTable BIT = 0
-
-						SET @SQL = CONCAT('IF EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTblName,''')', CHAR(10))
-						SET @SQL = CONCAT(@SQL,' SET @IsExistingTable = 1; ', CHAR(10))
-						PRINT @SQL  
-						EXEC sp_executesql @SQL, N'@IsExistingTable BIT OUTPUT',@IsExistingTable OUTPUT;
-					
-						IF @IsExistingTable = 1
-						BEGIN
-							
-							SET @SQL = CONCAT('SELECT TOP 1 @HistStepItemID = StepItemID FROM [',@HistTblName,'] WHERE FrameworkID=',
-												@FrameworkID,' AND StepItemKey=''',@StepItemKey,''''
-											 )
-						   PRINT @SQL  
-						   EXEC sp_executesql @SQL, N'@HistStepItemID INT OUTPUT',@HistStepItemID OUTPUT;
-
-						   --STEP ITEM WAS AVAILABLE, HENCE USE THE SAME STEP ITEM ID
-						   IF @HistStepItemID IS NOT NULL
-							 SET @StepItemID = @HistStepItemID
-
-						 END
-					--============================================================================================================
-						
 					INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
 						SELECT  @StepItemID,
 								@FrameworkID,
@@ -948,7 +923,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			   @AttributeID = NULL, @LookupID = NULL
 		
  END	--END OF WHILE LOOP	
-
+		--SELECT 1/0
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
 		--DECLARE @PeriodIdentifierID INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_history WHERE Name = @Name)
 
@@ -1151,40 +1126,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		WHERE FrameworkID = @FrameworkID
 			  AND VersionNum = @VersionNum
 		------------------------------------------------------------------------------------------------------------------------
-
-		--CODE TO UPDATE Steps & StepItems TABLE: RETAIN THE SAME STEPID,STEPITEMSID PK BUT ONLY INCREMENT THE VERSION NO. IN CASE OF AN UPDATE
-		--CURRENT LOGIC INSERTS A NEW RECORD FOR STEPS & STEPITEMS DURING EACH UPDATE AND WITH AN INCREMENTAL VERSION NO.
-		--WE WILL LET THIS CONTINUE JUST THAT TOWARDS THE END OF THE LOGIC WE WILL REMOVE THE EXTRA STEPS/STEPITEMS THAT WERE ADDED, AS BELOW
-		--NOTE: FRAMEWORK TABLES (FrameworkSteps/FrameworkStepItems) WILL ALWAYS HOLD THE LATEST RECORDS THAT WE ARE PROCESSING, SO WE WILL USE THOSE TABLES TO DO THE FOLLOWING ACTIVITY
-		----------------------------------------------------------------------------------------------------------------------------------
-		  --REMOVE THE EXTRA STEPS
-		  SET @SQL = CONCAT(N' DELETE TBL FROM dbo.[', @Name , '_FrameworkSteps] TBL', CHAR(10))
-		  SET @SQL = CONCAT(@SQL, N' WHERE NOT EXISTS (SELECT 1 FROM dbo.FrameworkSteps WHERE FrameWorkID=TBL.FrameWorkID AND StepID=TBL.StepID)', CHAR(10))
-		  PRINT @SQL		
-	      EXEC sp_executesql @SQL 
-
-		  ----REMOVE THE EXTRA STEPITEMS
-		  SET @SQL = CONCAT(N' DELETE TBL FROM dbo.[', @Name , '_FrameworkStepItems] TBL', CHAR(10))
-		  SET @SQL = CONCAT(@SQL, N' WHERE NOT EXISTS (SELECT 1 FROM dbo.FrameworkStepItems WHERE FrameWorkID=TBL.FrameWorkID AND StepID=TBL.StepID AND StepItemID=TBL.StepItemID)', CHAR(10))
-		  PRINT @SQL		
-	      EXEC sp_executesql @SQL 
-		  
-		  --UPDATE THE STEP FIELDS
-		  SET @SQL = CONCAT(N' UPDATE TBL SET DateModified = FRM.DateModified, VersionNum = FRM.VersionNum', CHAR(10))
-		  SET @SQL = CONCAT(@SQL, N' FROM dbo.[', @Name , '_FrameworkSteps] TBL', CHAR(10))
-		  SET @SQL = CONCAT(@SQL, N' INNER JOIN dbo.FrameworkSteps FRM ON FRM.FrameWorkID=TBL.FrameWorkID AND FRM.StepID=TBL.StepID', CHAR(10))
-		  PRINT @SQL		
-	      EXEC sp_executesql @SQL	 
-
-		  --UPDATE THE STEPITEMS FIELDS
-		  SET @SQL = CONCAT(N' UPDATE TBL SET DateModified = FRM.DateModified, VersionNum = FRM.VersionNum', CHAR(10))
-		  SET @SQL = CONCAT(@SQL, N' , StepItemName = FRM.StepItemName, StepItemType = FRM.StepItemType, StepItemKey = FRM.StepItemKey', CHAR(10))
-		  SET @SQL = CONCAT(@SQL, N' FROM dbo.[', @Name , '_FrameworkStepItems] TBL', CHAR(10))
-		  SET @SQL = CONCAT(@SQL, N' INNER JOIN dbo.FrameworkStepItems FRM ON FRM.FrameWorkID=TBL.FrameWorkID AND FRM.StepID=TBL.StepID AND FRM.StepItemID=TBL.StepItemID', CHAR(10))
-		  PRINT @SQL		
-	      EXEC sp_executesql @SQL	 
-		----------------------------------------------------------------------------------------------------------------------------------
-
+				
 		--INSERT INTO LOG-------------------------------------------------------------------------------------------------------------------------
 		IF @LogRequest = 1
 		BEGIN			
@@ -1198,7 +1140,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 									 @UserLoginID = @UserLoginID
 		END
 		------------------------------------------------------------------------------------------------------------------------------------------
-
+		
 		COMMIT
 
 		SELECT NULL AS ErrorMessage

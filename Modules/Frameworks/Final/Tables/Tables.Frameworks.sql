@@ -63,6 +63,7 @@ CONSTRAINT PK_Framework_Metafield_StepItemID PRIMARY KEY(StepItemID)
 
 	
 	ALTER TABLE [dbo].FrameworkStepItems ADD CONSTRAINT DF_FrameworkStepItems_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+	ALTER TABLE [dbo].FrameworkStepItems ADD CONSTRAINT UQ_FrameworkStepItems_StepItemKey UNIQUE(StepItemKey)
 GO
 
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_StepID FOREIGN KEY(StepID) REFERENCES dbo.FrameworkSteps(StepID)
