@@ -923,7 +923,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			   @AttributeID = NULL, @LookupID = NULL
 		
  END	--END OF WHILE LOOP	
-		--SELECT 1/0
+		
+		--**DELETE FROM STEP ITEMS IF DATA NOT AVAILABLE IN JSON************************************************************			
+			SET @TableName = CONCAT('[',@Name,'_FrameworkStepItems]');
+			SET @SQL = CONCAT('DELETE TBL FROM ',@TableName,' TBL WHERE NOT EXISTS(SELECT 1 FROM dbo.FrameworkStepItems FSI  WHERE TBL.FrameworkID = FSI.FrameworkID AND TBL.StepItemKey = FSI.StepItemKey)', CHAR(10))				
+			PRINT @SQL  
+			EXEC sp_executesql @SQL;			
+		--******************************************************************************************************************
+		
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
 		--DECLARE @PeriodIdentifierID INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_history WHERE Name = @Name)
 
