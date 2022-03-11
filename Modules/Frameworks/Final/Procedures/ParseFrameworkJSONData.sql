@@ -47,7 +47,8 @@ BEGIN TRY
 
 	 
 	 DECLARE @Params VARCHAR(MAX),
-			 @ObjectName VARCHAR(100)
+			 @ObjectName VARCHAR(100),
+			 @IsExistingTable BIT = 0
 
 --EMPTY THE TEMPLATE TABLES----------------------
 TRUNCATE TABLE dbo.FrameworkLookups_history
@@ -636,6 +637,30 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						
 					SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
 					
+					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================
+						DECLARE @HistStepItemID INT, @HistTblName VARCHAR(500) = CONCAT(@Name,'_',@TemplateTableName,'_history')
+						
+						SET @SQL = CONCAT('IF EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTblName,''')', CHAR(10))
+						SET @SQL = CONCAT(@SQL,' SET @IsExistingTable = 1; ', CHAR(10))
+						PRINT @SQL  
+						EXEC sp_executesql @SQL, N'@IsExistingTable BIT OUTPUT',@IsExistingTable OUTPUT;
+
+						IF @IsExistingTable = 1
+						BEGIN
+
+							SET @SQL = CONCAT('SELECT TOP 1 @HistStepItemID = StepItemID FROM [',@HistTblName,'] WHERE FrameworkID=',
+												@FrameworkID,' AND StepItemKey=''',@StepItemKey,''''
+											 )
+						   PRINT @SQL  
+						   EXEC sp_executesql @SQL, N'@HistStepItemID INT OUTPUT',@HistStepItemID OUTPUT;
+
+						   --STEP ITEM WAS AVAILABLE, HENCE USE THE SAME STEP ITEM ID
+						   IF @HistStepItemID IS NOT NULL
+							 SET @StepItemID = @HistStepItemID
+
+						 END
+					--============================================================================================================
+
 					INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
 						SELECT  @StepItemID,
 								@FrameworkID,
@@ -924,11 +949,21 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
  END	--END OF WHILE LOOP	
 		
-		--**DELETE FROM STEP ITEMS IF DATA NOT AVAILABLE IN JSON************************************************************			
-			SET @TableName = CONCAT('[',@Name,'_FrameworkStepItems]');
-			SET @SQL = CONCAT('DELETE TBL FROM ',@TableName,' TBL WHERE NOT EXISTS(SELECT 1 FROM dbo.FrameworkStepItems FSI  WHERE TBL.FrameworkID = FSI.FrameworkID AND TBL.StepItemKey = FSI.StepItemKey)', CHAR(10))				
+		--**DELETE FROM STEP ITEMS IF DATA NOT AVAILABLE IN JSON************************************************************
+			SET @IsExistingTable = 0
+
+			SET @SQL = CONCAT('IF EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME =''',@Name,'_FrameworkStepItems'')', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SET @IsExistingTable = 1; ', CHAR(10))
 			PRINT @SQL  
-			EXEC sp_executesql @SQL;			
+			EXEC sp_executesql @SQL, N'@IsExistingTable BIT OUTPUT',@IsExistingTable OUTPUT;
+
+			IF @IsExistingTable = 1
+			BEGIN			
+				SET @TableName = CONCAT('[',@Name,'_FrameworkStepItems]');
+				SET @SQL = CONCAT('DELETE TBL FROM ',@TableName,' TBL WHERE NOT EXISTS(SELECT 1 FROM dbo.FrameworkStepItems FSI  WHERE TBL.FrameworkID = FSI.FrameworkID AND TBL.StepItemKey = FSI.StepItemKey)', CHAR(10))				
+				PRINT @SQL  
+				EXEC sp_executesql @SQL;			
+			END
 		--******************************************************************************************************************
 		
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
