@@ -657,10 +657,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						   --STEP ITEM WAS AVAILABLE, HENCE USE THE SAME STEP ITEM ID
 						   IF @HistStepItemID IS NOT NULL
 							 SET @StepItemID = @HistStepItemID
-
+							
+							SET @HistStepItemID = NULL
 						 END
 					--============================================================================================================
-
+					
 					INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
 						SELECT  @StepItemID,
 								@FrameworkID,
