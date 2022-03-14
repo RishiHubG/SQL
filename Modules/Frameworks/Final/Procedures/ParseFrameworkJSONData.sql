@@ -661,7 +661,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 							SET @HistStepItemID = NULL
 						 END
 					--============================================================================================================
-					
+					 
 					INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
 						SELECT  @StepItemID,
 								@FrameworkID,
@@ -686,7 +686,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					UserModified = 1,
 					DateModified = GETUTCDATE()
 			WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
-			
+			 
 			IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND StepItemID=@StepItemID AND VersionNum=@VersionNum)
 				INSERT INTO [dbo].[FrameworkStepItems_history]
 						   (FrameworkID,
@@ -1068,7 +1068,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	--**********************************************************************************************************************************	
 		
 		PRINT 'ParseJSONData Completed...'
-			 
+				
 		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
 		
 		----INSERT INTO FrameworksEntityGridMapping & FrameworkAttributesMapping:------------------------------------------------
