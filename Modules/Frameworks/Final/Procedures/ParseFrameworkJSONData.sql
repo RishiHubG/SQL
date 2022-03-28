@@ -511,7 +511,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		WHERE ValueType NOT IN ('Object','array')		
 		--WHERE ISNULL(KeyName,'') <> '' 
 		--	  AND Parent_ID > 0
-		
+		--SELECT * FRom #TMP
+		--ROLLBACK
+		--RETURN
 		SELECT @StepItemType = (SELECT StringValue FROM #TMP WHERE KeyName ='type' AND Parent_ID = @ID),
 			   @StepItemName = (SELECT StringValue FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
 			   @StepItemKey = (SELECT StringValue FROM #TMP WHERE KeyName ='key' AND Parent_ID = @ID),	
@@ -950,6 +952,69 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
  END	--END OF WHILE LOOP	
 		
+				--HANDLE rangecolored/colored INSERTION INTO FrameworkStepItems======================================================
+					DECLARE @MaxStemItemID INT = (SELECT MAX(StepItemID) FROM dbo.FrameworkStepItems)
+					DECLARE @OrderBy INT = (SELECT MAX(OrderBy) FROM dbo.FrameworkStepItems)
+			 	
+					DROP TABLE IF EXISTS #TMP_FrameworkStepItems;
+
+					SELECT  ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @MaxStemItemID AS StepItemID,
+						    @FrameworkID AS FrameworkID,
+							(SELECT TOP 1 StepID FROM dbo.FrameworkStepItems) AS StepID,
+							Name AS StepItemName,
+							StringValue AS StepItemType,
+							Name AS StepItemKey,
+							ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @OrderBy AS OrderBy,
+							(SELECT TOP 1 DateCreated FROM dbo.FrameworkStepItems) AS DateCreated,
+							(SELECT TOP 1 UserCreated FROM dbo.FrameworkStepItems) AS UserCreated,
+							@VersionNum AS  VersionNum
+						INTO #TMP_FrameworkStepItems
+					FROM #TMP_DATA
+					WHERE StringValue IN ('rangecolored','colored')
+						  AND NAME NOT IN ('rangeColourCheck','colourDdl')
+					ORDER BY StringValue;
+
+					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================						
+						IF @IsExistingTable = 1
+						BEGIN
+							SET @SQL = CONCAT('UPDATE TMP SET StepItemID = Hist.StepItemID 
+											  FROM [',@HistTblName,'] Hist INNER JOIN #TMP_FrameworkStepItems TMP ON TMP.FrameworkID=Hist.FrameworkID AND Hist.StepItemKey=TMP.StepItemKey'
+											  )
+						   PRINT @SQL  
+						   EXEC sp_executesql @SQL
+						 END
+					--============================================================================================================
+					--SELECT * FROM #TMP_FrameworkStepItems
+
+				SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
+
+				INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
+					SELECT StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum
+					FROM #TMP_FrameworkStepItems
+					ORDER BY StepItemName;
+
+					SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;
+					
+				IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND StepItemID=@StepItemID AND VersionNum=@VersionNum)
+				INSERT INTO [dbo].[FrameworkStepItems_history]
+						   (FrameworkID,
+							StepItemID,
+							[StepID]
+						   ,[StepItemName]
+						   ,[StepItemType]
+						   ,[StepItemKey]
+						   ,[OrderBy]
+						   ,[UserCreated]
+						   ,[DateCreated]						  
+						   ,[VersionNum],
+						   PeriodIdentifierID)
+				SELECT FrameworkID, StepItemID, StepID,StepItemName,StepItemType,StepItemKey,OrderBy,UserCreated,DateCreated,VersionNum,1
+					FROM #TMP_FrameworkStepItems TMP
+					WHERE NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=TMP.FrameworkID AND StepID=TMP.StepID AND StepItemID=TMP.StepItemID AND VersionNum=TMP.VersionNum)
+					ORDER BY StepItemName;
+		--===================================================================================================================
+		
+
 		--**DELETE FROM STEP ITEMS IF DATA NOT AVAILABLE IN JSON************************************************************
 			SET @IsExistingTable = 0
 
@@ -967,6 +1032,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			END
 		--******************************************************************************************************************
 		
+
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
 		--DECLARE @PeriodIdentifierID INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_history WHERE Name = @Name)
 
