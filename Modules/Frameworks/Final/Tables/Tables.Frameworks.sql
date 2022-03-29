@@ -46,7 +46,8 @@ GO
 DROP TABLE  IF EXISTS dbo.FrameworkStepItems
 CREATE TABLE dbo.FrameworkStepItems
 (
-StepItemID INT IDENTITY(1,1),
+--StepItemID INT IDENTITY(1,1),
+StepItemID INT,
 UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
@@ -58,7 +59,7 @@ StepItemName NVARCHAR(100) NOT NULL,
 StepItemType NVARCHAR(100) NOT NULL,
 StepItemKey NVARCHAR(100) NOT NULL,
 OrderBy INT,
-CONSTRAINT PK_Framework_Metafield_StepItemID PRIMARY KEY(StepItemID)
+CONSTRAINT PK_FrameworkStepItems_StepItemID PRIMARY KEY(StepItemID)
 )
 
 	

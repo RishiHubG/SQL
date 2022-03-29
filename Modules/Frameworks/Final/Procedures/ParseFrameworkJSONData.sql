@@ -637,7 +637,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		IF @IsAvailable IS NULL OR @IsAvailable = 0
 		BEGIN
 						
-					SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
+					--SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
 					
 					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================
 						DECLARE @HistStepItemID INT, @HistTblName VARCHAR(500) = CONCAT(@Name,'_',@TemplateTableName,'_history')
@@ -658,8 +658,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 						   --STEP ITEM WAS AVAILABLE, HENCE USE THE SAME STEP ITEM ID
 						   IF @HistStepItemID IS NOT NULL
+						   BEGIN
 							 SET @StepItemID = @HistStepItemID
 							
+							 IF EXISTS(SELECT 1 FROM dbo.FrameworkStepItems WHERE StepItemID = @StepItemID)
+								UPDATE dbo.FrameworkStepItems SET StepItemID = StepItemID + 1 WHERE StepItemID >= @StepItemID
+
+							END
+
 							SET @HistStepItemID = NULL
 						 END
 					--============================================================================================================
@@ -673,9 +679,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 								@StepItemKey,
 								(SELECT SequenceNo FROM #TMP WHERE KeyName ='Label' AND Parent_ID = @ID),
 								GETUTCDATE(),@UserLoginID,@VersionNum	
-
+						
 					--SET @StepItemID = SCOPE_IDENTITY()
-					SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;				
+					--SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;				
 		END
 		ELSE IF NOT EXISTS(SELECT 1 FROM FrameworkStepItems WHERE StepItemKey = @StepItemKey AND StepID = @StepID) --KEY MOVED TO A DIFFERENT STEP
 				UPDATE dbo.FrameworkStepItems
@@ -951,7 +957,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 			   @AttributeID = NULL, @LookupID = NULL
 		
  END	--END OF WHILE LOOP	
-		
+					
 				--HANDLE rangecolored/colored INSERTION INTO FrameworkStepItems======================================================
 					DECLARE @MaxStemItemID INT = (SELECT MAX(StepItemID) FROM dbo.FrameworkStepItems)
 					DECLARE @OrderBy INT = (SELECT MAX(OrderBy) FROM dbo.FrameworkStepItems)
@@ -986,14 +992,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					--============================================================================================================
 					--SELECT * FROM #TMP_FrameworkStepItems
 
-				SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
+				--SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
 
 				INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
 					SELECT StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum
 					FROM #TMP_FrameworkStepItems
 					ORDER BY StepItemName;
 
-					SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;
+				--	SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;
 					
 				IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND StepItemID=@StepItemID AND VersionNum=@VersionNum)
 				INSERT INTO [dbo].[FrameworkStepItems_history]
