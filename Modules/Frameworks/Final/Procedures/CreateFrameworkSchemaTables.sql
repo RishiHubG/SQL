@@ -163,10 +163,27 @@ BEGIN
 		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.[',@NewTableName, '] WHERE FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
-		--IF @TemplateTableName NOT LIKE '%FrameworkLookups%'
+		IF @TemplateTableName NOT LIKE '%FrameworkStepItems%'
 		SET @SQL = CONCAT('SET IDENTITY_INSERT [',@NewTableName,'] ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT [',@NewTableName,'] OFF ;')
 		PRINT @SQL
 		EXEC sp_executesql @SQL
+		
+		IF @TemplateTableName LIKE '%FrameworkStepItems%'
+		BEGIN
+			DECLARE @IsExistingPK BIT = 0
+
+			SET @SQL = CONCAT('IF NOT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME =''',@NewTableName,''' AND CONSTRAINT_TYPE = ''PRIMARY KEY'')', CHAR(10))
+			SET @SQL = CONCAT(@SQL,' SET @IsExistingPK = 1; ', CHAR(10))
+			PRINT @SQL  
+			EXEC sp_executesql @SQL, N'@IsExistingPK BIT OUTPUT',@IsExistingPK OUTPUT;
+
+			IF @IsExistingPK  = 1
+			BEGIN
+				SET @SQL = CONCAT('ALTER TABLE ',@NewTableName,' ADD CONSTRAINT PK_',@NewTableName,'_StepItemID PRIMARY KEY(StepItemID)')
+				PRINT @SQL
+				EXEC sp_executesql @SQL
+			END
+		END
 
 		------------------------------------------------------------------------------------------------------------------------------------------------
 		--1. KEY MOVED TO A DIFFERENT STEP: UPDATE FROM FrameworkStepItems

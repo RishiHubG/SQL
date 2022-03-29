@@ -661,8 +661,11 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						   BEGIN
 							 SET @StepItemID = @HistStepItemID
 							
-							 IF EXISTS(SELECT 1 FROM dbo.FrameworkStepItems WHERE StepItemID = @StepItemID)
-								UPDATE dbo.FrameworkStepItems SET StepItemID = StepItemID + 1 WHERE StepItemID >= @StepItemID
+							-- IF EXISTS(SELECT 1 FROM dbo.FrameworkStepItems WHERE StepItemID = @StepItemID)
+							-- BEGIN
+							--	UPDATE dbo.FrameworkStepItems SET StepItemID = StepItemID + 1 WHERE StepItemID >= @StepItemID
+							--	UPDATE dbo.[FrameworkStepItems_history] SET StepItemID = StepItemID + 1 WHERE StepItemID >= @StepItemID
+							--END
 
 							END
 
@@ -999,6 +1002,39 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					FROM #TMP_FrameworkStepItems
 					ORDER BY StepItemName;
 
+					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================						
+						IF @IsExistingTable = 1
+						BEGIN
+							SET @SQL = CONCAT('UPDATE TMP SET StepItemID = Hist.StepItemID 
+											  FROM [',@HistTblName,'] Hist INNER JOIN dbo.FrameworkStepItems TMP ON TMP.FrameworkID=Hist.FrameworkID AND Hist.StepItemKey=TMP.StepItemKey'
+											  )
+						   PRINT @SQL  
+						   EXEC sp_executesql @SQL
+
+						   SET @SQL = CONCAT('UPDATE TMP SET StepItemID = -1
+											  FROM dbo.FrameworkStepItems TMP 
+											  WHERE NOT EXISTS(SELECT 1 FROM [',@HistTblName,'] Hist WHERE TMP.FrameworkID=Hist.FrameworkID AND Hist.StepItemKey=TMP.StepItemKey)'
+											  )
+						   PRINT @SQL  
+						   EXEC sp_executesql @SQL
+						   					   
+
+						   DECLARE @MaxID INT = (SELECT MAX(StepItemID) FROM dbo.FrameworkStepItems)
+						   DECLARE @Val INT = 0
+						   UPDATE dbo.FrameworkStepItems
+							SET @MaxID = StepItemID = @MaxID + 1
+							WHERE StepItemID = -1
+
+							UPDATE Hist
+							SET StepItemID = TMP.StepItemID 
+							FROM [dbo].[FrameworkStepItems_history] Hist 
+								  INNER JOIN dbo.FrameworkStepItems TMP ON TMP.FrameworkID=Hist.FrameworkID AND Hist.StepItemKey=TMP.StepItemKey
+							WHERE Hist.PeriodIdentifierID = 1
+
+						 END
+					--============================================================================================================
+					
+					--SELECT * FROM dbo.FrameworkStepItems
 				--	SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;
 					
 				IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND StepItemID=@StepItemID AND VersionNum=@VersionNum)
@@ -1016,7 +1052,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						   PeriodIdentifierID)
 				SELECT FrameworkID, StepItemID, StepID,StepItemName,StepItemType,StepItemKey,OrderBy,UserCreated,DateCreated,VersionNum,1
 					FROM #TMP_FrameworkStepItems TMP
-					WHERE NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=TMP.FrameworkID AND StepID=TMP.StepID AND StepItemID=TMP.StepItemID AND VersionNum=TMP.VersionNum)
+					--WHERE NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=TMP.FrameworkID AND StepID=TMP.StepID AND StepItemID=TMP.StepItemID AND VersionNum=TMP.VersionNum)
 					ORDER BY StepItemName;
 		--===================================================================================================================
 		

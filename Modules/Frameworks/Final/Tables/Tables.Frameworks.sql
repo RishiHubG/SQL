@@ -58,8 +58,8 @@ StepID INT NOT NULL,
 StepItemName NVARCHAR(100) NOT NULL,
 StepItemType NVARCHAR(100) NOT NULL,
 StepItemKey NVARCHAR(100) NOT NULL,
-OrderBy INT,
-CONSTRAINT PK_FrameworkStepItems_StepItemID PRIMARY KEY(StepItemID)
+OrderBy INT
+--,CONSTRAINT PK_FrameworkStepItems_StepItemID PRIMARY KEY(StepItemID)
 )
 
 	
