@@ -698,7 +698,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					DateModified = GETUTCDATE()
 			WHERE @StepItemID = StepItemID --StepItemKey = @StepItemKey
 			 
-			IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND StepItemID=@StepItemID AND VersionNum=@VersionNum)
+			IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND StepItemKey=@StepItemKey AND VersionNum=@VersionNum)
 				INSERT INTO [dbo].[FrameworkStepItems_history]
 						   (FrameworkID,
 							StepItemID,
@@ -1036,8 +1036,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					
 					--SELECT * FROM dbo.FrameworkStepItems
 				--	SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;
-					
-				IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND StepItemID=@StepItemID AND VersionNum=@VersionNum)
+			
 				INSERT INTO [dbo].[FrameworkStepItems_history]
 						   (FrameworkID,
 							StepItemID,
@@ -1052,7 +1051,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						   PeriodIdentifierID)
 				SELECT FrameworkID, StepItemID, StepID,StepItemName,StepItemType,StepItemKey,OrderBy,UserCreated,DateCreated,VersionNum,1
 					FROM #TMP_FrameworkStepItems TMP
-					--WHERE NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=TMP.FrameworkID AND StepID=TMP.StepID AND StepItemID=TMP.StepItemID AND VersionNum=TMP.VersionNum)
+					WHERE NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkStepItems_history] WHERE FrameworkID=TMP.FrameworkID AND StepItemKey=TMP.StepItemKey AND VersionNum=TMP.VersionNum)
 					ORDER BY StepItemName;
 		--===================================================================================================================
 		
