@@ -41,7 +41,7 @@ BEGIN TRY
 	EXEC dbo.CheckUserPermission @UserLoginID = @UserLoginID,
 								 @MethodName = @MethodName,
 								 @UserID = @UserID	OUTPUT							     
-	
+	SET @UserID = 100
 	IF @UserID IS NOT NULL
 	BEGIN
 
@@ -982,7 +982,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					WHERE StringValue IN ('rangecolored','colored')
 						  AND NAME NOT IN ('rangeColourCheck','colourDdl')
 					ORDER BY StringValue;
-
+					
 					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================						
 						IF @IsExistingTable = 1
 						BEGIN
@@ -993,13 +993,15 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						   EXEC sp_executesql @SQL
 						 END
 					--============================================================================================================
+
 					--SELECT * FROM #TMP_FrameworkStepItems
 
 				--SET IDENTITY_INSERT dbo.FrameworkStepItems ON;
 
 				INSERT INTO dbo.FrameworkStepItems (StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum)
 					SELECT StepItemID,FrameworkID,StepID,StepItemName,StepItemType,StepItemKey,OrderBy,DateCreated,UserCreated,VersionNum
-					FROM #TMP_FrameworkStepItems
+					FROM #TMP_FrameworkStepItems TBL
+					WHERE NOT EXISTS(SELECT 1 FROM dbo.FrameworkStepItems WHERE FrameworkID = TBL.FrameworkID AND StepItemKey =TBL.StepItemKey)
 					ORDER BY StepItemName;
 
 					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================						
