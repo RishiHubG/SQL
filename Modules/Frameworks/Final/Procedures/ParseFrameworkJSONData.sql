@@ -760,7 +760,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		IF @LookupID IS NULL AND NOT EXISTS(SELECT 1 FROM dbo.FrameworkLookups)		
 			SET @LookupID = 0;			
 		ELSE IF EXISTS(SELECT 1 FROM dbo.FrameworkLookups)		
-			SELECT @LookupID  = MAX(LookupID) + 1 FROM dbo.FrameworkLookups
+			SELECT @LookupID  = MAX(LookupID) FROM dbo.FrameworkLookups
 		--==================================================================================================================================
 					
 					SET IDENTITY_INSERT dbo.[FrameworkAttributes] ON;
@@ -789,8 +789,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				--	  OR
 				--	 TAB.ParentName = 'validate'				
 
-				SET IDENTITY_INSERT dbo.FrameworkLookups ON;
-				
+								
 				--GET THE LOOKUPS ATTRIBUTES
 				IF @StepItemType = 'selectboxes'
 				BEGIN
@@ -942,7 +941,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 									--						  AND LookupName= T.KeyName
 									--				)			
 					
-					SET IDENTITY_INSERT dbo.FrameworkLookups OFF;
+					 
 										
 					--UPDATE dbo.FrameworkLookups SET VersionNum = @VersionNum
 		
@@ -1004,6 +1003,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 					WHERE NOT EXISTS(SELECT 1 FROM dbo.FrameworkStepItems WHERE FrameworkID = TBL.FrameworkID AND StepItemKey =TBL.StepItemKey)
 					ORDER BY StepItemName;
 
+					 DECLARE @MaxID INT
+					 DECLARE @Val INT = 0
+
 					--CHECK IF THE NEW STEP ITEM IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================						
 						IF @IsExistingTable = 1
 						BEGIN
@@ -1021,8 +1023,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						   EXEC sp_executesql @SQL
 						   					   
 
-						   DECLARE @MaxID INT = (SELECT MAX(StepItemID) FROM dbo.FrameworkStepItems)
-						   DECLARE @Val INT = 0
+						   SELECT @MaxID = MAX(StepItemID) FROM dbo.FrameworkStepItems
+						  
 						   UPDATE dbo.FrameworkStepItems
 							SET @MaxID = StepItemID = @MaxID + 1
 							WHERE StepItemID = -1
@@ -1036,6 +1038,49 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						 END
 					--============================================================================================================
 					
+			    --CHECK IF THE NEW LOOKUPS IS ALREADY AVAILABLE IN HISTORY (USING APIKEY)=================================	
+						
+						SELECT  @HistTblName = CONCAT(@Name,'_FrameworkLookups_history')
+						
+						SET @SQL = CONCAT('IF EXISTS (SELECT 1 FROM SYS.TABLES WHERE NAME =''',@HistTblName,''')', CHAR(10))
+						SET @SQL = CONCAT(@SQL,' SET @IsExistingTable = 1; ', CHAR(10))
+						PRINT @SQL  
+						EXEC sp_executesql @SQL, N'@IsExistingTable BIT OUTPUT',@IsExistingTable OUTPUT;
+
+
+						IF @IsExistingTable = 1
+						BEGIN
+							SET @SQL = CONCAT('UPDATE TMP SET LookupID = Hist.LookupID 
+											  FROM [',@HistTblName,'] Hist INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND Hist.LookupName=TMP.LookupName'
+											  )
+						   PRINT @SQL  
+						   EXEC sp_executesql @SQL
+
+						   SET @SQL = CONCAT('UPDATE TMP SET LookupID = -1
+											  FROM dbo.FrameworkLookups TMP 
+											  WHERE NOT EXISTS(SELECT 1 FROM [',@HistTblName,'] Hist WHERE TMP.FrameworkID=Hist.FrameworkID AND Hist.LookupName=TMP.LookupName)'
+											  )
+						   PRINT @SQL  
+						   EXEC sp_executesql @SQL
+						   					   
+
+						   SELECT @MaxID = MAX(LookupID) FROM dbo.FrameworkLookups
+						   SET @Val = 0
+
+						   UPDATE dbo.FrameworkLookups
+							SET @MaxID = LookupID = @MaxID + 1
+							WHERE LookupID = -1
+
+							UPDATE Hist
+							SET LookupID = TMP.LookupID 
+							FROM [dbo].[FrameworkLookups_history] Hist 
+								  INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND Hist.LookupName=TMP.LookupName
+							WHERE Hist.PeriodIdentifierID = 1
+
+						 END
+					--============================================================================================================
+
+					--SELECT * FROM dbo.FrameworkLookups
 					--SELECT * FROM dbo.FrameworkStepItems
 				--	SET IDENTITY_INSERT dbo.FrameworkStepItems OFF;
 			

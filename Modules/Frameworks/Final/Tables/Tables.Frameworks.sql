@@ -97,7 +97,8 @@ GO
 DROP TABLE  IF EXISTS dbo.FrameworkLookups
 CREATE TABLE dbo.FrameworkLookups
 (
-LookupID INT IDENTITY(1,1),
+--LookupID INT IDENTITY(1,1),
+LookupID INT,
 UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,

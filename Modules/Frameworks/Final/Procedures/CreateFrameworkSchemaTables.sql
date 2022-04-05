@@ -163,12 +163,12 @@ BEGIN
 		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.[',@NewTableName, '] WHERE FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
-		IF @TemplateTableName NOT LIKE '%FrameworkStepItems%'
+		IF @TemplateTableName NOT LIKE '%FrameworkStepItems%' AND @TemplateTableName NOT LIKE '%FrameworkLookups%' 
 		SET @SQL = CONCAT('SET IDENTITY_INSERT [',@NewTableName,'] ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT [',@NewTableName,'] OFF ;')
 		PRINT @SQL
 		EXEC sp_executesql @SQL
 		
-		IF @TemplateTableName LIKE '%FrameworkStepItems%'
+		IF @TemplateTableName LIKE '%FrameworkStepItems%' OR @TemplateTableName LIKE '%FrameworkLookups%'
 		BEGIN
 			DECLARE @IsExistingPK BIT = 0
 
@@ -179,7 +179,11 @@ BEGIN
 
 			IF @IsExistingPK  = 1
 			BEGIN
-				SET @SQL = CONCAT('ALTER TABLE ',@NewTableName,' ADD CONSTRAINT PK_',@NewTableName,'_StepItemID PRIMARY KEY(StepItemID)')
+				IF @TemplateTableName LIKE '%FrameworkStepItems%'
+					SET @SQL = CONCAT('ALTER TABLE ',@NewTableName,' ADD CONSTRAINT PK_',@NewTableName,'_StepItemID PRIMARY KEY(StepItemID)')
+				ELSE
+					SET @SQL = CONCAT('ALTER TABLE ',@NewTableName,' ADD CONSTRAINT PK_',@NewTableName,'_LookupID PRIMARY KEY(LookupID)')
+
 				PRINT @SQL
 				EXEC sp_executesql @SQL
 			END
