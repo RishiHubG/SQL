@@ -1230,9 +1230,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 	--**********************************************************************************************************************************	
 		
 		PRINT 'ParseJSONData Completed...'
-				
-		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
 		
+		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
+		 
 		----INSERT INTO FrameworksEntityGridMapping & FrameworkAttributesMapping:------------------------------------------------
 			
 			UPDATE FEGM

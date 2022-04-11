@@ -98,7 +98,7 @@ DROP TABLE  IF EXISTS dbo.FrameworkLookups
 CREATE TABLE dbo.FrameworkLookups
 (
 --LookupID INT IDENTITY(1,1),
-LookupID INT,
+LookupID INT NOT NULL,
 UserCreated INT NOT NULL,
 DateCreated DATETIME2(0) NOT NULL,
 UserModified INT,
@@ -106,7 +106,7 @@ DateModified DATETIME2(0),
 VersionNum INT NOT NULL,
 FrameworkID INT,
 StepItemID INT NOT NULL,
-LookupName NVARCHAR(MAX) NOT NULL,
+LookupName NVARCHAR(845) NOT NULL,
 LookupValue NVARCHAR(MAX) NOT NULL,
 LookupType NVARCHAR(100) NULL,
 Color  NVARCHAR(100) NULL,
@@ -117,6 +117,7 @@ OrderBy INT
 
 	
 	ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT DF_FrameworkLookups_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+	ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT UQ_FrameworkLookups_LookupName UNIQUE(FrameworkID,StepItemID,LookupName)
 GO
 
 --ALTER TABLE dbo.FrameworkLookups ADD CONSTRAINT FK_FrameworkLookups_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems(StepItemID)

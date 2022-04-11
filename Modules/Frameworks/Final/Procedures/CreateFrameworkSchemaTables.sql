@@ -49,7 +49,7 @@ DECLARE @TBL_List TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500),PK V
 DECLARE @TBL_List_Constraints TABLE(ID INT IDENTITY(1,1),TemplateTableName VARCHAR(500), NewTableName VARCHAR(500),ParentTableName VARCHAR(500),ConstraintSQL VARCHAR(MAX))
 DECLARE @ConstraintSQL NVARCHAR(MAX),@HistoryTable VARCHAR(50)= '_history',@TableCheck VARCHAR(500)
 DECLARE @DropConstraintsSQL NVARCHAR(MAX),@TableType VARCHAR(100),@KeyColName VARCHAR(100)
-
+DECLARE @UQ_ConstraintName VARCHAR(MAX)
 
 	--GET THE CURRENT VERSION NO.: THIS WILL ACTUALLY BE PASSED FROM THE PREVIOUS SCRIPT/CODE:ParseJSON_v2.sql
 	--DECLARE @VersionNum INT = (SELECT MAX(VersionNum) FROM dbo.Frameworks_history)
@@ -167,7 +167,7 @@ BEGIN
 		SET @SQL = CONCAT('SET IDENTITY_INSERT [',@NewTableName,'] ON ;', CHAR(10),@SQL, CHAR(10),'SET IDENTITY_INSERT [',@NewTableName,'] OFF ;')
 		PRINT @SQL
 		EXEC sp_executesql @SQL
-		
+	
 		IF @TemplateTableName LIKE '%FrameworkStepItems%' OR @TemplateTableName LIKE '%FrameworkLookups%'
 		BEGIN
 			DECLARE @IsExistingPK BIT = 0
@@ -187,6 +187,20 @@ BEGIN
 				PRINT @SQL
 				EXEC sp_executesql @SQL
 			END
+
+			--CREATE UNIQUE CONSTRAINT ON Lookups
+			IF @TemplateTableName LIKE '%FrameworkLookups%'
+			BEGIN	
+				SET @UQ_ConstraintName = CONCAT('ÚQ_',@NewTableName,'_LookupName');
+
+				IF NOT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = @NewTableName AND CONSTRAINT_NAME = @UQ_ConstraintName)
+				BEGIN
+					SET @SQL = CONCAT(' ALTER TABLE dbo.[',@NewTableName,'] ADD CONSTRAINT ', @UQ_ConstraintName, ' UNIQUE(FrameworkID,StepItemID,LookupName)')
+					PRINT @SQL
+					EXEC sp_executesql @SQL
+				END
+			END
+
 		END		
 		------------------------------------------------------------------------------------------------------------------------------------------------
 		--1. KEY MOVED TO A DIFFERENT STEP: UPDATE FROM FrameworkStepItems
@@ -194,7 +208,7 @@ BEGIN
 		IF @NewTableName LIKE '%_FrameworkStepItems'
 		BEGIN
 			
-			DECLARE @UQ_ConstraintName VARCHAR(100) = CONCAT('ÚQ_',@NewTableName,'_StepItemKey');
+			SET @UQ_ConstraintName = CONCAT('ÚQ_',@NewTableName,'_StepItemKey');
 
 			--CREATE UNIQUE CONSTRAINT ON StepItemKey
 			IF NOT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = @NewTableName AND CONSTRAINT_NAME = @UQ_ConstraintName)
