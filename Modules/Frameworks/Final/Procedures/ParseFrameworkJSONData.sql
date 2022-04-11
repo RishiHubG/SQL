@@ -866,12 +866,13 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				--SELECT @id,* FROM  #TMP T WHERE keyName IN ('Name','Value','Color') AND ValueType = 'string'
 
 						SELECT Parent_ID,
+							   MAX(CASE WHEN KeyName='Name' THEN StringValue ELSE '' END) AS LookupName,
 							   MAX(CASE WHEN KeyName='Color' THEN StringValue ELSE '' END) AS LookupColor,
 							   MAX(CASE WHEN KeyName='Value' THEN StringValue ELSE '' END) AS LookupValue,
 							   CAST(NULL AS VARCHAR(50)) AS LookupType
 							INTO #TMP_ColorLookups
 						FROM #TMP 
-						WHERE KeyName IN ('Color','value')
+						WHERE KeyName IN ('Name','Color','value')
 							 GROUP BY Parent_ID
 
 						INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum, Color,MaxValue)
@@ -879,7 +880,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										   @FrameworkID,
 										   @StepItemID,
 										   @StepItemKey,
-										   @StepItemType,
+										   LookupName, --@StepItemType
 										   Parent_ID,
 										   GETUTCDATE(),
 										   @UserLoginID,
@@ -895,13 +896,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				--SELECT @id,* FROM  #TMP T WHERE keyName IN ('Name','Value','Color') AND ValueType = 'string'
 
 						SELECT Parent_ID,
+						        MAX(CASE WHEN KeyName='Name' THEN StringValue ELSE '' END) AS LookupName,
 							   MAX(CASE WHEN KeyName='Color' THEN StringValue ELSE '' END) AS LookupColor,
 							   MAX(CASE WHEN KeyName='MinValue' THEN StringValue ELSE '' END) AS LookupMinValue,
 							   MAX(CASE WHEN KeyName='MaxValue' THEN StringValue ELSE '' END) AS LookupMaxValue,
 							   CAST(NULL AS VARCHAR(50)) AS LookupType
 							INTO #TMP_RangeColorLookups
 						FROM #TMP 
-						WHERE KeyName IN ('Color','Minvalue','MaxValue')
+						WHERE KeyName IN ('Name','Color','Minvalue','MaxValue')
 							 GROUP BY Parent_ID
 
 						INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum, Color,MinValue,MaxValue)
@@ -909,7 +911,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										   @FrameworkID,
 										   @StepItemID,
 										   @StepItemKey,
-										   @StepItemType,
+										   LookupName, --@StepItemType
 										   Parent_ID,
 										   GETUTCDATE(),
 										   @UserLoginID,
@@ -1051,14 +1053,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						IF @IsExistingTable = 1
 						BEGIN
 							SET @SQL = CONCAT('UPDATE TMP SET LookupID = Hist.LookupID 
-											  FROM [',@HistTblName,'] Hist INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND Hist.LookupName=TMP.LookupName'
+											  FROM [',@HistTblName,'] Hist INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName'
 											  )
 						   PRINT @SQL  
 						   EXEC sp_executesql @SQL
 
 						   SET @SQL = CONCAT('UPDATE TMP SET LookupID = -1
 											  FROM dbo.FrameworkLookups TMP 
-											  WHERE NOT EXISTS(SELECT 1 FROM [',@HistTblName,'] Hist WHERE TMP.FrameworkID=Hist.FrameworkID AND Hist.LookupName=TMP.LookupName)'
+											  WHERE NOT EXISTS(SELECT 1 FROM [',@HistTblName,'] Hist WHERE TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName)'
 											  )
 						   PRINT @SQL  
 						   EXEC sp_executesql @SQL
@@ -1074,7 +1076,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 							UPDATE Hist
 							SET LookupID = TMP.LookupID 
 							FROM [dbo].[FrameworkLookups_history] Hist 
-								  INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND Hist.LookupName=TMP.LookupName
+								  INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName
 							WHERE Hist.PeriodIdentifierID = 1
 
 						 END
@@ -1196,7 +1198,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   PeriodIdentifierID)
+				   PeriodIdentifierID,
+				   Color,
+				   MinValue,
+				   MaxValue)
 		SELECT		@FrameworkID,
 					LookupID,
 					[StepItemID]
@@ -1209,7 +1214,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   ,[UserModified]
 				   ,[DateModified]
 				   ,[VersionNum],
-				   @PeriodIdentifierID    
+				   @PeriodIdentifierID,
+				   Color,
+				   MinValue,
+				   MaxValue
 		FROM dbo.FrameworkLookups
 		ORDER BY [OrderBy]
 

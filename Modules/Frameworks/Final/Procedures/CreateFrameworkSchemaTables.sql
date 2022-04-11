@@ -187,8 +187,7 @@ BEGIN
 				PRINT @SQL
 				EXEC sp_executesql @SQL
 			END
-		END
-
+		END		
 		------------------------------------------------------------------------------------------------------------------------------------------------
 		--1. KEY MOVED TO A DIFFERENT STEP: UPDATE FROM FrameworkStepItems
 		--2. CREATE UNIQUE CONSTRAINT ON StepItemKey
