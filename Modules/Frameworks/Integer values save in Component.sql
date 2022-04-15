@@ -24,3 +24,5 @@ SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'DemoComponent_DATA'
 AND (DATA_TYPE LIKE '%INT%' OR DATA_TYPE LIKE '%DATE%' OR DATA_TYPE LIKE '%FLOAT%' OR DATA_TYPE LIKE '%DECIMAL%')
 
  
+ INSERT INTO dbo.DemoComponent_DATA(FrameworkID, [VersionNum], [UserCreated], [DateCreated], [RegisterID], [ReferenceNum], [name], [objective], [dateUpdated], [riskAssessmsent], [conclusiononoperatingeffectivenessofcontrols], [natureOfControlAndFrequencyOfPerformance], [justificationForSampleSize], [sampleSize], [systemsampleSize], [systemobjective], [systemriskAssessmsent], [systemconclusiononoperatingeffectivenessofcontrols], [isDesignAndImplementationRequired]) 
+ VALUES('54', '476', '2747', '2022-04-15 09:30:16.623', '1415', '-2', 'New Componen', 'To ensure that controls are operating effectively.', , '', '', '', '',NULL , , 'To ensure controls are designed and implemented effectively', '', '', 'Yes')
