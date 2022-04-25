@@ -739,3 +739,4 @@ DROP TABLE lookupsfix_FrameworkLookups_history
 DROP TABLE lookupsfix_FrameworkStepItems_history
 DROP TABLE lookupsfix_FrameworkSteps_history
 
+SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'lookupsfix_FrameworkLookups' AND CONSTRAINT_TYPE = 'UNIQUE' AND CONSTRAINT_NAME = 'ÚQ_lookupsfix_FrameworkLookups_LookupName'

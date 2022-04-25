@@ -61,7 +61,11 @@ TRUNCATE TABLE dbo.FrameworkAttributes
 TRUNCATE TABLE dbo.FrameworkStepItems
 TRUNCATE TABLE dbo.FrameworkSteps
 ------------------------------------------------
- 
+
+--DROP UNIQUE CONSTRAINT
+IF EXISTS(SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'FrameworkLookups' AND CONSTRAINT_TYPE = 'UNIQUE' AND CONSTRAINT_NAME = 'UQ_FrameworkLookups_LookupName')
+	ALTER TABLE dbo.FrameworkLookups DROP CONSTRAINT UQ_FrameworkLookups_LookupName
+
 DROP TABLE IF EXISTS #TMP_ALLSTEPS 
 
  SELECT *
@@ -1240,6 +1244,10 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		
 	--**********************************************************************************************************************************	
 		
+		--ADD UNIQUE CONSTRAINT BACK
+		IF NOT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'FrameworkLookups' AND CONSTRAINT_TYPE = 'UNIQUE' AND CONSTRAINT_NAME = 'UQ_FrameworkLookups_LookupName')
+			ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT UQ_FrameworkLookups_LookupName UNIQUE(FrameworkID,StepItemID,LookupName)
+
 		PRINT 'ParseJSONData Completed...'
 		
 		EXEC dbo.CreateFrameworkSchemaTables @NewTableName = @Name, @FrameworkID = @FrameworkID, @VersionNum = @VersionNum
