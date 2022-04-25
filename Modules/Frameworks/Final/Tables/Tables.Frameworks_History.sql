@@ -121,7 +121,8 @@ LookupType NVARCHAR(100) NULL,
 Color  NVARCHAR(100) NULL,
 MinValue NVARCHAR(100) NULL,
 MaxValue NVARCHAR(100) NULL,
-OrderBy INT
+OrderBy INT,
+StepItemKey NVARCHAR(100) NOT NULL
 )
 
 	ALTER TABLE [dbo].FrameworkLookups_history ADD CONSTRAINT DF_FrameworkLookups_history_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 

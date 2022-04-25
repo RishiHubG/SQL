@@ -788,7 +788,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				--WHERE TAB.Parent_ID = @ID
 				--	  OR
 				--	 TAB.ParentName = 'validate'				
-
+				
 								
 				--GET THE LOOKUPS ATTRIBUTES
 				IF @StepItemType = 'selectboxes'
@@ -811,9 +811,9 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						--			)
 
 						
-						 INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+						 INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum,StepItemKey)
 							SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
-								   @FrameworkID,@StepItemID,@LookupValues,@StepItemName,1,GETUTCDATE(),@UserLoginID,@VersionNum						
+								   @FrameworkID,@StepItemID,@LookupValues,@StepItemName,1,GETUTCDATE(),@UserLoginID,@VersionNum,@StepItemKey						
 				END
 				ELSE		
 				IF @StepItemType = 'select'
@@ -840,7 +840,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 
 							 --SELECT * FROM #TMP_Lookups	
 					
-						 INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,LookupType,OrderBy,DateCreated,UserCreated,VersionNum)
+						 INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,LookupType,OrderBy,DateCreated,UserCreated,VersionNum,StepItemKey)
 									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
 										   @FrameworkID,
 										   @StepItemID,
@@ -850,7 +850,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 											Parent_ID,
 											GETUTCDATE(),
 											@UserLoginID,
-											@VersionNum	
+											@VersionNum,
+											@StepItemKey
 									FROM #TMP_Lookups T
 									--WHERE NOT EXISTS (SELECT 1 
 									--					FROM dbo.FrameworkLookups FMA
@@ -875,7 +876,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						WHERE KeyName IN ('Name','Color','value')
 							 GROUP BY Parent_ID
 
-						INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum, Color,MaxValue)
+						INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum, Color,MaxValue,StepItemKey)
 									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
 										   @FrameworkID,
 										   @StepItemID,
@@ -886,7 +887,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										   @UserLoginID,
 										   @VersionNum,
 										   LookupColor,
-										   LookupValue
+										   LookupValue,
+										   @StepItemKey
 									FROM #TMP_ColorLookups
 			 
 				END
@@ -906,7 +908,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						WHERE KeyName IN ('Name','Color','Minvalue','MaxValue')
 							 GROUP BY Parent_ID
 
-						INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum, Color,MinValue,MaxValue)
+						INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum, Color,MinValue,MaxValue,StepItemKey)
 									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
 										   @FrameworkID,
 										   @StepItemID,
@@ -919,11 +921,12 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										   LookupColor,
 										   LookupMinValue,
 										   LookupMaxValue
+										   ,@StepItemKey
 									FROM #TMP_RangeColorLookups
 			 
 				END				
 				ELSE
-								INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum)
+								INSERT INTO dbo.FrameworkLookups(LookupID,FrameworkID,StepItemID,LookupValue,LookupName,OrderBy,DateCreated,UserCreated,VersionNum,StepItemKey)
 									SELECT ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + @LookupID,
 										   @FrameworkID,
 										   @StepItemID,
@@ -932,7 +935,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 										   SequenceNo,
 										   GETUTCDATE(),
 										   @UserLoginID,
-										   @VersionNum
+										   @VersionNum,
+										   @StepItemKey
 									FROM #TMP T
 									WHERE Parent_ID <> @ID
 										AND KeyName ='value'
@@ -1048,19 +1052,18 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 						SET @SQL = CONCAT(@SQL,' SET @IsExistingTable = 1; ', CHAR(10))
 						PRINT @SQL  
 						EXEC sp_executesql @SQL, N'@IsExistingTable BIT OUTPUT',@IsExistingTable OUTPUT;
-
-
+						
 						IF @IsExistingTable = 1
 						BEGIN
 							SET @SQL = CONCAT('UPDATE TMP SET LookupID = Hist.LookupID 
-											  FROM [',@HistTblName,'] Hist INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName'
+											  FROM [',@HistTblName,'] Hist INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName AND TMP.StepItemKey=Hist.StepItemKey'
 											  )
 						   PRINT @SQL  
 						   EXEC sp_executesql @SQL
 
 						   SET @SQL = CONCAT('UPDATE TMP SET LookupID = -1
 											  FROM dbo.FrameworkLookups TMP 
-											  WHERE NOT EXISTS(SELECT 1 FROM [',@HistTblName,'] Hist WHERE TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName)'
+											  WHERE NOT EXISTS(SELECT 1 FROM [',@HistTblName,'] Hist WHERE TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName AND TMP.StepItemKey=Hist.StepItemKey)'
 											  )
 						   PRINT @SQL  
 						   EXEC sp_executesql @SQL
@@ -1076,7 +1079,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 							UPDATE Hist
 							SET LookupID = TMP.LookupID 
 							FROM [dbo].[FrameworkLookups_history] Hist 
-								  INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName
+								  INNER JOIN dbo.FrameworkLookups TMP ON TMP.FrameworkID=Hist.FrameworkID AND TMP.StepItemID=Hist.StepItemID AND Hist.LookupName=TMP.LookupName AND TMP.StepItemKey=Hist.StepItemKey
 							WHERE Hist.PeriodIdentifierID = 1
 
 						 END
@@ -1121,8 +1124,14 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				EXEC sp_executesql @SQL;			
 			END
 		--******************************************************************************************************************
-		
-
+			
+			--FIX STEPITEM ID IN LOOKUPS: ADDED STEPITEMKEY TO FRAMEWORKLOOKUPS & IT'S HISTORY TABLES TO UNIQUELY IDENTIFY STEPITEMID========================================
+			UPDATE LP
+				SET StepItemID = TMP.StepItemID 
+			FROM [dbo].[FrameworkLookups] LP 
+					INNER JOIN dbo.FrameworkStepItems TMP ON TMP.FrameworkID=LP.FrameworkID AND LP.StepItemKey=TMP.StepItemKey;			
+			--================================================================================================================================================================
+						
 		--POPULATE TEMPLATE HISTORY TABLES**************************************************************************************
 		--DECLARE @PeriodIdentifierID INT = (SELECT MAX(VersionNum) + 1 FROM dbo.Frameworks_history WHERE Name = @Name)
 
@@ -1201,7 +1210,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   PeriodIdentifierID,
 				   Color,
 				   MinValue,
-				   MaxValue)
+				   MaxValue,
+				   StepItemKey)
 		SELECT		@FrameworkID,
 					LookupID,
 					[StepItemID]
@@ -1217,7 +1227,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				   @PeriodIdentifierID,
 				   Color,
 				   MinValue,
-				   MaxValue
+				   MaxValue,
+				   StepItemKey
 		FROM dbo.FrameworkLookups
 		ORDER BY [OrderBy]
 

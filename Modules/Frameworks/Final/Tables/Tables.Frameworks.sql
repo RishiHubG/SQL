@@ -112,12 +112,13 @@ LookupType NVARCHAR(100) NULL,
 Color  NVARCHAR(100) NULL,
 MinValue NVARCHAR(100) NULL,
 MaxValue NVARCHAR(100) NULL,
-OrderBy INT
+OrderBy INT,
+StepItemKey NVARCHAR(100) NOT NULL
 )
 
 	
 	ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT DF_FrameworkLookups_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-	ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT UQ_FrameworkLookups_LookupName UNIQUE(FrameworkID,StepItemID,LookupName)
+	--ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT UQ_FrameworkLookups_LookupName UNIQUE(FrameworkID,StepItemID,LookupName)
 GO
 
 --ALTER TABLE dbo.FrameworkLookups ADD CONSTRAINT FK_FrameworkLookups_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems(StepItemID)
