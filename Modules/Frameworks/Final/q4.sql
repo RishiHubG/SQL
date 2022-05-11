@@ -721,6 +721,7 @@ ALTER TABLE dbo.FrameworkLookups DROP CONSTRAINT UQ_FrameworkLookups_LookupName
 
 SELECT * FROM FrameworkSteps
 SELECT * FROM FrameworkStepItems
+SELECT * FROM FrameworkStepItems_HISTORY
 SELECT * FROM FrameworkLookups
 SELECT * FROM FrameworkLookups_history
 
@@ -740,3 +741,7 @@ DROP TABLE lookupsfix_FrameworkStepItems_history
 DROP TABLE lookupsfix_FrameworkSteps_history
 
 SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'lookupsfix_FrameworkLookups' AND CONSTRAINT_TYPE = 'UNIQUE' AND CONSTRAINT_NAME = 'ÚQ_lookupsfix_FrameworkLookups_LookupName'
+
+
+SELECT * FROM [NewAuditFramework_FrameworkLookups]
+SELECT * FROM [NewAuditFramework_FrameworkLookups_history]
