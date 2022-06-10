@@ -1,0 +1,1 @@
+exec SaveFrameworkJSONData @EntityId=-1,@EntitytypeId=9,@ParentEntityID=14,@ParentEntityTypeID=3,@transitionid=N'',@InputJSON=N'{"tab1":{"name":"Name","department":{"physics":false,"chemistry":true,"maths":true},"school":{"kv":true,"bvb":true,"dav":false}}}',@MethodName=NULL,@UserLoginID=1136
