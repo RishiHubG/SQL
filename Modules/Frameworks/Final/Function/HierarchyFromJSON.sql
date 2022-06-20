@@ -1,11 +1,9 @@
 --https://www.red-gate.com/simple-talk/blogs/consuming-hierarchical-json-documents-sql-server-using-openjson/
-USE junk
-GO
 
 IF Object_Id('dbo.HierarchyFromJSON', 'TF') IS NOT NULL DROP FUNCTION dbo.HierarchyFromJSON;
 GO
  
-CREATE FUNCTION dbo.HierarchyFromJSON(@JSONData VARCHAR(MAX))
+CREATE FUNCTION dbo.HierarchyFromJSON(@JSONData NVARCHAR(MAX))
 RETURNS @ReturnTable TABLE
   (
   Element_ID INT, /* internal surrogate primary key gives the order of parsing and the list order */
