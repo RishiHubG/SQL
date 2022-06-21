@@ -755,10 +755,11 @@ BEGIN TRY
 				
 			SET @ColumnValues = CONCAT(CHAR(39),@FrameworkID,CHAR(39),',',@ColumnValues)
 
+			--LOGIC FOR UPDATING VALUES FOR UNICODE COLUMNS TO ADD A 'N' BEFORE THE STRING************************************************************
 			SELECT IDENTITY(INT,1,1) AS ID, REPLACE(REPLACE(TAB.VALUE,'[',''),']','') AS ColName
 				INTO #TMP_ColName
 			FROM string_split(@ColumnNames,',')TAB
-			SELECT * FROM #TMP_ColName
+			--SELECT * FROM #TMP_ColName
 			
 			/* UNCOMMENT TO CHECK ALL COLUMNS
 			SELECT *
@@ -775,9 +776,32 @@ BEGIN TRY
 			WHERE TABLE_NAME = @TableName
 				  AND C.DATA_TYPE <> 'nvarchar'
 
-			SELECT * FROM #TMP_ColName
-			ROLLBACK
-			RETURN
+			--SELECT * FROM #TMP_ColName
+
+			--EXTRACT ALL VALUES
+			SELECT IDENTITY(INT,1,1) AS ID, REPLACE(REPLACE(TAB.VALUE,'[',''),']','') AS ColValues
+				INTO #TMP_ColValues
+			FROM string_split(@ColumnValues,',')TAB;
+			
+			--FETCH VALUES FOR ALL UNICODE COLUMNS
+			SELECT *
+				INTO #TMP_UniCodeValues
+			FROM #TMP_ColValues TMP				
+			WHERE EXISTS(SELECT 1 FROM #TMP_ColName WHERE ID = TMP.ID);
+
+			--SELECT * FROM #TMP_ColValues
+			--SELECT * FROM #TMP_UniCodeValues
+			
+			UPDATE TMP
+				SET ColValues = CONCAT('N',TMP.ColValues)
+			FROM #TMP_ColValues TMP
+				 INNER JOIN #TMP_UniCodeValues UNI ON UNI.ID = TMP.ID
+				 
+			SELECT @ColumnValues = STRING_AGG(ColValues, ', ')
+			FROM #TMP_ColValues;	
+			
+			--SELECT @ColumnNames, @ColumnValues
+			--UNICODE LOGIC ENDS HERE************************************************************************************************************************
 
 		END
 		ELSE IF @OperationType ='UPDATE'
