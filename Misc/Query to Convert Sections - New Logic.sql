@@ -164,6 +164,7 @@ UPDATE T
 FROM #TMP T
 	 CROSS APPLY dbo.GetNumberFromRomanNumeral(value)TAB
 WHERE T.ROWNUM >=2
+	  AND ASCII(value) NOT IN (99,108,100,109) -- NOT IN (c,l,d,m)
 	  AND (NUM IS NULL OR NUM = 0)
 	   
 --UPDATE DOUBLE ALPAHABETS
