@@ -793,7 +793,7 @@ BEGIN TRY
 			--SELECT * FROM #TMP_UniCodeValues
 			
 			UPDATE TMP
-				SET ColValues = CONCAT('N',TMP.ColValues)
+				SET ColValues = CONCAT('N',TRIM(TMP.ColValues))
 			FROM #TMP_ColValues TMP
 				 INNER JOIN #TMP_UniCodeValues UNI ON UNI.ID = TMP.ID
 				 
