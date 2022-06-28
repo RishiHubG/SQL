@@ -1,0 +1,2 @@
+--DROP TABLE IF EXISTS HirarchyMapping_OM
+CREATE TABLE dbo.HirarchyMapping_OM(ID INT IDENTITY(1,1),KeyName VARCHAR(100), KeyValue INT, KeyType VARCHAR(100))
