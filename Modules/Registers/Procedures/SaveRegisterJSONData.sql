@@ -114,7 +114,7 @@ BEGIN TRY
 				SELECT @OperationType ='UPDATE',
 					   @RegisterID = @EntityID
 
-					SELECT @AccessControlID = RegisterID FROM  dbo.Registers WHERE RegisterID = @RegisterID
+					SELECT @AccessControlID = accesscontrolid FROM  dbo.Registers WHERE RegisterID = @RegisterID
 					SELECT @WorkflowID = WorkFlowACID FROM  dbo.Registers WHERE RegisterID = @RegisterID	
 					
 					UPDATE Registers
@@ -212,9 +212,9 @@ BEGIN TRY
 			 
 		SET @SQL = STUFF
 					((SELECT CONCAT(' ', UpdString,'; ', CHAR(10))
-					FROM #TMP_UpdateStmt 	
-					FOR XML PATH ('')								
-					),1,1,'')	
+					FROM #TMP_UpdateStmt 					 	
+					FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+					,1,1,'')	
 		 
 		PRINT @SQL
 		EXEC (@SQL)
@@ -287,8 +287,8 @@ BEGIN TRY
 		SET @SQL = STUFF
 					((SELECT CONCAT(' ', TableInsert,'; ', CHAR(10))
 					FROM #TMP_ContactInst 	
-					FOR XML PATH ('')								
-					),1,1,'')	
+					FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+					,1,1,'')	
 		 
 		PRINT @SQL
 		EXEC (@SQL)
@@ -359,23 +359,34 @@ BEGIN TRY
 											((SELECT CONCAT(', ',QUOTENAME(ColumnName))
 											FROM #TMP_INSERT 								
 											ORDER BY Element_ID
-											FOR XML PATH ('')								
-											),1,1,'')
+											FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+											,1,1,'')
 					
 						
 						DECLARE @HistoryColumns VARCHAR(MAX) = 'RegisterPropertiesXref_DataID,RegisterID,UserCreated,DateCreated ,UserModified, Datemodified'
+						
+					
+					IF @ColumnNames IS NOT NULL
+					BEGIN
+						SET @ColumnNames = CONCAT('RegisterID,UserCreated,',@ColumnNames)
 						SET @HistoryColumns = CONCAT(@HistoryColumns,',',@ColumnNames)
-
-					SET @ColumnNames = CONCAT('RegisterID,UserCreated,',@ColumnNames)
+					END
+					ELSE
+					BEGIN
+						SET @ColumnNames = 'RegisterID,UserCreated'
+					END
 
 					SET @ColumnValues = STUFF
 											((SELECT CONCAT(', ',CHAR(39),StringValue,CHAR(39))
 											FROM #TMP_INSERT 								
 											ORDER BY Element_ID
-											FOR XML PATH ('')								
-											),1,1,'')
+											FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
+											,1,1,'')
 
-					SET @ColumnValues = CONCAT(CHAR(39),@RegisterID,CHAR(39),',',CHAR(39),@UserLoginID,CHAR(39),',',@ColumnValues)
+					IF @ColumnValues IS NOT NULL
+						SET @ColumnValues = CONCAT(CHAR(39),@RegisterID,CHAR(39),',',CHAR(39),@UserLoginID,CHAR(39),',',@ColumnValues)
+					ELSE
+						SET @ColumnValues = CONCAT(CHAR(39),@RegisterID,CHAR(39),',',CHAR(39),@UserLoginID,CHAR(39))
 				END
 				ELSE
 				BEGIN
@@ -385,8 +396,7 @@ BEGIN TRY
 										(
 										SELECT CONCAT(', ',QUOTENAME(COLUMNNAME),'=',CHAR(39),StringValue,CHAR(39), CHAR(10))
 										FROM #TMP_INSERT
-										FOR XML PATH('')
-										),
+										FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)'),
 										1,1,'')
 				
 				END
@@ -500,7 +510,7 @@ BEGIN TRY
 				 --------------------------------------------------------
 
 				 SELECT NULL AS ErrorMessage
-				 SELECT @RegisterID AS registerid
+				 SELECT @RegisterID AS id
 
 		 END		--END OF USER PERMISSION CHECK
 		 ELSE IF @UserID IS NULL
@@ -535,7 +545,5 @@ BEGIN CATCH
 END CATCH
 END
 
-
-GO
 
 
