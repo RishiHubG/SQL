@@ -31,6 +31,10 @@ INSERT INTO @TBL
 SELECT 'NAM-FIMA 2017 Sec(1)(1)(as)'
 UNION
 SELECT 'NAM-FIMA 2017 Sec78(1)(ab)(a)(i)'
+UNION
+SELECT 'SA-MSA 1262-1999 Reg15D(a)(viii)'
+UNION
+SELECT 'SA-LTIA 1407-2017 Par15A(1)(a)'
 --SELECT R_NAME FROM TEST2
 DROP TABLE IF EXISTS #TMP_NumAlpha;
 --SELECT LEN('ii')
@@ -84,13 +88,41 @@ SELECT *,
 FROM CTE2
 	 CROSS APPLY STRING_SPLIT(Val, '.')TAB;
 	 		
-			
+	
+	
 	 --1. UPDATE ALL NUMBERS
 	 UPDATE T
 		SET Num = TRY_PARSE(value AS INT)
 	FROM #TMP T
 	--WHERE ROWNUM > 1;	 
 	  
+	  --HANDLING COMBINATION LIKE 15D BEFORE BRACKETS************	 
+	SELECT Name,StrVal,Val,RIGHT(value,1) AS Alphabet,ROWNUM + 1 AS ROWNUM
+		INTO #TMP_NumAlpha
+	FROM #TMP
+	WHERE RowNum = 1
+		  AND Num IS NULL;	
+	
+	--RESETTING THE ROWNUM ORDER
+	UPDATE TMP
+			SET ROWNUM = ROWNUM + 1
+		FROM #TMP TMP
+		WHERE EXISTS(SELECT 1 #TMP_NumAlpha WHERE NAME = TMP.NAME)
+		      AND ROWNUM > 1;
+	
+	--UPDATE 15 D TO 15
+	UPDATE TMP
+		SET value = REPLACE(TMP.value,TNum.Alphabet,'')
+	FROM #TMP TMP
+		 INNER JOIN #TMP_NumAlpha TNUM ON TNUM.NAME = TMP.NAME
+	WHERE TMP.RowNum = 1;
+
+	--INSERT "D" FROM 15D
+	INSERT INTO #TMP(Name,StrVal,Val,value,ROWNUM)
+		SELECT Name,StrVal,Val,Alphabet,ROWNUM
+		FROM #TMP_NumAlpha;		
+	--*******************************************************
+
 	--2. UPDATE ROMAN NUMBERALS
 	UPDATE T
 		SET Num = TA.KeyValue
@@ -115,6 +147,13 @@ FROM CTE2
 	WHERE (NUM IS NULL OR NUM = 0)
 	      AND TA.KeyType = 'SingleAlphabets';		  
 	
+	--UPDATE ALL NUMBERS AGAIN
+	 UPDATE T
+		SET Num = TRY_PARSE(value AS INT)
+	FROM #TMP T
+	WHERE (NUM IS NULL OR NUM = 0); 
+	 
+
 	--GENERATE SEQUENCE OF NO.S
 	;WITH e1(n) AS
 	(
@@ -153,7 +192,7 @@ FROM CTE2
 	INSERT INTO #TMP(Name,StrVal,Val,value,RowNum,Num)
 		SELECT Name,StrVal,Val,Alphabet,RowNum,Num
 		FROM #TMP_SingleAlpha;
-
+		  
 	--UPDATE THE REMAINING (WHICH HOPEFULLY SHOULD NOW BE ALL NUMBERS)
 	--UPDATE T
 	--	SET Num = TRY_PARSE(value AS INT)
