@@ -20,6 +20,9 @@ SNo.	Modification Date		Modified By				Comments
 
 CREATE OR ALTER PROCEDURE dbo.GetAuditTrail
 @EntityID INT,
+@EntityTypeID INT,
+@ParentEntityID INT,
+@ParentEntityTypeID INT,
 @StartDate DATETIME,
 @EndDate DATETIME,
 @UserLoginID INT,
