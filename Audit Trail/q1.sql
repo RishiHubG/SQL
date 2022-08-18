@@ -102,7 +102,7 @@ SELECT * FROM #TMP
 						INTO #TMP
 					FROM INFORMATION_SCHEMA.COLUMNS
 					WHERE TABLE_NAME = 'NewAuditFramework_data_history'
-					AND COLUMN_NAME NOT IN ('HistoryID','ID','UserCreated','DateCreated','UserModified','DateModified','VersionNum','registerid');
+					AND COLUMN_NAME NOT IN ('FrameworkID','HistoryID','ID','UserCreated','DateCreated','UserModified','DateModified','VersionNum','registerid','PeriodIdentifier','OperationType');
 
 					
 					UPDATE #TMP
