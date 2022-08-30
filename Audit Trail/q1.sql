@@ -231,8 +231,11 @@ SELECT * FROM #TMP
 			
 			 --==========================================================================================
 			 
+			 --operationtype,Notify,RoleTypeID - FOR AUDIT
+			 SELECT * FROM ContactInst_history
 	
-
+	SELECT * FROM NewAuditFramework_data_history WHERE id=1442
+	SELECT * FROM Registers WHERE FRAMEWORKID=6
 --==========================================================================================	
 						 USE VKB_NEW
 						GO
@@ -334,3 +337,12 @@ SELECT * FROM #TMP
 	WHERE FrameworkID = 6
 
 	SELECT auditOjectives, auditStatus, actualcompletiondate,actualstartdate,* FROM NewAuditFramework_data_history WHERE ID=1442
+
+
+	EXEC dbo.GetAuditTrail  @EntityID=1442,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-08-31',
+							@UserLoginID = 1
