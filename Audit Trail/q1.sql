@@ -346,3 +346,72 @@ SELECT * FROM #TMP
 							@StartDate = '2022-08-15',
 							@EndDate = '2022-08-31',
 							@UserLoginID = 1
+
+			
+			--DELETE FROM AuditTrailColumns WHERE ColumnNAme =''
+		 	SELECT * FROM AuditTrailColumns ORDER BY TABLENAME
+			ALTER TABLE AuditTrailColumns ADD SqlString VARCHAR(MAX)
+			SELECT * FROM Contact
+			SELECT * FROM RoleType
+
+			UPDATE AuditTrailColumns SET SqlString=NULL WHERE id in (5,6)
+
+			UPDATE AuditTrailColumns
+				SET SqlString ='UPDATE TMP
+									SET NewValue = Cnt.DisplayName
+								FROM #TMPHistData TMP
+									 INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.OldValue;
+		
+								UPDATE TMP
+									SET NewValue = Cnt.DisplayName
+								FROM #TMPHistData TMP
+									 INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.NewValue;'
+			where TableName = 'ContactInst_history'
+
+			UPDATE AuditTrailColumns
+				SET SqlString ='UPDATE TMP
+										SET NewValue = RT.Name
+									FROM #TMPHistData TMP
+										 INNER JOIN dbo.RoleType RT ON RT.RoleTypeID = TMP.OldValue;
+
+								UPDATE TMP
+										SET NewValue = RT.Name
+									FROM #TMPHistData TMP
+										 INNER JOIN dbo.RoleType RT ON RT.RoleTypeID = TMP.NewValue;'
+			where TableName = 'ContactInst_history'
+				  AND ColumnNAme ='RoleTypeID'
+
+			UPDATE TMP
+				SET NewValue = Cnt.DisplayName
+			FROM #TMPHistData TMP
+			     INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.OldValue;
+		
+			UPDATE TMP
+				SET NewValue = Cnt.DisplayName
+			FROM #TMPHistData TMP
+			     INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.NewValue;
+		
+		UPDATE TMP
+				SET NewValue = RT.Name
+			FROM #TMPHistData TMP
+			     INNER JOIN dbo.RoleType RT ON RT.RoleTypeID = TMP.OldValue;
+
+		UPDATE TMP
+				SET NewValue = RT.Name
+			FROM #TMPHistData TMP
+			     INNER JOIN dbo.RoleType RT ON RT.RoleTypeID = TMP.NewValue;
+
+			UPDATE AuditTrailColumns SET TableName ='NewAuditFramework_data_history' WHERE TableName ='NewAuditFramework_data'
+
+			INSERT INTO dbo.AuditTrailColumns(TableName,TableType,ColumnName,ToInclude)
+				SELECT 'NewAuditFramework_data_history',1,TAB.ColName,2
+				FROM (VALUES('FrameworkID'),('HistoryID'),('ID'),('UserCreated'),('DateCreated'),('UserModified'),('DateModified'),('VersionNum'),('registerid'),('PeriodIdentifier'),('OperationType'))
+				TAB(ColName)
+				WHERE NOT EXISTS(SELECT 1 FROM AuditTrailColumns where TABLENAME = 'NewAuditFramework_data_history' AND ColumnName = TAB.ColName)
+				
+
+
+				SELECT TOP 100 PERCENT HistoryID AS NewHistoryID,LAG(HISTORYID)OVER(ORDER BY HISTORYID) AS OldHistoryID,
+																DateModified,'OperationType' AS ColName, OperationType AS NewValue, LAG(OperationType)OVER(ORDER BY HISTORYID) AS OldValue
+				FROM ContactInst_history 
+				 	WHERE entityid = 1442 AND DateModified BETWEEN '2022-08-15 00:00:00.000000' AND '2022-08-31 00:00:00.000000' ORDER BY DateModified

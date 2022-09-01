@@ -48,30 +48,64 @@ BEGIN TRY
 	IF @UserID IS NOT NULL
 	BEGIN
 			
+			DECLARE @FrameworkID INT = (SELECT frameworkid FROM Registers WHERE registerid = @ParentEntityID)	
+			DECLARE @TableName VARCHAR(500) 
+
+			SELECT @TableName = Name
+			FROM dbo.Frameworks 
+			WHERE FrameworkID = @FrameworkID
+
+			IF @TableName IS NULL
+			BEGIN
+				PRINT '_DATA TABLE NOT AVAILABLE!!'
+				RETURN
+			END
+
+			 IF NOT EXISTS (SELECT 1 FROM dbo.AuditTrailColumns WHERE TableName = CONCAT(@TableName,'_data_history') AND TableType=1 AND ToInclude=2)
+			 BEGIN
+				RAISERROR('No Columns Available to Audit!!',16,1);
+				PRINT 'No Columns Available to Audit!!'
+				RETURN
+			 END
+
 			CREATE TABLE #AuditTrailData(ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
 			
 			INSERT INTO #AuditTrailData (ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
-			EXEC [dbo].[GetAuditTrailData]  @TableID = 1,	--DYNAMIC
-											@EntityID  = @EntityID,
-											@EntityTypeID = @EntityTypeID,
-											@ParentEntityID = @ParentEntityID,
-											@ParentEntityTypeID = @ParentEntityTypeID,
+			EXEC [dbo].[GetAuditTrailData]  @EntityID = @EntityID,
+											@FrameworkID= @FrameworkID,
+											@TableID = 1,	--DYNAMIC
+											@TableName = @TableName,											
 											@StartDate = @StartDate,
 											@EndDate = @EndDate,
 											@UserLoginID = @UserLoginID,
 											@MethodName = @MethodName
 			
-			INSERT INTO #AuditTrailData
-			EXEC [dbo].[GetAuditTrailData]  @TableID = 0,	--STATIC
-											@EntityID  = @EntityID,
-											@EntityTypeID = @EntityTypeID,
-											@ParentEntityID = @ParentEntityID,
-											@ParentEntityTypeID = @ParentEntityTypeID,
-											@StartDate = @StartDate,
-											@EndDate = @EndDate,
-											@UserLoginID = @UserLoginID,
-											@MethodName = @MethodName
 			
+			--FOR AUDITING STATIC TABLES
+			SELECT DISTINCT TableName
+				INTO #TMP_StaticTablesAudit
+			FROM dbo.AuditTrailColumns WHERE TableType=2 AND ToInclude=1;
+
+			 
+			WHILE EXISTS(SELECT 1 FROM #TMP_StaticTablesAudit)
+			BEGIN
+				
+				SELECT TOP 1 @TableName = TableName FROM #TMP_StaticTablesAudit;
+
+				INSERT INTO #AuditTrailData (ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
+				EXEC [dbo].[GetAuditTrailData]  @EntityID = @EntityID,
+												@FrameworkID= @FrameworkID,
+												@TableID = 0,	--STATIC
+												@TableName = @TableName,											
+												@StartDate = @StartDate,
+												@EndDate = @EndDate,
+												@UserLoginID = @UserLoginID,
+												@MethodName = @MethodName
+				
+				DELETE FROM #TMP_StaticTablesAudit WHERE TableName = @TableName;
+
+			END
+
 			SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
 			FROM #AuditTrailData;
 	 
