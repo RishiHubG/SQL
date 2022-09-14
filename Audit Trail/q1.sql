@@ -426,3 +426,20 @@ SELECT * FROM #TMP
 		SET SqlString ='UPDATE TMP            SET OldValue = RT.Name           FROM #TMPHistData TMP             INNER JOIN dbo.RoleType RT ON RT.RoleTypeID = TMP.OldValue AND TMP.Column_Name = ''RoleTypeID'';          
 						UPDATE TMP            SET NewValue = RT.Name           FROM #TMPHistData TMP             INNER JOIN dbo.RoleType RT ON RT.RoleTypeID = TMP.NewValue AND TMP.Column_Name = ''RoleTypeID'';'
 		WHERE ColumnName ='RoleTypeID'
+
+
+		EXEC dbo.GetAuditTrail     @EntityID=1442,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-09-14',
+							@UserLoginID = 1
+
+EXEC dbo.GetAuditTrail  @EntityID=1442,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-08-31',
+							@UserLoginID = 1
