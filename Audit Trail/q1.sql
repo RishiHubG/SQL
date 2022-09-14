@@ -415,3 +415,14 @@ SELECT * FROM #TMP
 																DateModified,'OperationType' AS ColName, OperationType AS NewValue, LAG(OperationType)OVER(ORDER BY HISTORYID) AS OldValue
 				FROM ContactInst_history 
 				 	WHERE entityid = 1442 AND DateModified BETWEEN '2022-08-15 00:00:00.000000' AND '2022-08-31 00:00:00.000000' ORDER BY DateModified
+
+
+		UPDATE AuditTrailColumns
+		SET SqlString ='UPDATE TMP           SET OldValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.OldValue AND TMP.Column_Name = ''ContactId'';
+						UPDATE TMP           SET NewValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.NewValue AND TMP.Column_Name = ''ContactId'';'
+		WHERE ColumnName ='ContactId'
+
+		UPDATE AuditTrailColumns
+		SET SqlString ='UPDATE TMP            SET OldValue = RT.Name           FROM #TMPHistData TMP             INNER JOIN dbo.RoleType RT ON RT.RoleTypeID = TMP.OldValue AND TMP.Column_Name = ''RoleTypeID'';          
+						UPDATE TMP            SET NewValue = RT.Name           FROM #TMPHistData TMP             INNER JOIN dbo.RoleType RT ON RT.RoleTypeID = TMP.NewValue AND TMP.Column_Name = ''RoleTypeID'';'
+		WHERE ColumnName ='RoleTypeID'
