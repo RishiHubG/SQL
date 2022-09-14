@@ -18,6 +18,12 @@
 					WHERE TABLE_NAME = @TableName_Data
 					AND COLUMN_NAME NOT IN ('FrameworkID','HistoryID','ID','UserCreated','DateCreated','UserModified','DateModified','VersionNum','registerid','PeriodIdentifier','OperationType');
 
+					DECLARE @TBL_DataTypes TABLE(DataType VARCHAR(50))
+
+					--POPULATE WITH ALL DATA TYPES THAT THE TABLES ARE MADE UP OF
+					INSERT INTO @TBL_DataTypes(DataType)
+						SELECT DataType FROM (VALUES('decimal'),('bigint'),('int'),('bit'))TAB(DataType);
+
 					DECLARE @strDT VARCHAR(500) = 'CONVERT(NVARCHAR(MAX),<ColName>,20)'
 					
 					UPDATE #TMP
@@ -26,15 +32,15 @@
 					 
 					UPDATE #TMP
 						SET COL = CONCAT('CAST(',REPLACE(Col,'AS NewValue',' AS NVARCHAR(MAX)) AS NewValue'))
-					WHERE DATA_TYPE IN('decimal','bigint','int');
+					WHERE DATA_TYPE IN (SELECT DataType FROM @TBL_DataTypes);
 
 					UPDATE #TMP
 						SET COL = REPLACE(Col,'LAG',' CAST(LAG')
-					WHERE DATA_TYPE IN('decimal','bigint','int');
+					WHERE DATA_TYPE IN (SELECT DataType FROM @TBL_DataTypes);
 
 					UPDATE #TMP
 						SET COL = REPLACE(Col,'AS OldValue',' AS NVARCHAR(MAX)) AS OldValue')
-					WHERE DATA_TYPE IN('decimal','bigint','int');
+					WHERE DATA_TYPE IN (SELECT DataType FROM @TBL_DataTypes);
 
  
 						DECLARE @SQL VARCHAR(MAX)
