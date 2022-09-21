@@ -419,7 +419,8 @@ SELECT * FROM #TMP
 
 		UPDATE AuditTrailColumns
 		SET SqlString ='UPDATE TMP           SET OldValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.OldValue AND TMP.Column_Name = ''ContactId'';
-						UPDATE TMP           SET NewValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.NewValue AND TMP.Column_Name = ''ContactId'';'
+						UPDATE TMP           SET NewValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.NewValue AND TMP.Column_Name = ''ContactId'';
+						UPDATE TMP           SET StepItemName = Hist.OperationType   FROM #TMPHistData TMP            INNER JOIN dbo.ContactInst_History Hist ON Hist.HistoryID = TMP.NewHistoryID AND TMP.Column_Name = ''ContactId'';'
 		WHERE ColumnName ='ContactId'
 
 		UPDATE AuditTrailColumns
@@ -442,4 +443,12 @@ EXEC dbo.GetAuditTrail  @EntityID=1442,
 							@ParentEntityTypeID=0,
 							@StartDate = '2022-08-15',
 							@EndDate = '2022-08-31',
+							@UserLoginID = 1
+
+EXEC dbo.GetAuditTrail  @EntityID=1442,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-09-30',
 							@UserLoginID = 1
