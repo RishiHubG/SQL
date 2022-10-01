@@ -452,3 +452,15 @@ EXEC dbo.GetAuditTrail  @EntityID=1442,
 							@StartDate = '2022-08-15',
 							@EndDate = '2022-09-30',
 							@UserLoginID = 1
+
+
+USE VKB_NEW
+
+--CREATE HIST TABLE & TRIGGER: INSERT/DELETE
+SELECT * FROM ENTITYCHILDLINKFRAMEWORK
+linktype:
+1=child
+2=link
+
+if entitytypeid=9
+CHECK FRAMEWORKID/ENTITYID
