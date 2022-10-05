@@ -132,7 +132,8 @@ BEGIN TRY
 
 				IF @OperationType = 'INSERT' 
 					SET @DateModified = @DatecCreated	 
-								
+				
+				IF @OldValue IS NOT NULL
 					INSERT INTO #AuditTrailData (Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
 						SELECT 'EntityChildLinkFramework_history',
 								@OperationType,NULL,NULL,@DateModified,NULL,
