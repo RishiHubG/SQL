@@ -458,9 +458,47 @@ USE VKB_NEW
 
 --CREATE HIST TABLE & TRIGGER: INSERT/DELETE
 SELECT * FROM ENTITYCHILDLINKFRAMEWORK
+
+SELECT * FROM EntityChildLinkFramework_history ORDER BY HistoryID DESC
+
 linktype:
 1=child
 2=link
 
 if entitytypeid=9
 CHECK FRAMEWORKID/ENTITYID
+
+EX: IF VALUES FOUND IN FROM THEN: PICK NEW FRAMEWORKID/ENTITYID VALUES -
+OLDVALUE=NAME OF ToFrameWorkId FROM FRAMEWORKS TABLE FOR THIS TOFRAMEWORKID
+NEWVALUE=_DATA TABLE OF FOR TOFRAMEWORKID FRAMEWORK, PICK THE NAME
+
+SELECT * FROM EntityChildLinkFramework_history ORDER BY HistoryID DESC
+
+DECLARE @EntityID int=1442, @FrameworkID INT=6
+DECLARE @OldValue NVARCHAR(MAX),@NewValue NVARCHAR(MAX), @OperationType VARCHAR(50),@DateModified datetime2(6),@DatecCreated datetime2(6)
+
+SELECT @OldValue = FR.Name,
+	   @NewValue = CONCAT(FR.NAME,'_data'),
+	   @OperationType = hist.OperationType,
+	   @DatecCreated = hist.DateCreated,
+	   @DateModified = hist.DateModified
+FROM dbo.EntityChildLinkFramework_history hist
+	 INNER JOIN dbo.Frameworks FR ON FR.FrameworkID = hist.ToFrameWorkId
+WHERE FromFrameworkId = @FrameworkID
+	  AND FromEntityId = @EntityID
+
+IF @OldValue IS NULL
+	SELECT @OldValue = FR.Name,
+		   @NewValue = CONCAT(FR.NAME,'_data'),
+		   @OperationType = hist.OperationType,
+		   @DatecCreated = hist.DateCreated,
+		   @DateModified = hist.DateModified
+	FROM dbo.EntityChildLinkFramework_history hist
+		 INNER JOIN dbo.Frameworks FR ON FR.FrameworkID = hist.FromFrameworkId
+	WHERE ToFrameWorkId = @FrameworkID
+		  AND ToEntityid = @EntityID
+
+IF @OperationType = 'INSERT' 
+	SET @DateModified = @DatecCreated
+
+SELECT @DateModified, @OldValue, @NewValue,@OperationType

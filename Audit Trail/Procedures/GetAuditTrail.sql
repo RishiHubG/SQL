@@ -106,6 +106,39 @@ BEGIN TRY
 
 			END
 
+			--FOR AUDITING EntityChildLinkFramework_history-------------------------------------------------			
+				DECLARE @OldValue NVARCHAR(MAX),@NewValue NVARCHAR(MAX), @OperationType VARCHAR(50),@DateModified datetime2(6),@DatecCreated datetime2(6)
+				
+				SELECT @OldValue = FR.Name,
+					   @NewValue = CONCAT(FR.NAME,'_data'),
+					   @OperationType = hist.OperationType,
+					   @DatecCreated = hist.DateCreated,
+					   @DateModified = hist.DateModified
+				FROM dbo.EntityChildLinkFramework_history hist
+					 INNER JOIN dbo.Frameworks FR ON FR.FrameworkID = hist.ToFrameWorkId
+				WHERE FromFrameworkId = @FrameworkID
+					  AND FromEntityId = @EntityID
+
+				IF @OldValue IS NULL
+					SELECT @OldValue = FR.Name,
+						   @NewValue = CONCAT(FR.NAME,'_data'),
+						   @OperationType = hist.OperationType,
+						   @DatecCreated = hist.DateCreated,
+						   @DateModified = hist.DateModified
+					FROM dbo.EntityChildLinkFramework_history hist
+						 INNER JOIN dbo.Frameworks FR ON FR.FrameworkID = hist.FromFrameworkId
+					WHERE ToFrameWorkId = @FrameworkID
+						  AND ToEntityid = @EntityID
+
+				IF @OperationType = 'INSERT' 
+					SET @DateModified = @DatecCreated	 
+								
+					INSERT INTO #AuditTrailData (Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
+						SELECT 'EntityChildLinkFramework_history',
+								@OperationType,NULL,NULL,@DateModified,NULL,
+								@OldValue, @NewValue
+				-------------------------------------------------------------------------------------------------
+
 			SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
 			FROM #AuditTrailData;
 	 
