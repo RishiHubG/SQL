@@ -69,6 +69,7 @@ BEGIN TRY
 			 END
 
 			CREATE TABLE #AuditTrailData(ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
+			CREATE TABLE #StaticAuditTrailData(ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
 			
 			INSERT INTO #AuditTrailData (ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
 			EXEC [dbo].[GetAuditTrailData]  @EntityID = @EntityID,
@@ -92,7 +93,7 @@ BEGIN TRY
 				
 				SELECT TOP 1 @TableName = TableName FROM #TMP_StaticTablesAudit;
 
-				INSERT INTO #AuditTrailData (ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
+				INSERT INTO #StaticAuditTrailData (ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
 				EXEC [dbo].[GetAuditTrailData]  @EntityID = @EntityID,
 												@FrameworkID= @FrameworkID,
 												@TableID = 0,	--STATIC
@@ -105,6 +106,58 @@ BEGIN TRY
 				DELETE FROM #TMP_StaticTablesAudit WHERE TableName = @TableName;
 
 			END
+
+			--ROLLING UP CONTACT INFO----------------------------------------------------------------------------
+			IF EXISTS(SELECT 1 FROM #StaticAuditTrailData)
+			BEGIN
+				
+				SELECT *
+					INTO #TMP_ContactInfo
+				FROM #StaticAuditTrailData
+				WHERE Column_Name = 'ContactId'
+				ORDER BY Column_Name
+
+				SELECT TMP.OldHistoryID,
+					   CAST(STRING_AGG(Aud.OldValue,'|') AS NVARCHAR(MAX)) AS OldValue,
+					   CAST(STRING_AGG(Aud.NewValue,'|') AS NVARCHAR(MAX)) AS NewValue	
+					INTO #TMP_ContactRollupInfo	 
+				FROM #TMP_ContactInfo TMP
+					 INNER JOIN #StaticAuditTrailData Aud ON Aud.OldHistoryID = TMP.OldHistoryID
+				WHERE Aud.Column_Name <> 'OperationType'
+				GROUP BY TMP.OldHistoryID
+				
+				ALTER TABLE #TMP_ContactRollupInfo ADD ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50)
+
+				--UPDATE THE REMAINING FIELDS
+				UPDATE TMP
+					SET ID = AUD.ID,
+						NewHistoryID = AUD.NewHistoryID,
+						Column_Name = AUD.Column_Name,
+						StepItemName = AUD.StepItemName,
+						DateModified = AUD.DateModified,
+						Data_Type = 'nvarchar',
+						OldValue=IIF(AUD.StepItemName='INSERT','',TMP.OldValue)
+				FROM #TMP_ContactRollupInfo TMP
+					 INNER JOIN #StaticAuditTrailData Aud ON Aud.OldHistoryID = TMP.OldHistoryID
+				WHERE AUD.Column_Name = 'ContactID'
+
+				--REMOVE ALL CONTACT DATA FROM  #AuditTrailData AS WE HAVE ROLLED UP THE DATA IN THE ABOVE DATA
+				DELETE Aud 
+				FROM #TMP_ContactInfo TMP
+						INNER JOIN #StaticAuditTrailData Aud ON Aud.OldHistoryID = TMP.OldHistoryID
+
+				INSERT INTO #AuditTrailData (ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
+					SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
+					FROM #TMP_ContactRollupInfo
+
+					/* UNCOMMENT THE ABOVE DELETE & FOLLOWING TO DEBUG WHAT WAS RETURNED FROM THE CHILD PROCEDURE FOR CONTACT INFO BEFORE ROLLUP
+					UNION
+
+					SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
+					FROM #StaticAuditTrailData
+					*/
+			END	
+			----CONTACT INFO ROLL UP ENDS HERE------------------------------------------------------------------------------------------------------
 
 			--FOR AUDITING EntityChildLinkFramework_history-------------------------------------------------			
 				DECLARE @OldValue NVARCHAR(MAX),@NewValue NVARCHAR(MAX), @OperationType VARCHAR(50),@DateModified datetime2(6),@DatecCreated datetime2(6)
@@ -141,7 +194,8 @@ BEGIN TRY
 				-------------------------------------------------------------------------------------------------
 
 			SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
-			FROM #AuditTrailData;
+			FROM #AuditTrailData
+			ORDER BY OldHistoryID;
 	 
 		DECLARE @Params VARCHAR(MAX)
 		DECLARE @ObjectName VARCHAR(100)

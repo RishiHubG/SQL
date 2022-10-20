@@ -502,3 +502,34 @@ IF @OperationType = 'INSERT'
 	SET @DateModified = @DatecCreated
 
 SELECT @DateModified, @OldValue, @NewValue,@OperationType
+
+
+select * from NewAuditComponent_data where id = 2090
+EXEC dbo.GetAuditTrail  @EntityID=1442,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-10-30',
+							@UserLoginID = 1
+
+
+select * from EntityChildLinkFramework_history order by 1 desc
+If Linktype = 1 then Link
+If Linktype = 2 - Child
+
+Add Link  Add/Delete Historyid
+Add Child
+
+							Add / Delete / 
+
+							Contact-oldValue-NewValue
+
+							Contact - Add / Delete / Modify Datatype = String  ContactName|Roletype|Notify ContactName-Roletype-Notify
+
+							select * from userlogin where active = 1
+
+
+							SELECT * FROM dbo.AuditTrailColumns 
+
+
