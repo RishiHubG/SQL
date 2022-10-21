@@ -513,7 +513,7 @@ EXEC dbo.GetAuditTrail  @EntityID=1442,
 							@EndDate = '2022-10-30',
 							@UserLoginID = 1
 
-
+select * from EntityChildLinkFramework_history WHERE FROMENTITYID=1442
 select * from EntityChildLinkFramework_history order by 1 desc
 If Linktype = 1 then Link
 If Linktype = 2 - Child

@@ -161,12 +161,15 @@ BEGIN TRY
 
 			--FOR AUDITING EntityChildLinkFramework_history-------------------------------------------------			
 				DECLARE @OldValue NVARCHAR(MAX),@NewValue NVARCHAR(MAX), @OperationType VARCHAR(50),@DateModified datetime2(6),@DatecCreated datetime2(6)
-				
+				DECLARE @Column_Name VARCHAR(100), @DataEntityID INT, @SQL NVARCHAR(MAX)
+
 				SELECT @OldValue = FR.Name,
-					   @NewValue = CONCAT(FR.NAME,'_data'),
+					   @TableName = CONCAT(FR.NAME,'_data'),
 					   @OperationType = hist.OperationType,
 					   @DatecCreated = hist.DateCreated,
-					   @DateModified = hist.DateModified
+					   @DateModified = hist.DateModified,
+					   @Column_Name  = CASE WHEN hist.LinkType = '1' THEN 'Add Link' ELSE 'Add Child' END,
+					   @DataEntityID = hist.ToEntityid
 				FROM dbo.EntityChildLinkFramework_history hist
 					 INNER JOIN dbo.Frameworks FR ON FR.FrameworkID = hist.ToFrameWorkId
 				WHERE FromFrameworkId = @FrameworkID
@@ -174,23 +177,30 @@ BEGIN TRY
 
 				IF @OldValue IS NULL
 					SELECT @OldValue = FR.Name,
-						   @NewValue = CONCAT(FR.NAME,'_data'),
+						   @TableName = CONCAT(FR.NAME,'_data'),
 						   @OperationType = hist.OperationType,
 						   @DatecCreated = hist.DateCreated,
-						   @DateModified = hist.DateModified
+						   @DateModified = hist.DateModified,
+						   @Column_Name  = CASE WHEN hist.LinkType = '1' THEN 'Add Link' ELSE 'Add Child' END,
+						   @DataEntityID = hist.FromEntityId
 					FROM dbo.EntityChildLinkFramework_history hist
 						 INNER JOIN dbo.Frameworks FR ON FR.FrameworkID = hist.FromFrameworkId
 					WHERE ToFrameWorkId = @FrameworkID
 						  AND ToEntityid = @EntityID
+			
+				
+				SELECT @SQL = CONCAT('SELECT @NewValue = NAME FROM dbo.',@TableName,' WHERE ID =', @DataEntityID)
+				EXEC sp_executesql @SQL,N'@NewValue VARCHAR(MAX) OUTPUT',@NewValue OUTPUT
+				PRINT @SQL
 
 				IF @OperationType = 'INSERT' 
 					SET @DateModified = @DatecCreated	 
 				
 				IF @OldValue IS NOT NULL
 					INSERT INTO #AuditTrailData (Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
-						SELECT 'EntityChildLinkFramework_history',
+						SELECT @Column_Name,
 								@OperationType,NULL,NULL,@DateModified,NULL,
-								@OldValue, @NewValue
+								NULL, @NewValue
 				-------------------------------------------------------------------------------------------------
 
 			SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
