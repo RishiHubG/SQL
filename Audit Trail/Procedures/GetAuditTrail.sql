@@ -188,10 +188,12 @@ BEGIN TRY
 					WHERE ToFrameWorkId = @FrameworkID
 						  AND ToEntityid = @EntityID
 			
-				
-				SELECT @SQL = CONCAT('SELECT @NewValue = NAME FROM dbo.',@TableName,' WHERE ID =', @DataEntityID)
-				EXEC sp_executesql @SQL,N'@NewValue VARCHAR(MAX) OUTPUT',@NewValue OUTPUT
-				PRINT @SQL
+				IF @DataEntityID IS NOT NULL
+				BEGIN
+					SELECT @SQL = CONCAT('SELECT @NewValue = NAME FROM dbo.',@TableName,' WHERE ID =', @DataEntityID)
+					EXEC sp_executesql @SQL,N'@NewValue VARCHAR(MAX) OUTPUT',@NewValue OUTPUT
+					PRINT @SQL
+				END
 
 				IF @OperationType = 'INSERT' 
 					SET @DateModified = @DatecCreated	 

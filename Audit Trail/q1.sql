@@ -532,4 +532,48 @@ Add Child
 
 							SELECT * FROM dbo.AuditTrailColumns 
 
+--==============================================
+--CASE 2
+IF @EntityTypeID=3=FOR REGISTERS THEN PULL ALLFROM DATA TABLE USING REGISTERID AS FILTER IN _DATA TABLE AND GET AUDIT TRAIL FOR ALL THESE RECORDS
+@EntityID=REGISTERID
+SELECT frameworkid FROM Registers WHERE registerid = @EntityID
+--REGISTERS
+EXEC dbo.GetAuditTrail  @EntityID=1,
+							@EntityTypeID=3,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=2,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-10-30',
+							@UserLoginID = 1
+
+--CASE 3
+IF @EntityTypeID=2=FOR UNIVERSE THEN PULL go to registers TO PULL ALL REGISTERS AND THEN SAME PROCESS AS CASE# 2 ABOVE
+THIS CAN HAVE MULTIPLE FRAMEWORK AS EACH REGISTER IS TIED TO ONE FRAMEWORK
+@EntityID=UNIVERSEID
+SELECT frameworkid FROM Registers WHERE universeid = @EntityID
+
+--UNIVERSE
+EXEC dbo.GetAuditTrail  @EntityID=1,
+							@EntityTypeID=2,
+							@ParentEntityID=NULL,
+							@ParentEntityTypeID=NULL,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-10-30',
+							@UserLoginID = 1
+--==============================================
+
+SELECT * FROM Registers WHERE registerid = 1--@EntityID
+SELECT * FROM Frameworks WHERE FRAMEWORKID = 6
+SELECT * FROM NewAuditFramework_data_history where registerid=1
+
+SELECT * FROM NewAuditFramework_data_history where ID=1442
+EXEC dbo.test1  @EntityID=11,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-03-1',
+							@EndDate = '2022-10-30',
+							@UserLoginID = 1
+
+
 
