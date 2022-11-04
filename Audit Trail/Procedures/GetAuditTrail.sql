@@ -68,7 +68,9 @@ BEGIN TRY
 				RETURN
 			 END
 
-			CREATE TABLE #AuditTrailData(ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
+			 IF OBJECT_ID('TEMPDB..#AuditTrailData') IS NULL
+				CREATE TABLE #AuditTrailData(RegisterName VARCHAR(500), FrameworkName NVARCHAR(1000),ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
+
 			CREATE TABLE #StaticAuditTrailData(ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
 			
 			INSERT INTO #AuditTrailData (ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
@@ -81,7 +83,7 @@ BEGIN TRY
 											@UserLoginID = @UserLoginID,
 											@MethodName = @MethodName
 			
-			
+			 
 			--FOR AUDITING STATIC TABLES
 			SELECT DISTINCT TableName
 				INTO #TMP_StaticTablesAudit
@@ -205,9 +207,9 @@ BEGIN TRY
 								NULL, @NewValue
 				-------------------------------------------------------------------------------------------------
 
-			SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
-			FROM #AuditTrailData
-			ORDER BY OldHistoryID;
+			--SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
+			--FROM #AuditTrailData
+			--ORDER BY OldHistoryID;
 	 
 		DECLARE @Params VARCHAR(MAX)
 		DECLARE @ObjectName VARCHAR(100)

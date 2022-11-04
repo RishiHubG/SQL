@@ -1,3 +1,4 @@
+--Dev1/AGS@123
 USE DEVDB
 GO
 
@@ -550,7 +551,9 @@ EXEC dbo.GetAuditTrail  @EntityID=1,
 IF @EntityTypeID=2=FOR UNIVERSE THEN PULL go to registers TO PULL ALL REGISTERS AND THEN SAME PROCESS AS CASE# 2 ABOVE
 THIS CAN HAVE MULTIPLE FRAMEWORK AS EACH REGISTER IS TIED TO ONE FRAMEWORK
 @EntityID=UNIVERSEID
-SELECT frameworkid FROM Registers WHERE universeid = @EntityID
+--For All registers under the universe
+SELECT frameworkid, RegisterID FROM Registers WHERE universeid = @EntityID
+SELECT frameworkid, RegisterID FROM Registers WHERE universeid = 1
 
 --UNIVERSE
 EXEC dbo.GetAuditTrail  @EntityID=1,
@@ -562,18 +565,94 @@ EXEC dbo.GetAuditTrail  @EntityID=1,
 							@UserLoginID = 1
 --==============================================
 
+			DECLARE @RegisterList VARCHAR(MAX)
+			DECLARE @TableName_Data VARCHAR(500),@SQL VARCHAR(MAX)
+			DECLARE @TBL_ID TABLE(ID INT, RegisterID INT,FrameWorkID INT)
+
+				--For All registers under the universe
+				SELECT @RegisterList = STRING_AGG(RegisterID,',')					 
+				FROM dbo.Registers 
+				WHERE universeid = 1;
+				 
+				SET @TableName_Data = 'NewAuditFramework_data_history'; --= --CONCAT(@TableName,'_data_history'); 
+				SET @SQL = CONCAT('SELECT ID, RegisterID FROM ',@TableName_Data,' WHERE RegisterID IN (',@RegisterList,') AND DateModified BETWEEN ''',@StartDate,''' AND ''', @EndDate,'''')
+				
+				INSERT INTO @TBL_ID (ID, RegisterID)
+					EXEC(@SQL);
+
+					SELECT * FROM @TBL_ID
+
 SELECT * FROM Registers WHERE registerid = 1--@EntityID
 SELECT * FROM Frameworks WHERE FRAMEWORKID = 6
 SELECT * FROM NewAuditFramework_data_history where registerid=1
 
+SELECT F.NAME,R.NAME
+FROM dbo.Registers R 
+	 INNER JOIN dbo.Frameworks F ON F.FrameworkID = R.frameworkid
+WHERE registerid = 1--@EntityID
+
+SELECT * FROM Frameworks WHERE FRAMEWORKID = 6
+SELECT * FROM NewAuditFramework_data_history where registerid=1
+
+
 SELECT * FROM NewAuditFramework_data_history where ID=1442
-EXEC dbo.test1  @EntityID=11,
+
+DROP TABLE IF EXISTS #TMP
+CREATE TABLE #TMP(ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
+
+INSERT INTO #TMP (ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue)
+
+--HANDLES ALL CASES: ADD ENTITYID AS ANOTHER COLUMN?
+--CAN LOOP THROUGH CASE 2 & 3
+BEGIN
+
+DROP TABLE IF EXISTS #AuditTrailData
+CREATE TABLE #AuditTrailData(RegisterName VARCHAR(500), FrameworkName NVARCHAR(1000),ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
+
+DECLARE @I INT=1
+WHILE @I<=2		
+BEGIN
+IF @I=2
+SET @I=11
+EXEC dbo.TEST1  @EntityID=11,
 							@EntityTypeID=0,
 							@ParentEntityID=1,
 							@ParentEntityTypeID=0,
 							@StartDate = '2022-03-1',
 							@EndDate = '2022-10-30',
+							@UserLoginID = 1,
+							@MethodName= NULL,
+							@LogRequest =1;
+
+							SET @I=@I+1
+END
+SELECT ID,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
+			FROM #AuditTrailData
+			ORDER BY OldHistoryID;
+END
+SELECT * FROM #TMP
+
+
+EXEC dbo.GetAuditTrail   @EntityID=1442,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-10-30',
 							@UserLoginID = 1
 
+EXEC dbo.GetAuditTrailByType  @EntityID=1442,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-10-30',
+							@UserLoginID = 1;
 
-
+EXEC dbo.GetAuditTrailByType  @EntityID=1,
+							@EntityTypeID=2,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-10-30',
+							@UserLoginID = 1
