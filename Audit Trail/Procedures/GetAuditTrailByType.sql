@@ -135,7 +135,7 @@ BEGIN TRY
 			 END
 			
 			--TABLE TO STORE AUDIT TRAIL RESULTS IN THE CHILD PROCEDURE
-			CREATE TABLE #AuditTrailData(RegisterID INT, FrameworkID INT, RegisterName VARCHAR(500), FrameworkName NVARCHAR(1000),ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX))
+			CREATE TABLE #AuditTrailData(RegisterID INT, FrameworkID INT, RegisterName VARCHAR(500), FrameworkName NVARCHAR(1000),ID INT, Column_Name VARCHAR(500),StepItemName VARCHAR(500),OldHistoryID INT,NewHistoryID INT, DateModified datetime2(6),Data_Type VARCHAR(50),OldValue NVARCHAR(MAX),NewValue NVARCHAR(MAX),Name NVARCHAR(MAX),DisplayName NVARCHAR(MAX))
 			DECLARE @ID INT
 			--SELECT * FROM @TBL_ID
 			--RETURN
@@ -172,7 +172,18 @@ BEGIN TRY
 					FrameworkName = (SELECT Name FROM dbo.Frameworks WHERE FrameworkID = A.FrameworkID)
 			FROM #AuditTrailData A;
 
-			SELECT FrameworkName, RegisterName,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue
+			--UPDATE CONTACT'S NAME & DISPLAYNAME
+			UPDATE A
+				SET Name = Usr.Name,
+					DisplayName = Ct.DisplayName
+			FROM #AuditTrailData A
+				INNER JOIN dbo.ContactInst_History Hist ON Hist.HistoryID = A.NewHistoryID
+				INNER JOIN dbo.Contact Ct ON CT.ContactID = Hist.ContactId
+				INNER JOIN dbo.AUser Usr ON Usr.ContactID = CT.ContactID
+			WHERE A.Column_Name = 'ContactId';
+
+			SELECT FrameworkName, RegisterName,Column_Name,StepItemName,OldHistoryID,NewHistoryID,DateModified,Data_Type,OldValue,NewValue,
+				   Name, DisplayName
 			FROM #AuditTrailData
 			ORDER BY OldHistoryID;
 	 

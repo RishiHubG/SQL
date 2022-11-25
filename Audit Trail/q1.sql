@@ -641,6 +641,7 @@ EXEC dbo.GetAuditTrail   @EntityID=1442,
 							@EndDate = '2022-10-30',
 							@UserLoginID = 1
 
+--SINGLE ENTITY
 EXEC dbo.GetAuditTrailByType  @EntityID=1442,
 							@EntityTypeID=0,
 							@ParentEntityID=1,
@@ -648,11 +649,127 @@ EXEC dbo.GetAuditTrailByType  @EntityID=1442,
 							@StartDate = '2022-08-15',
 							@EndDate = '2022-10-30',
 							@UserLoginID = 1;
-
+--REGISTER
 EXEC dbo.GetAuditTrailByType  @EntityID=1,
-							@EntityTypeID=2,
+							@EntityTypeID=3,
+							@ParentEntityID=1,						
+							@ParentEntityTypeID=2,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-10-30',
+							@UserLoginID = 1
+
+SELECT * FROM Registers WHERE registerid=3
+
+USE VKB_NEW
+GO
+EXEC dbo.GetAuditTrailByType  @EntityID=1509,
+							@EntityTypeID=9,
+							@ParentEntityID=6,
+							@ParentEntityTypeID=3,
+							@StartDate = '2022-10-01',
+							@EndDate = '2022-11-30',
+							@UserLoginID = 2752;
+
+
+
+--SINGLE ENTITY
+EXEC dbo.GetAuditTrailByType  @EntityID=1509,
+							@EntityTypeID=0,
 							@ParentEntityID=1,
 							@ParentEntityTypeID=0,
 							@StartDate = '2022-08-15',
 							@EndDate = '2022-10-30',
-							@UserLoginID = 1
+							@UserLoginID = 1;
+
+SELECT * FROM UserLogin WHERE UserLoginID=2440
+--Name
+SELECT * FROM AUser WHERE UserID=406
+--DisplayName
+SELECT * FROM Contact WHERE ContactID=1205
+
+SELECT Usr.Name, CT.DisplayName 
+FROM dbo.ContactInst_history Hist
+	 INNER JOIN dbo.Contact Ct ON CT.ContactID =Hist.ContactId
+	 INNER JOIN dbo.AUser Usr ON Usr.ContactID = CT.ContactID
+WHERE Hist.HistoryID=118920
+	
+
+SELECT DISTINCT EntityId FROM ContactInst_history WHERE HistoryID IN (118920,
+130269,
+140234,
+145778,
+157129,
+167115,
+172659,
+184012,
+241107,
+264192,
+275793,
+290658,
+301157)
+
+
+SELECT * FROM dbo.AuditTrailColumns;
+
+--ROLLBACK COMMIT
+SET XACT_ABORT ON;
+BEGIN TRAN;
+UPDATE AuditTrailColumns
+	SET SqlString='
+UPDATE TMP           SET OldValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.OldValue AND TMP.Column_Name = ''ContactId'';        
+UPDATE TMP           SET NewValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.NewValue AND TMP.Column_Name = ''ContactId'';        
+UPDATE TMP           SET StepItemName = Hist.OperationType   FROM #TMPHistData TMP            INNER JOIN dbo.ContactInst_History Hist ON Hist.HistoryID = TMP.NewHistoryID AND TMP.Column_Name = ''ContactId'';
+UPDATE TMP           SET Name = Usr.Name, DisplayName = CT.Name  FROM #TMPHistData TMP  INNER JOIN dbo.ContactInst_History Hist ON Hist.HistoryID = TMP.NewHistoryID AND TMP.Column_Name = ''ContactId''
+																			INNER JOIN dbo.Contact Ct ON CT.ContactID =Hist.ContactId
+																			INNER JOIN dbo.AUser Usr ON Usr.ContactID = CT.ContactID;' 
+WHERE TableName ='ContactInst_history' AND ColumnName = 'ContactId'
+
+
+--SINGLE ENTITY
+EXEC dbo.GetAuditTrailByType  @EntityID=1509,
+							@EntityTypeID=0,
+							@ParentEntityID=1,
+							@ParentEntityTypeID=0,
+							@StartDate = '2022-08-15',
+							@EndDate = '2022-10-30',
+							@UserLoginID = 1;
+
+SELECT * FROM UserLogin WHERE UserLoginID=2440
+--Name
+SELECT * FROM AUser WHERE UserID=406
+--DisplayName
+SELECT * FROM Contact WHERE ContactID=1205
+
+SELECT Usr.Name, CT.DisplayName 
+FROM dbo.ContactInst_history Hist
+	 INNER JOIN dbo.Contact Ct ON CT.ContactID =Hist.ContactId
+	 INNER JOIN dbo.AUser Usr ON Usr.ContactID = CT.ContactID
+WHERE Hist.HistoryID=118920
+	
+
+SELECT DISTINCT EntityId FROM ContactInst_history WHERE HistoryID IN (118920,
+130269,
+140234,
+145778,
+157129,
+167115,
+172659,
+184012,
+241107,
+264192,
+275793,
+290658,
+301157)
+
+
+SELECT * FROM dbo.AuditTrailColumns;
+
+--ROLLBACK COMMIT
+SET XACT_ABORT ON;
+BEGIN TRAN;
+UPDATE AuditTrailColumns
+	SET SqlString='
+UPDATE TMP           SET OldValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.OldValue AND TMP.Column_Name = ''ContactId'';        
+UPDATE TMP           SET NewValue = Cnt.DisplayName          FROM #TMPHistData TMP            INNER JOIN dbo.Contact Cnt ON Cnt.ContactID = TMP.NewValue AND TMP.Column_Name = ''ContactId'';        
+UPDATE TMP           SET StepItemName = Hist.OperationType   FROM #TMPHistData TMP            INNER JOIN dbo.ContactInst_History Hist ON Hist.HistoryID = TMP.NewHistoryID AND TMP.Column_Name = ''ContactId'';'
+WHERE TableName ='ContactInst_history' AND ColumnName = 'ContactId'
