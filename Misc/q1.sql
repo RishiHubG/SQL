@@ -4,9 +4,12 @@ GO
 SET XACT_ABORT ON
 --COMMIT ROLLBACK
 BEGIN TRAN
---IF columnToCompare":"Name" IS AVAIAlable IN AUser then Update Contact
---IF columnToCompare":"Name" IS NOT AVAIAlable IN AUser then Insert into AUser/Contact
---IF columnToCompare":"AnyOtherColumn" IS NOT AVAILABLE/AVAIAlable IN Contact then Insert/Update Contact
+---WHILE INSERTING INTO AUSER MAKE SURE NAME COLUMN IS AVAILABLE IN JSON STRING
+--IF columnToCompare":"Name" IS MAtching IN AUser then Update Contact
+--IF columnToCompare":"Name" IS NOT MAtching IN AUser AND NAME IS AVAILABLE in Json then INSERT AUser/Contact
+--IF columnToCompare":"Name" IS NOT MAtching IN AUser AND NAME IS NOT AVAILABLE in Json then INSERT Contact
+--IF columnToCompare":"AnyOtherColumn" AND NAME IS AVAILABLE/AVAIAlable IN Contact then Insert Contact/AUser OR UPDATE Contact
+--IF columnToCompare":"Email" AND Name IS NOT AVAILABLE Then Insert/Update Contact
 exec importDataForEntity 
 @dataJSON=N'{"data":[{"entityType":"4","columnToCompare":"Name","dataToMap":[{"FirstName":"ABC","MiddleName":"DEF","Name":"ABCDEF","JobTitle":"CTO","E_Mail":"ABCDEF@gmail.com"},{"FirstName":"XYZ","MiddleName":"MNO","Name":"ZYZMNO","JobTitle":"DPO","E_Mail":"ZYXMNO@gmail.com"}]},{"entityType":"","columnToCompare":"","dataToMap":[{},{}]}],"fileName":"Contact.xlsx","sheetsDependency":[{"leftSheetIndex":0,"leftColumnName":"","rightSheetIndex":1,"rightColumnName":""}]}',
 @MethodName=NULL,
