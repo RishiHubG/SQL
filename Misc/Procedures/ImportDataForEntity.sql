@@ -128,7 +128,7 @@ BEGIN TRY
 			--RETURN
 
 		    --BUILD UPDATE FOR Contact
-			SELECT DISTINCT Parent_ID, TAB.*
+			SELECT DISTINCT Parent_ID, TAB.*,  CAST(NULL AS VARCHAR(MAX)) AS strSelect
 				INTO #TMP_UpdateString
 			FROM #TMP_Child TMP
 				  CROSS APPLY ( SELECT STRING_AGG(CONCAT(ColumnName,'=', CHAR(39),StringValue,CHAR(39)),',') AS strColumns									  
@@ -138,18 +138,30 @@ BEGIN TRY
 			--WHERE EXISTS(SELECT 1 FROM #TMP_Name WHERE Parent_ID =TMP.Parent_ID AND ContactID IS NOT NULL); -- NAME AVAILABLE IN AUSER	;
 
 			UPDATE #TMP_UpdateString
-				SET strColumns = CONCAT('UPDATE dbo.Contact SET ', CHAR(10),strColumns,  CHAR(10),
-										' WHERE EXISTS ( SELECT 1
-														FROM #TMP_NAME TMP
-															 INNER JOIN #TMP_CHILD Child ON Child.Parent_ID = TMP.Parent_ID
-														WHERE TMP.ColumnToCompare = Child.ColumnName
-															  AND TMP.StringValue  = Child.StringValue
-										
-														)'	
-				
-										)
+				SET strColumns = CONCAT('UPDATE	dbo.Contact SET ', CHAR(10),strColumns,  CHAR(10),
+										' WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39)),
+					--RUN UPDATE ONLY IF A SINGLE CONTACT IS BEING UPDATE ELSE RETURN ERROR MESSAGE
+					strSelect = CONCAT('SELECT COUNT(*) FROM dbo.Contact WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39))
 			
-			SELECT * FROM #TMP_UpdateString;
+			UPDATE TMP
+				SET strColumns = REPLACE(strColumns,'<ColumnToCompare>',
+										(SELECT ColumnToCompare FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
+										),
+					strSelect = REPLACE(strSelect,'<ColumnToCompare>',
+										(SELECT ColumnToCompare FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
+										)					
+			FROM #TMP_UpdateString TMP;
+
+			UPDATE TMP
+				SET strColumns = REPLACE(strColumns,'<StringValue>',
+										(SELECT StringValue FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
+										),
+					strSelect = REPLACE(strSelect,'<StringValue>',
+										(SELECT ColumnToCompare FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
+										)		
+			FROM #TMP_UpdateString TMP;
+
+		SELECT * FROM #TMP_UpdateString;
 
 		RETURN
 		INSERT INTO [dbo].[AUser]

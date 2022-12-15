@@ -40,4 +40,6 @@ BEGIN TRAN
 exec importDataForEntity 
 @dataJSON=N'{"data":[{"entityType":"4","columnToCompare":"JobTitle","dataToMap":[{"FirstName":"ABC","MiddleName":"DEF","Name":"ABCDEF","JobTitle":"CTO","E_Mail":"ABCDEF@gmail.com"},{"FirstName":"XYZ","MiddleName":"MNO","Name":"ZYZMNO","JobTitle":"DPO","E_Mail":"ZYXMNO@gmail.com"}]},{"entityType":"","columnToCompare":"","dataToMap":[{},{}]}],"fileName":"Contact.xlsx","sheetsDependency":[{"leftSheetIndex":0,"leftColumnName":"","rightSheetIndex":1,"rightColumnName":""}]}',
 @MethodName=NULL,
-@UserLoginID=2913
+@UserLoginID=2913;
+
+SELECT COUNT(*) FROM dbo.Contact WHERE JobTitle='JobTitle'
