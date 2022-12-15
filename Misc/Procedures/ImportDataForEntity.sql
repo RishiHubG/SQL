@@ -141,7 +141,7 @@ BEGIN TRY
 				SET strColumns = CONCAT('UPDATE	dbo.Contact SET ', CHAR(10),strColumns,  CHAR(10),
 										' WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39)),
 					--RUN UPDATE ONLY IF A SINGLE CONTACT IS BEING UPDATE ELSE RETURN ERROR MESSAGE
-					strSelect = CONCAT('SELECT COUNT(*) FROM dbo.Contact WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39))
+					strSelect = CONCAT('SELECT ',Parent_ID,' AS Parent_ID, COUNT(*) FROM dbo.Contact WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39))
 			
 			UPDATE TMP
 				SET strColumns = REPLACE(strColumns,'<ColumnToCompare>',
