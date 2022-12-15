@@ -42,4 +42,5 @@ exec importDataForEntity
 @MethodName=NULL,
 @UserLoginID=2913;
 
-SELECT COUNT(*) FROM dbo.Contact WHERE JobTitle='JobTitle'
+SELECT COUNT(*) FROM dbo.Contact WHERE JobTitle='CTO'
+SELECT COUNT(*) FROM dbo.Contact WHERE JobTitle='DPO'

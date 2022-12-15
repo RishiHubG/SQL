@@ -157,7 +157,7 @@ BEGIN TRY
 										(SELECT StringValue FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
 										),
 					strSelect = REPLACE(strSelect,'<StringValue>',
-										(SELECT ColumnToCompare FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
+										(SELECT StringValue FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
 										)		
 			FROM #TMP_UpdateString TMP;
 
