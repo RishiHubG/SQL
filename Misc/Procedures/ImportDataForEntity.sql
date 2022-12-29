@@ -74,7 +74,7 @@ BEGIN TRY
 		WHERE T1.Name = 'columnToCompare' 
 			  --AND T1.StringValue = 'Name'
 			
-			SELECT * FROM #TMP_Name;
+			--SELECT * FROM #TMP_Name;
 
 			
 			--GET COLUMN LIST FOR CONTACT
@@ -98,10 +98,11 @@ BEGIN TRY
 								  )TAB
 				WHERE ColumnName NOT IN ('DisplayName','validUpto');
 
-				SELECT * FROM #TMP_Child;
+				--SELECT * FROM #TMP_Child;
 
 				--RETURN			
-			
+			BEGIN TRAN
+
 			--BUILD INSERT FOR Contact
 			SELECT DISTINCT TMP.Parent_ID, TAB.*
 				INTO #TMP_InsertString
@@ -121,12 +122,12 @@ BEGIN TRY
 			BEGIN
 				SET @SQL = (SELECT STRING_AGG(InsertString,CONCAT(';',CHAR(10))) FROM #TMP_InsertString);			
 				PRINT @SQL				
-				EXEC sp_executesql @SQL	
-				 
-				SELECT * FROM #TBL_Contact
+				EXEC sp_executesql @SQL				 
+				
 			END
 			--RETURN
 
+			
 		    --BUILD UPDATE FOR Contact
 			SELECT DISTINCT Parent_ID, TAB.*,  CAST(NULL AS VARCHAR(MAX)) AS strSelect
 				INTO #TMP_UpdateString
@@ -140,15 +141,23 @@ BEGIN TRY
 			UPDATE #TMP_UpdateString
 				SET strColumns = CONCAT('UPDATE	dbo.Contact SET ', CHAR(10),strColumns,  CHAR(10),
 										' WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39)),
-					--RUN UPDATE ONLY IF A SINGLE CONTACT IS BEING UPDATE ELSE RETURN ERROR MESSAGE
-					strSelect = CONCAT('SELECT ',Parent_ID,' AS Parent_ID, COUNT(*) FROM dbo.Contact WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39))
+					--RUN UPDATE ONLY IF A SINGLE CONTACT IS BEING UPDATED ELSE RETURN ERROR MESSAGE
+					strSelect = CONCAT('SELECT ',Parent_ID,' AS Parent_ID, COUNT(*) AS TotalCount FROM dbo.Contact WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39))
 			
 			UPDATE TMP
 				SET strColumns = REPLACE(strColumns,'<ColumnToCompare>',
-										(SELECT ColumnToCompare FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
+										(SELECT CASE 
+													  WHEN ContactID IS NULL THEN ColumnToCompare 
+													  WHEN ContactID IS NOT NULL THEN CAST(ContactID AS NVARCHAR(MAX))
+												END
+										  FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID AND ColumnToCompare <> 'Name')
 										),
 					strSelect = REPLACE(strSelect,'<ColumnToCompare>',
-										(SELECT ColumnToCompare FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
+										(SELECT CASE 
+													  WHEN ContactID IS NULL THEN ColumnToCompare 
+													  WHEN ContactID IS NOT NULL THEN CAST(ContactID AS NVARCHAR(MAX))
+												END
+										  FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID AND ColumnToCompare <> 'Name')
 										)					
 			FROM #TMP_UpdateString TMP;
 
@@ -161,9 +170,31 @@ BEGIN TRY
 										)		
 			FROM #TMP_UpdateString TMP;
 
-		SELECT * FROM #TMP_UpdateString;
+		--SELECT * FROM #TMP_UpdateString;
 
-		RETURN
+		CREATE TABLE #TBL_CHECKCOUNT(Parent_ID INT, TotalCount INT)
+
+		SET @SQL = (SELECT STRING_AGG(strSelect,CONCAT(' UNION ',CHAR(10))) FROM #TMP_UpdateString);			
+		PRINT @SQL		
+
+		--GET COUNTS OF CONTACTS BEING UPDATED: UPDATE CONTACT ONLY IF A SINGLE CONTACT IS BEING UPDATED
+		IF @SQL IS NOT NULL
+			INSERT INTO #TBL_CHECKCOUNT(Parent_ID,TotalCount)
+				EXEC sp_executesql @SQL	
+		
+		--SELECT * FROM #TBL_CHECKCOUNT
+		--SELECT * FROM #TBL_Contact
+
+		--UPDATE CONTACT PROVIDED ONLY ONE CONTACT IS UPDATED
+		SET @SQL = (SELECT STRING_AGG(strSelect,CONCAT(' UNION ',CHAR(10)))
+					FROM #TMP_UpdateString TMP
+					WHERE EXISTS(SELECT 1 FROM #TBL_CHECKCOUNT WHERE TotalCount=1 AND Parent_ID = TMP.Parent_ID)
+				   );
+		IF @SQL IS NOT NULL
+			EXEC sp_executesql @SQL
+
+		--ROLLBACK
+		--RETURN
 		INSERT INTO [dbo].[AUser]
 				   ([UserCreated]
 				   ,[DateCreated]
@@ -188,11 +219,17 @@ BEGIN TRY
 			   @UTCDATE,
 			   Name,
 			   1,
-			   0,NULL,0x,1,
+			   0,NULL,
+			   CAST(0x AS uniqueidentifier),
+			   1,
 			   ContactID,
 			   0,0,0,1,0,
 			   (SELECT StringValue FROM #TMP_ALLSTEPS WHERE Name = 'validUpto' AND Parent_ID = TMP.Parent_ID) 
 		FROM #TBL_Contact TMP;
+			
+			SELECT 'Success' AS ErrorMessage
+
+			COMMIT
 
 		END		--END OF USER PERMISSION CHECK
 		 ELSE IF @UserID IS NULL

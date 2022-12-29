@@ -38,7 +38,9 @@ BEGIN TRAN
 --IF columnToCompare":"AnyOtherColumn" AND NAME IS AVAILABLE/AVAIAlable IN Contact then Insert Contact/AUser OR UPDATE Contact
 --IF columnToCompare":"Email" AND Name IS NOT AVAILABLE Then Insert/Update Contact
 exec importDataForEntity 
-@dataJSON=N'{"data":[{"entityType":"4","columnToCompare":"JobTitle","dataToMap":[{"FirstName":"ABC","MiddleName":"DEF","Name":"ABCDEF","JobTitle":"CTO","E_Mail":"ABCDEF@gmail.com"},{"FirstName":"XYZ","MiddleName":"MNO","Name":"ZYZMNO","JobTitle":"DPO","E_Mail":"ZYXMNO@gmail.com"}]},{"entityType":"","columnToCompare":"","dataToMap":[{},{}]}],"fileName":"Contact.xlsx","sheetsDependency":[{"leftSheetIndex":0,"leftColumnName":"","rightSheetIndex":1,"rightColumnName":""}]}',
+@dataJSON=N'{"data":[{"entityType":"4","columnToCompare":"Name","dataToMap":[{"FirstName":"ABC","MiddleName":"DEF","Name":"ABCDEF","JobTitle":"CTO","E_Mail":"ABCDEF@gmail.com"},{"FirstName":"XYZ","MiddleName":"MNO","Name":"ZYZMNO","JobTitle":"Branch Manager","E_Mail":"ZYXMNO@gmail.com"}]},{"entityType":"","columnToCompare":"","dataToMap":[{},{}]}],"fileName":"Contact.xlsx","sheetsDependency":[{"leftSheetIndex":0,"leftColumnName":"","rightSheetIndex":1,"rightColumnName":""}]}',
 @MethodName=NULL,
 @UserLoginID=2913;
  
+ SELECT CAST(0x AS UNIQUEIDENTIFIER)
+  
