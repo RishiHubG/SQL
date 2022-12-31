@@ -227,7 +227,7 @@ BEGIN TRY
 			   (SELECT StringValue FROM #TMP_ALLSTEPS WHERE Name = 'validUpto' AND Parent_ID = TMP.Parent_ID) 
 		FROM #TBL_Contact TMP;
 			
-			SELECT 'Success' AS ErrorMessage
+			SELECT '' AS ErrorMessage
 
 			COMMIT
 
