@@ -50,3 +50,23 @@ exec importDataForEntity
   @MethodName=NULL,@UserLoginID=2962
 
   SELECT * FROM Contact WHERE E_Mail IN ('nitind@gmail.com','Prashanthig@gmail.com','srinathk@gmail.com')
+
+    exec importDataForEntity 
+  @dataJSON=N'{"data":[{"entityType":"5","entityId":-1,"parentEntityId":-1,"parentEntityTypeId":-1,"columnToCompare":"E_Mail","dataToMap":[{"Name":"nitindd","FirstName":"Nitin","MiddleName":"dn","E_Mail":"abc1@gmail.com"},{"Name":"Prashanthig","FirstName":"Prashanthi","MiddleName":"g","E_Mail":"Prashanthig1@gmail.com"},{"Name":"srinathk","FirstName":"Srinath","MiddleName":"k","E_Mail":"srinathk1@gmail.com"}]}],"fileName":"import.xlsx","sheetsDependency":[]}',
+  @MethodName=NULL,@UserLoginID=2962
+
+  
+SELECT * FROM Contact ORDER BY ContactID desc
+
+SELECT * FROM AUser ORDER BY USERID DESC
+
+    exec importDataForEntity 
+  @dataJSON=N'{"data":[{"entityType":"5","entityId":-1,"parentEntityId":-1,"parentEntityTypeId":-1,"columnToCompare":"Name","dataToMap":[{"Name":"nitindd","FirstName":"Nitin","MiddleName":"dn","E_Mail":"abc@gmail.com"},{"Name":"Prashanthig","FirstName":"Prashanthi","MiddleName":"g","E_Mail":"Prashanthig@gmail.com"},{"Name":"srinathk","FirstName":"Srinath","MiddleName":"k","E_Mail":"srinathk@gmail.com"}]}],"fileName":"import.xlsx","sheetsDependency":[]}',
+  @MethodName=NULL,@UserLoginID=2962
+
+ SELECT * FROM AUser WHERE NAME ='nitindd'
+
+   exec importDataForEntity 
+  @dataJSON=N'{"data":[{"entityType":"5","entityId":-1,"parentEntityId":-1,"parentEntityTypeId":-1,"columnToCompare":"E_Mail","dataToMap":[{"Name":"nitindd","FirstName":"Nitin","MiddleName":"dn1","E_Mail":"abc1@gmail.com"}]}],"fileName":"import.xlsx","sheetsDependency":[]}',
+  @MethodName=NULL,@UserLoginID=2962
+ 						

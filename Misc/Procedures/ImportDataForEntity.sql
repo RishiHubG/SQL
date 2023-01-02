@@ -102,9 +102,9 @@ BEGIN TRY
 
 				--RETURN			
 			BEGIN TRAN
-
-			--BUILD INSERT FOR Contact
-			SELECT DISTINCT TMP.Parent_ID, TAB.*
+			 
+			--BUILD INSERT FOR Contact: CREATE CONTACT IF ColumnToCompare Value IS NOT AVAILABLE IN CONTACT			
+			SELECT DISTINCT TMP.Parent_ID,TMPName.ColumnToCompare,TMPName.StringValue, TAB.*
 				INTO #TMP_InsertString
 			FROM #TMP_Child TMP
 				INNER JOIN #TMP_Name TMPName ON TMPName.Parent_ID =TMP.Parent_ID AND TMPName.ContactID IS NULL -- NAME NOT AVAILABLE IN AUSER
@@ -112,12 +112,19 @@ BEGIN TRY
 									   STRING_AGG(CONCAT(CHAR(39),StringValue,char(39)),',') AS strValues,
 									   --CONCAT('INSERT INTO dbo.Contact (',@StaticCols,',',STRING_AGG(ColumnName,','),') OUTPUT INSERTED.ContactID INTO #TBL_Contact(ContactID) 
 									   CONCAT('INSERT INTO dbo.Contact (',@StaticCols,',',STRING_AGG(ColumnName,','),') OUTPUT INSERTED.ContactID,',TMP.Parent_ID,',',CHAR(39),TMPName.StringValue,CHAR(39),' INTO #TBL_Contact(ContactID,Parent_ID,Name) 
-									   VALUES (',@StaticColValues,',',STRING_AGG(CONCAT(CHAR(39),StringValue,CHAR(39)),','),')') AS InsertString
+									   SELECT ',@StaticColValues,',',STRING_AGG(CONCAT(CHAR(39),StringValue,CHAR(39)),',')
+									   --ADD FILTER TO CHECK IF VALUE IS AVAILABLE IN CONTACT PROVIDED ColumnToCompare IS NOT "NAME"
+									   --i.e. INSERT IF ColumnToCompare IS NOT AVAILABLE IN CONTACT PROVIDED ColumnToCompare IS NOT "NAME"
+									   ,CASE WHEN TMPName.ColumnToCompare <> 'NAME' THEN
+											CONCAT(' WHERE NOT EXISTS(SELECT 1 FROM dbo.Contact WHERE ',TMPName.ColumnToCompare,'=',CHAR(39),TMPName.StringValue,CHAR(39),')')
+									   END
+									   ) AS InsertString
+
 								FROM #TMP_Child
 								WHERE Parent_ID = TMP.Parent_ID				  
 								)TAB
-			WHERE EXISTS(SELECT 1 FROM #TMP_Name WHERE Parent_ID =TMP.Parent_ID AND ContactID IS NULL AND ColumnToCompare = 'Name'); -- NAME NOT AVAILABLE IN AUSER
-			
+			WHERE EXISTS(SELECT 1 FROM #TMP_Name WHERE Parent_ID =TMP.Parent_ID AND ContactID IS NULL); -- NAME NOT AVAILABLE IN AUSER
+						
 			IF EXISTS(SELECT 1 FROM #TMP_InsertString)
 			BEGIN
 				SET @SQL = (SELECT STRING_AGG(InsertString,CONCAT(';',CHAR(10))) FROM #TMP_InsertString);			
@@ -125,8 +132,8 @@ BEGIN TRY
 				EXEC sp_executesql @SQL				 
 				
 			END
+			--ROLLBACK
 			--RETURN
-
 			
 		    --BUILD UPDATE FOR Contact
 			SELECT DISTINCT Parent_ID, TAB.*,  CAST(NULL AS VARCHAR(MAX)) AS strSelect
@@ -137,7 +144,7 @@ BEGIN TRY
 								WHERE Parent_ID = TMP.Parent_ID				  
 								)TAB
 			--WHERE EXISTS(SELECT 1 FROM #TMP_Name WHERE Parent_ID =TMP.Parent_ID AND ContactID IS NOT NULL); -- NAME AVAILABLE IN AUSER	;
-
+			
 			UPDATE #TMP_UpdateString
 				SET strColumns = CONCAT('UPDATE	dbo.Contact SET ', CHAR(10),strColumns,  CHAR(10),
 										' WHERE <ColumnToCompare>=',CHAR(39),'<StringValue>',CHAR(39)),
@@ -146,21 +153,23 @@ BEGIN TRY
 			
 			UPDATE TMP
 				SET strColumns = REPLACE(strColumns,'<ColumnToCompare>',
-										(SELECT CASE 
-													  WHEN ContactID IS NULL THEN ColumnToCompare 
-													  WHEN ContactID IS NOT NULL THEN CAST(ContactID AS NVARCHAR(MAX))
-												END
+										(SELECT ColumnToCompare
+												--CASE 
+												--	  WHEN ContactID IS NULL THEN ColumnToCompare 
+												--	  WHEN ContactID IS NOT NULL THEN CAST(ContactID AS NVARCHAR(MAX))
+												--END
 										  FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID AND ColumnToCompare <> 'Name')
 										),
 					strSelect = REPLACE(strSelect,'<ColumnToCompare>',
-										(SELECT CASE 
-													  WHEN ContactID IS NULL THEN ColumnToCompare 
-													  WHEN ContactID IS NOT NULL THEN CAST(ContactID AS NVARCHAR(MAX))
-												END
+										(SELECT ColumnToCompare
+												--CASE 
+												--	  WHEN ContactID IS NULL THEN ColumnToCompare 
+												--	  WHEN ContactID IS NOT NULL THEN CAST(ContactID AS NVARCHAR(MAX))
+												--END
 										  FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID AND ColumnToCompare <> 'Name')
 										)					
 			FROM #TMP_UpdateString TMP;
-
+			 
 			UPDATE TMP
 				SET strColumns = REPLACE(strColumns,'<StringValue>',
 										(SELECT StringValue FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
@@ -168,33 +177,32 @@ BEGIN TRY
 					strSelect = REPLACE(strSelect,'<StringValue>',
 										(SELECT StringValue FROM #TMP_Name WHERE Parent_ID = TMP.Parent_ID)
 										)		
-			FROM #TMP_UpdateString TMP;
-
-		--SELECT * FROM #TMP_UpdateString;
+			FROM #TMP_UpdateString TMP;			
+		
 
 		CREATE TABLE #TBL_CHECKCOUNT(Parent_ID INT, TotalCount INT)
 
 		SET @SQL = (SELECT STRING_AGG(strSelect,CONCAT(' UNION ',CHAR(10))) FROM #TMP_UpdateString);			
 		PRINT @SQL		
-
+		
 		--GET COUNTS OF CONTACTS BEING UPDATED: UPDATE CONTACT ONLY IF A SINGLE CONTACT IS BEING UPDATED
 		IF @SQL IS NOT NULL
 			INSERT INTO #TBL_CHECKCOUNT(Parent_ID,TotalCount)
 				EXEC sp_executesql @SQL	
-		
+			 
 		--SELECT * FROM #TBL_CHECKCOUNT
 		--SELECT * FROM #TBL_Contact
-
+		 
 		--UPDATE CONTACT PROVIDED ONLY ONE CONTACT IS UPDATED
-		SET @SQL = (SELECT STRING_AGG(strSelect,CONCAT(' UNION ',CHAR(10)))
+		SET @SQL = (SELECT STRING_AGG(strColumns,CONCAT(' UNION ',CHAR(10)))
 					FROM #TMP_UpdateString TMP
 					WHERE EXISTS(SELECT 1 FROM #TBL_CHECKCOUNT WHERE TotalCount=1 AND Parent_ID = TMP.Parent_ID)
 				   );
+		PRINT @SQL;
+
 		IF @SQL IS NOT NULL
 			EXEC sp_executesql @SQL
-
-		--ROLLBACK
-		--RETURN
+			 
 		INSERT INTO [dbo].[AUser]
 				   ([UserCreated]
 				   ,[DateCreated]
