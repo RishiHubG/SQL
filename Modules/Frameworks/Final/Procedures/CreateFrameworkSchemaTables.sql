@@ -133,6 +133,7 @@ BEGIN
 
 		-- COMMENTING THIS OUT AS NOW WE ARE NOT INSERTING NEW RECORDS FOR EACH SAVE IF STEPITEMKEY HAS ALREADY BEEN SVED BEFORE
 		--IF DATA ALREADY EXISTS THEN REORGANIZE THE PK ID OF THE TABLE TO START FROM THE LAST ID+1
+		/*
 		IF @MAXID IS NOT NULL
 		BEGIN
 		
@@ -157,7 +158,8 @@ BEGIN
 			PRINT @SQL
 			EXEC sp_executesql @SQL		
 			
-		END		
+		END	
+		*/
 		-------------------------------------------------------------------------
 		
 		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))		
