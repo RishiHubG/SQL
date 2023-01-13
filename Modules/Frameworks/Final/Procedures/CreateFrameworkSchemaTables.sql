@@ -162,7 +162,19 @@ BEGIN
 		*/
 		-------------------------------------------------------------------------
 		
-		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))		
+		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))	
+		IF @TemplateTableName = 'FrameworkSteps'
+		BEGIN			  
+			/*
+			SELECT * FROM FrameworkSteps
+			
+			SELECT  [UserCreated] , [DateCreated] , [UserModified] , [DateModified] , [VersionNum] , [FrameworkID] , [StepName] , ROW_NUMBER()OVER(ORDER BY (SELECT NULL))+ ISNULL(@MaxID,0) AS StepID
+			 FROM FrameworkSteps T
+			WHERE NOT EXISTS(SELECT 1 FROM dbo.[BWEFindings_FrameworkSteps] WHERE FrameworkID=4 AND StepName = T.StepName);
+			SELECT @cols,@PK
+			*/
+			SET @cols = REPLACE(@cols,CONCAT('[',@PK,']'),CONCAT('ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + ',@MaxID))
+		END
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.[',@NewTableName, '] WHERE FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
 		IF @TemplateTableName NOT LIKE '%FrameworkStepItems%' AND @TemplateTableName NOT LIKE '%FrameworkLookups%' 
