@@ -173,6 +173,8 @@ BEGIN
 			WHERE NOT EXISTS(SELECT 1 FROM dbo.[BWEFindings_FrameworkSteps] WHERE FrameworkID=4 AND StepName = T.StepName);
 			SELECT @cols,@PK
 			*/
+			IF @MaxID IS NULL SET @MaxID = 0
+
 			SET @cols = REPLACE(@cols,CONCAT('[',@PK,']'),CONCAT('ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + ',@MaxID))
 		END
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))		
