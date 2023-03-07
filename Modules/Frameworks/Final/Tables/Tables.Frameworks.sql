@@ -34,7 +34,8 @@ CREATE TABLE dbo.FrameworkSteps
 	VersionNum INT NOT NULL,
 	FrameworkID INT NOT NULL,
 	StepName NVARCHAR(500) NOT NULL,
-	CONSTRAINT PK_FrameworkSteps_StepID PRIMARY KEY(StepID)
+	CONSTRAINT PK_FrameworkSteps_StepID PRIMARY KEY(StepID),
+	CONSTRAINT UQ_FrameworkSteps_StepName UNIQUE(StepName),
 	)
 	
 	
