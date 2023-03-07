@@ -550,44 +550,7 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 		SET @TemplateTableName = 'FrameworkSteps'
 		SET @TableName = CONCAT('[',@Name,'_',@TemplateTableName,']')
 		
-		--SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM SYS.TABLES WHERE NAME =''',REPLACE(REPLACE(@TableName,'[',''),']',''),''')', CHAR(10))	--ASSUSMPTION:Framework TABLE WILL NOT BE AVAILABLE IN THE 1ST VERSION AND CREATED DYNAMICALLY BY THE NEXT PROCEDURE
-		--SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SELECT TOP 1 @StepID = StepID FROM ',@TableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,''' ORDER BY StepID DESC;', CHAR(10));				
-		--SET @SQL = CONCAT(@SQL,' IF @StepID IS NULL ')
-		--SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM dbo.',@TemplateTableName,')', CHAR(10))	--PROCESSING MULTIPLE STEPS
-		--SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TemplateTableName,CHAR(10));	
-		--SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TableName, CHAR(10));		
-		--SET @SQL = CONCAT(@SQL,' IF @StepID IS NULL SELECT @StepID = 1, @IsAvailable = NULL;', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))		--FIRST VERSION
-		--SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' IF EXISTS(SELECT 1 FROM dbo.',@TemplateTableName,')', CHAR(10))	--PROCESSING MULTIPLE STEPS IN THE VERY FIRST VERSION
-		--SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SELECT @StepID = StepID FROM ',@TemplateTableName,' WHERE FrameworkID = ', @FrameworkID,' AND StepName = ''', @StepName,'''',CHAR(10));
-		--SET @SQL = CONCAT(@SQL,' IF @StepID IS NULL ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' BEGIN ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SELECT @StepID = MAX(StepID) + 1 FROM ',@TemplateTableName,CHAR(10));	
-		--SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 0; ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SET @IsAvailable = 1; ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' ELSE ', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' SELECT @StepID = 1, @IsAvailable = NULL;', CHAR(10))
-		--SET @SQL = CONCAT(@SQL,' END ', CHAR(10))
-		--PRINT @SQL  
-		--EXEC sp_executesql @SQL, N'@StepID INT OUTPUT,@IsAvailable BIT OUTPUT',@StepID OUTPUT,@IsAvailable OUTPUT;
-		  
-		--IF NOT EXISTS(SELECT 1 FROM dbo.FrameworkSteps WHERE StepName = @StepName)		
-		--BEGIN	
-		
+				
 				--CHECK IF THE NEW STEP IS ALREADY AVAILABLE IN HISTORY (USING STEPNAME)=================================
 						DECLARE @HistStepID INT, @HistStepTblName VARCHAR(500) = CONCAT(@Name,'_',@TemplateTableName,'_history')
 						SET @IsExistingTable = 0;
@@ -645,15 +608,8 @@ DROP TABLE IF EXISTS #TMP_ALLSTEPS
 				END
 			
 				INSERT INTO #TBL_JSONFrameworkStepItems(FrameworkID, StepID, StepItemKey)
-					SELECT @FrameworkID, @StepID, @StepItemKey
-					
-		--END
-		--ELSE
-		--	UPDATE dbo.FrameworkSteps
-		--		SET VersionNum = @VersionNum,
-		--			UserModified = 1,
-		--			DateModified = GETUTCDATE()
-		--	WHERE StepID = @StepID			
+					SELECT @FrameworkID, @StepID, @StepItemKey					
+			
 		--===========================================================================================================================================
 		
 		IF NOT EXISTS(SELECT 1 FROM [dbo].[FrameworkSteps_history] WHERE FrameworkID=@FrameworkID AND StepID=@StepID AND VersionNum=@VersionNum AND StepName=@StepName)
