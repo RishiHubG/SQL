@@ -1,0 +1,29 @@
+User --> Usergroup --> 
+
+select * from Universe
+select * from Registers
+select * from AccessControlledResource
+select * from AccessControl
+select * from UserAccessControlledResource
+select * from auser
+
+Step 1 --> User groups -- Userid's --> Groups
+AccessControlledResource -- Accesscontrolid -- AccessControlid and Userid(Groups)
+
+User Group Save
+
+--> Users in the Group
+select * from AccessControlledResource where userid = 12 
+--Insert -- the extracted user does not exist in the UserAccessControlledResource
+--Update -- The extracted User is in this group, update UserAccessControlledResource
+--Delete -- User exists in UserAccessControlledResource but no in Extracted list - delete
+--Verify : Customized = 1, then do not update the user for the accesscontrolid
+
+select * from UserAccessControlledResource where AccessControlID = 1
+
+-- User save
+One userid : 
+
+
+User group save : Userid Extract
+User Save : User Group extract
