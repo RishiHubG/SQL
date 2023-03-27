@@ -50,7 +50,10 @@ ColumnName VARCHAR(500),
 ColumnType VARCHAR(100),
 IsActive BIT,
 VersionNum INT NOT NULL,
-CustomFormsInstanceID INT
+CustomFormsInstanceID INT,
+OrderByColumn VARCHAR(100),
+MatchOnColumn VARCHAR(100),
+AllowImport BIT
 )
 
 DROP TABLE IF EXISTS TemplateTableColumnMaster_history
@@ -69,7 +72,10 @@ OperationType VARCHAR(50),
 ColumnName VARCHAR(500),
 ColumnType VARCHAR(100),
 IsActive BIT,
-CustomFormsInstanceID INT
+CustomFormsInstanceID INT,
+OrderByColumn VARCHAR(100),
+MatchOnColumn VARCHAR(100),
+AllowImport BIT
 )
 
 
