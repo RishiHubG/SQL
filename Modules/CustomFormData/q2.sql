@@ -16,6 +16,7 @@ SELECT * FROM TemplateTableColumnMaster WHERE CustomFormsInstanceID=4 AND Versio
 
 ALTER TABLE TemplateTableColumnMaster ADD OrderByColumn VARCHAR(100),MatchOnColumn VARCHAR(100),AllowImport BIT
 ALTER TABLE TemplateTableColumnMaster_history ADD OrderByColumn VARCHAR(100),MatchOnColumn VARCHAR(100),AllowImport BIT
+
 --2.
 --IF columnToCompare EXISTS UPDATE ELSE INSERT INTO TEMPLATETABLE_<apikey>_data PROVIDED entityType":"13","parentEntityId":-1,"parentEntityTypeId":-1
 exec importDataForEntity 
@@ -23,5 +24,22 @@ exec importDataForEntity
 @MethodName=NULL,@UserLoginID=377,
 @OperationType=1/2 --if 1=INSERT/UPDATE;IF 2=DELETE THEN INSERT
 
-SELECT * FROM CustomFormsInstance WHERE CustomFormsInstanceID=4  --GET NAME AND CHECK TEMPLATETABLE_<apikey>_data
+SELECT * FROM CustomFormsInstance WHERE CustomFormsInstanceID=4  --<entityId>= GET NAME AND CHECK TEMPLATETABLE_<apikey>_data
 SELECT * FROM TemplateTable_cash_data
+--ALSO, INSERT 1 ROW IN THIS TABLE: --tableid & entityTypeid unique key: insert only if this combination not available
+--tableid=entityId;FrameworkID=-1;entityid=-1;entityTypeid=entityType;apikey=SELECT apikey FROM CustomFormsInstance WHERE CustomFormsInstanceID=4 
+Select * from Table_EntityMapping
+
+SET XACT_ABORT ON
+--ROLLBACK COMMIT
+BEGIN TRAN;
+exec importDataForEntity 
+@dataJSON=N'{"data":[{"entityType":"13","entityId":"4","parentEntityId":-1,"parentEntityTypeId":-1,"columnToCompare":"refno","dataToMap":[{"refno":1001,"control":"Maintenance of bank accounts is an operational responsibility, with Group Treasury kept updated of any changes.","procedure":"Confirm that any changes made to the bank accounts Group Treasury where well informed of the changes","observation":"AAA","conclusion":"Satisfactory","issues":"aaaa","complete":"Yes","auditManagerComments":"dfahlk"},{"refno":1001,"control":"Maintenance of bank accounts is an operational responsibility, with Group Treasury kept updated of any changes.","procedure":"Confirm that any changes made to the bank accounts Group Treasury where well informed of the changes","observation":"AAA","conclusion":"Satisfactory","issues":"aaaa","complete":"Yes","auditManagerComments":"dfahlk"},{"refno":1001,"control":"Maintenance of bank accounts is an operational responsibility, with Group Treasury kept updated of any changes.","procedure":"Confirm that any changes made to the bank accounts Group Treasury where well informed of the changes","observation":"AAA","conclusion":"Satisfactory","issues":"aaaa","complete":"Yes","auditManagerComments":"dfahlk"}]}],"selectedAction":"update","fileName":"FormImport.xlsx","sheetsDependency":[]}',
+@MethodName=NULL,@UserLoginID=377 
+
+
+SELECT * FROM TemplateTable_cash_data WHERE refno=1001
+
+UPDATE TMP TemplateTable_cash_data TMP   SET [control]='Maintenance of bank accounts is an operational responsibility, with Group Treasury kept updated of any changes.', [procedure]='Confirm that any changes made to the bank accounts Group Treasury where well informed of the changes', [observation]='AAA', [conclusion]='Satisfactory', [issues]='aaaa', [complete]='Yes', [auditManagerComments]='dfahlk'  WHERE EXISTS (SELECT 1 FROM TemplateTable_cash_data WHERE refno='1001')
+
+
