@@ -74,13 +74,26 @@ BEGIN TRY
 			IF @EntityType = 13 AND @ParentEntityId = -1 AND @ParentEntityTypeId = -1
 			BEGIN
 				SELECT @EntityId = StringValue FROM #TMP_ALLSTEPS WHERE NAME = 'EntityId';
-				DECLARE @TableName VARCHAR(100) = (SELECT CONCAT('TemplateTable_',Apikey,'_data') FROM dbo.CustomFormsInstance WHERE CustomFormsInstanceID=@EntityId)
+				DECLARE @apiKey NVARCHAR(4000) = (SELECT Apikey FROM dbo.CustomFormsInstance WHERE CustomFormsInstanceID=@EntityId)
+				DECLARE @TableName VARCHAR(100) =  CONCAT('TemplateTable_',@apiKey,'_data')
 				
 				IF @TableName IS NOT NULL
 				BEGIN
 					DECLARE @columnToCompare VARCHAR(100)
+					DECLARE @VersionNum INT
+					DECLARE @AdditionalInsertColumns VARCHAR(MAX)= 'versionNum, apiKey'
+					DECLARE @AdditionalInsertValues VARCHAR(MAX)
+
 					SELECT @columnToCompare = StringValue FROM #TMP_ALLSTEPS WHERE NAME = 'columnToCompare';
 					
+					SET @SQL = CONCAT(' SELECT @VersionNum = ISNULL(MAX(VersionNum),0) FROM ',@TableName, CHAR(10))
+					PRINT @SQL  
+					EXEC sp_executesql @SQL, N'@VersionNum INT OUTPUT',@VersionNum OUTPUT;
+					--SELECT @VersionNum
+					SET @AdditionalInsertValues = CONCAT(@VersionNum + 1,',',CHAR(39),@apiKey,CHAR(39))
+					
+					IF @VersionNum = 0 SET @VersionNum = 1;
+
 					--LIST OF ALL DATA TO PROCESS FOR INSERT/UPDATE
 					SELECT @columnToCompare AS columnToCompare,TMP_Data.*
 						INTO #TMP_Data
@@ -90,7 +103,7 @@ BEGIN TRY
 					WHERE Parent.Name = 'dataToMap';
 
 					SELECT Parent_ID, Name, StringValue,
-						  CONCAT(' WHERE EXISTS (SELECT 1 FROM ',@TableName, ' WHERE ',Name,'=', CHAR(39), StringValue, CHAR(39),')') AS UpdCheck,
+						  CONCAT(' WHERE VersionNum = ',@VersionNum,CHAR(10),' AND EXISTS (SELECT 1 FROM ',@TableName, ' WHERE ',Name,'=', CHAR(39), StringValue, CHAR(39),')') AS UpdCheck,
 						  CONCAT('WHERE NOT EXISTS (SELECT 1 FROM ',@TableName, ' WHERE ',Name,'=', CHAR(39), StringValue, CHAR(39),')') AS InsertCheck
 						INTO #TMP_UpdAndInsertCheck
 					FROM #TMP_Data
@@ -120,7 +133,7 @@ BEGIN TRY
 					
 					--BUILD INSERT STATEMENTS
 					SELECT * ,
-						 CONCAT('INSERT INTO ',	@TableName, ' (',@StaticCols,',',ColumnList,') SELECT ',@StaticColValues,',',ValuesList, CHAR(10),
+						 CONCAT('INSERT INTO ',	@TableName, ' (',@StaticCols,',',@AdditionalInsertColumns,',',ColumnList,') SELECT ',@StaticColValues,',',@AdditionalInsertValues,',',ValuesList, CHAR(10),
 								InsertCheck
 								)
 					FROM #TMP_Insert TMP

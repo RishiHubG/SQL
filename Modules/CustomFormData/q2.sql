@@ -37,9 +37,11 @@ exec importDataForEntity
 @dataJSON=N'{"data":[{"entityType":"13","entityId":"4","parentEntityId":-1,"parentEntityTypeId":-1,"columnToCompare":"refno","dataToMap":[{"refno":1001,"control":"Maintenance of bank accounts is an operational responsibility, with Group Treasury kept updated of any changes.","procedure":"Confirm that any changes made to the bank accounts Group Treasury where well informed of the changes","observation":"AAA","conclusion":"Satisfactory","issues":"aaaa","complete":"Yes","auditManagerComments":"dfahlk"},{"refno":1001,"control":"Maintenance of bank accounts is an operational responsibility, with Group Treasury kept updated of any changes.","procedure":"Confirm that any changes made to the bank accounts Group Treasury where well informed of the changes","observation":"AAA","conclusion":"Satisfactory","issues":"aaaa","complete":"Yes","auditManagerComments":"dfahlk"},{"refno":1001,"control":"Maintenance of bank accounts is an operational responsibility, with Group Treasury kept updated of any changes.","procedure":"Confirm that any changes made to the bank accounts Group Treasury where well informed of the changes","observation":"AAA","conclusion":"Satisfactory","issues":"aaaa","complete":"Yes","auditManagerComments":"dfahlk"}]}],"selectedAction":"update","fileName":"FormImport.xlsx","sheetsDependency":[]}',
 @MethodName=NULL,@UserLoginID=377 
 
-
+select * FROM dbo.CustomFormsInstance WHERE CustomFormsInstanceID=4
+select * FROM dbo.CustomForms WHERE CustomFormID=51
 SELECT * FROM TemplateTable_cash_data WHERE refno=1001
 
-UPDATE TMP TemplateTable_cash_data TMP   SET [control]='Maintenance of bank accounts is an operational responsibility, with Group Treasury kept updated of any changes.', [procedure]='Confirm that any changes made to the bank accounts Group Treasury where well informed of the changes', [observation]='AAA', [conclusion]='Satisfactory', [issues]='aaaa', [complete]='Yes', [auditManagerComments]='dfahlk'  WHERE EXISTS (SELECT 1 FROM TemplateTable_cash_data WHERE refno='1001')
+
+
 
 
