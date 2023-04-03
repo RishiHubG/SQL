@@ -120,7 +120,35 @@ BEGIN TRY
 								,NULL
 
 							SET @TableInstanceID = SCOPE_IDENTITY()
-					
+							
+							INSERT INTO [dbo].[Table_EntityMapping_history]
+										   ([TableInstanceID]
+										   ,[UserCreated]
+										   ,[DateCreated]
+										   ,[UserModified]
+										   ,[DateModified]
+										   ,[VersionNum]
+										   ,[TableID]
+										   ,[EntityID]
+										   ,[FrameworkID]
+										   ,[EntityTypeID]
+										   ,[APIKey]
+										   ,[FullSchemaJSON]
+										   ,[OperationType])
+							SELECT   @TableInstanceID,
+									 @UserID
+									,@UTCDate
+									,@UserID
+									,@UTCDate
+									,@VersionNum
+									,@EntityId
+									,-1
+									,-1									
+									,@EntityType
+									,@apiKey
+									,NULL,
+									'INSERT'
+
 					END
 
 					SELECT @columnToCompare = StringValue FROM #TMP_ALLSTEPS WHERE NAME = 'columnToCompare';
@@ -182,7 +210,9 @@ BEGIN TRY
 					--ROLLBACK
 					--RETURN
 
-					--TO DO: ROLL UP UPDATE & INSERT STATEMENTS
+					--TO DO: ROLL UP UPDATE & INSERT STATEMENTS & history table insert Table_EntityMapping_history
+
+					
 
 				END
 
