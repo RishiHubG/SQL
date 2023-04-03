@@ -81,8 +81,47 @@ BEGIN TRY
 				BEGIN
 					DECLARE @columnToCompare VARCHAR(100)
 					DECLARE @VersionNum INT
-					DECLARE @AdditionalInsertColumns VARCHAR(MAX)= 'versionNum, apiKey'
+					DECLARE @AdditionalInsertColumns VARCHAR(MAX)= 'versionNum, apiKey, TableInstanceID'
 					DECLARE @AdditionalInsertValues VARCHAR(MAX)
+
+					DECLARE @TableInstanceID INT = (SELECT TableInstanceID FROM [dbo].[Table_EntityMapping]
+													WHERE [TableID] = @EntityId
+														  AND APIKey = @apiKey
+														  AND EntityTypeID = 13
+													)
+					
+					IF @TableInstanceID IS NULL
+					BEGIN
+
+						INSERT INTO [dbo].[Table_EntityMapping]
+									   ([UserCreated]
+									   ,[DateCreated]
+									   ,[UserModified]
+									   ,[DateModified]
+									   ,[VersionNum]
+									   ,[TableID]
+									   ,[EntityID]
+									   ,[FrameworkID]
+									   ,[FullSchemaJSON]
+									   ,[EntityTypeID]
+									   ,[APIKey]
+									   ,[EntityApikey])
+						SELECT   @UserID
+								,@UTCDate
+								,@UserID
+								,@UTCDate
+								,@VersionNum
+								,@EntityId
+								,-1
+								,-1
+								,NULL
+								,@EntityType
+								,@apiKey
+								,NULL
+
+							SET @TableInstanceID = SCOPE_IDENTITY()
+					
+					END
 
 					SELECT @columnToCompare = StringValue FROM #TMP_ALLSTEPS WHERE NAME = 'columnToCompare';
 					
@@ -90,7 +129,7 @@ BEGIN TRY
 					PRINT @SQL  
 					EXEC sp_executesql @SQL, N'@VersionNum INT OUTPUT',@VersionNum OUTPUT;
 					--SELECT @VersionNum
-					SET @AdditionalInsertValues = CONCAT(@VersionNum + 1,',',CHAR(39),@apiKey,CHAR(39))
+					SET @AdditionalInsertValues = CONCAT(@VersionNum + 1,',',CHAR(39),@apiKey,CHAR(39),',', @TableInstanceID)
 					
 					IF @VersionNum = 0 SET @VersionNum = 1;
 
@@ -142,8 +181,12 @@ BEGIN TRY
 					--SELECT @TableName,@columnToCompare,* FROM #TMP_ALLSTEPS
 					--ROLLBACK
 					--RETURN
+
+					--TO DO: ROLL UP UPDATE & INSERT STATEMENTS
+
 				END
 
+				
 			END				 
 		--====================================================================================================================
 

@@ -41,6 +41,11 @@ select * FROM dbo.CustomFormsInstance WHERE CustomFormsInstanceID=4
 select * FROM dbo.CustomForms WHERE CustomFormID=51
 SELECT * FROM TemplateTable_cash_data WHERE refno=1001
 
+--Table id = @Entityid, Entitytypeid = @Entitytypeid (13 in this case), Entityid = -1, when @parententityid and @ParentEntitytypeid both are -1
+--if record exists then no action, if not exists then insert
+select * from Table_EntityMapping
+
+
 
 
 
