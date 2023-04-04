@@ -193,26 +193,42 @@ BEGIN TRY
 					GROUP BY Parent_ID;
 
 					--BUILD UPDATE STATEMENTS
-					SELECT *,
-							 CONCAT('UPDATE TMP ',	@TableName, ' TMP ', CHAR(10),' SET ', UpdString, CHAR(10),UpdCheck)
+					SELECT --*,
+							 CONCAT('UPDATE TMP ',CHAR(10),' SET ', UpdString, CHAR(10),' FROM ',@TableName, ' TMP ', CHAR(10),UpdCheck) AS UpdateString
+						INTO #TBL_Update
 					FROM #TMP_Update TMP
 						 INNER JOIN #TMP_UpdAndInsertCheck TMPCheck ON TMPCheck.Parent_ID = TMP.Parent_ID
 					
 					--BUILD INSERT STATEMENTS
-					SELECT * ,
+					SELECT --* ,
 						 CONCAT('INSERT INTO ',	@TableName, ' (',@StaticCols,',',@AdditionalInsertColumns,',',ColumnList,') SELECT ',@StaticColValues,',',@AdditionalInsertValues,',',ValuesList, CHAR(10),
 								InsertCheck
-								)
+								) AS InsertString
+							INTO #TBL_Insert
 					FROM #TMP_Insert TMP
 						 INNER JOIN #TMP_UpdAndInsertCheck TMPCheck ON TMPCheck.Parent_ID = TMP.Parent_ID;
 
 					--SELECT @TableName,@columnToCompare,* FROM #TMP_ALLSTEPS
 					--ROLLBACK
 					--RETURN
+					--SELECT * FROM #TBL_Update
+					--SELECT * FROM #TBL_Insert
 
-					--TO DO: ROLL UP UPDATE & INSERT STATEMENTS & history table insert Table_EntityMapping_history
-
+					--ROLL UP UPDATE & INSERT STATEMENTS------------------------------------------------
+					DECLARE @strString VARCHAR(MAX)
 					
+					SELECT  @strString = STRING_AGG(UpdateString,CONCAT(';',CHAR(10)))
+					FROM #TBL_Update;
+					 
+					PRINT @strString
+					EXEC(@strString);
+					
+					SELECT @strString = STRING_AGG(InsertString,CONCAT(';',CHAR(10)))
+					FROM #TBL_Insert;
+
+					PRINT @strString
+					EXEC(@strString);
+					-------------------------------------------------------------------------------------					
 
 				END
 
@@ -255,13 +271,11 @@ BEGIN CATCH
 			SELECT @ErrorMessage AS ErrorMessage,@Error AS Errorline
 END CATCH
 
-		--DROP TEMP TABLES--------------------------------------
-		 DROP TABLE IF EXISTS #TMP_Objects
+		--DROP TEMP TABLES--------------------------------------		 
 		 DROP TABLE IF EXISTS #TMP_ALLSTEPS
-		 DROP TABLE IF EXISTS #TMP_DATA
-		 DROP TABLE IF EXISTS #TMP_DATA_DAY
-		 DROP TABLE IF EXISTS #TMP_DATA_DOT 
-		 DROP TABLE IF EXISTS #TMP
-		 DROP TABLE IF EXISTS #TMP_Lookups
+		 DROP TABLE IF EXISTS #TBL_Insert
+		 DROP TABLE IF EXISTS #TBL_Update
+		 DROP TABLE IF EXISTS #TMP_UpdAndInsertCheck
+		 DROP TABLE IF EXISTS #TMP_Update		 
 		 --------------------------------------------------------
 END
