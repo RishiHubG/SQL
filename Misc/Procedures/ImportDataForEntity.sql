@@ -60,7 +60,7 @@ BEGIN TRY
 	END
 	ELSE IF @EntityType = 13 AND @ParentEntityId = -1 AND @ParentEntityTypeId = -1
 	BEGIN
-		EXEC dbo.[ImportUserDetails2] @DataJSON = @DataJSON, @UserLoginID = @UserLoginID, @MethodName = @MethodName, @LogRequest = @LogRequest
+		EXEC dbo.[TableTemplateMetaDataImport] @DataJSON = @DataJSON, @UserLoginID = @UserLoginID, @MethodName = @MethodName, @LogRequest = @LogRequest
 	END
 
 		END		--END OF USER PERMISSION CHECK
