@@ -1,3 +1,9 @@
+/*
+USE VKB_NEW
+go
+EXEC GetAuditDetails_Report_test 1577,3316
+*/
+
 DROP TABLE IF EXISTS tmp
 create table tmp ([ID] int, ParentID int, SomeText varchar(50))
 insert into tmp values

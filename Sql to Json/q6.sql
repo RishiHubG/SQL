@@ -30,7 +30,7 @@ BEGIN
 		
 		 
 		SELECT @strColumnList = STRING_AGG(CONCAT('@',Column_Name,'= [',Column_name,']'),',') ,
-			  @ColumnListDataType = STRING_AGG(CONCAT('@',Column_Name,CONCAT(' ', DATA_TYPE),CASE WHEN DATA_TYPE IN ('varchar','Nvarchar') THEN CONCAT('(',CHARACTER_MAXIMUM_LENGTH,')') END),',' ) 
+			  @ColumnListDataType = STRING_AGG(CONCAT('@',Column_Name,CONCAT(' ', DATA_TYPE),CASE WHEN DATA_TYPE IN ('varchar','Nvarchar') THEN CONCAT('(',IIF(CHARACTER_MAXIMUM_LENGTH=-1,'MAX',CAST(CHARACTER_MAXIMUM_LENGTH AS VARCHAR)),')') END),',' ) 
 		FROM INFORMATION_SCHEMA.COLUMNS
 		WHERE TABLE_NAME = 'tmp1'
 

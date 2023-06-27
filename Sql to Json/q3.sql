@@ -15,7 +15,7 @@ go
 select  
     t.id, t.[key], t.[value]
 from t1 as t
-for json path,  WITHOUT_ARRAY_WRAPPER
+for json path--,  WITHOUT_ARRAY_WRAPPER
 
 select t.id, 
     '{' + STRING_AGG(concat(quotename([key],'"'),':',quotename(value,'"')),',') within group( order by value ) + '}' value
