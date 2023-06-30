@@ -24,101 +24,115 @@ GO
 
 	
 DROP TABLE  IF EXISTS dbo.FrameworkSteps
-CREATE TABLE dbo.FrameworkSteps
-	(
-	StepID INT IDENTITY(1,1),
-	UserCreated INT NOT NULL,
-	DateCreated DATETIME2(0) NOT NULL,
-	UserModified INT,
-	DateModified DATETIME2(0),
-	VersionNum INT NOT NULL,
-	FrameworkID INT NOT NULL,
-	StepName NVARCHAR(500) NOT NULL,
-	CONSTRAINT PK_FrameworkSteps_StepID PRIMARY KEY(StepID),
-	CONSTRAINT UQ_FrameworkSteps_StepName UNIQUE(StepName),
-	)
-	
-	
-	ALTER TABLE [dbo].FrameworkSteps ADD CONSTRAINT DF_FrameworkSteps_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+CREATE TABLE [dbo].[FrameworkSteps](
+	[UserCreated] [int] NOT NULL,
+	[DateCreated] [datetime2](0) NOT NULL,
+	[UserModified] [int] NULL,
+	[DateModified] [datetime2](0) NULL,
+	[VersionNum] [int] NOT NULL,
+	[FrameworkID] [int] NOT NULL,
+	[StepName] [nvarchar](500) NOT NULL,
+	[StepID] [int] IDENTITY(1,1) NOT NULL,
+	ClientID INT NOT NULL,
+ CONSTRAINT [PK_FrameworkSteps_StepID] PRIMARY KEY CLUSTERED 
+(
+	[StepID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[FrameworkSteps] ADD  CONSTRAINT [DF_FrameworkSteps_DateCreated]  DEFAULT (getutcdate()) FOR [DateCreated]
 GO
 
 	--ALTER TABLE dbo.FrameworkSteps ADD CONSTRAINT FK_FrameworkSteps_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
 DROP TABLE  IF EXISTS dbo.FrameworkStepItems
-CREATE TABLE dbo.FrameworkStepItems
-(
---StepItemID INT IDENTITY(1,1),
-StepItemID INT,
-UserCreated INT NOT NULL,
-DateCreated DATETIME2(0) NOT NULL,
-UserModified INT,
-DateModified DATETIME2(0),
-VersionNum INT NOT NULL,
-FrameworkID INT,
-StepID INT NOT NULL,
-StepItemName NVARCHAR(100) NOT NULL,
-StepItemType NVARCHAR(100) NOT NULL,
-StepItemKey NVARCHAR(100) NOT NULL,
-OrderBy INT
---,CONSTRAINT PK_FrameworkStepItems_StepItemID PRIMARY KEY(StepItemID)
-)
 
-	
-	ALTER TABLE [dbo].FrameworkStepItems ADD CONSTRAINT DF_FrameworkStepItems_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
-	ALTER TABLE [dbo].FrameworkStepItems ADD CONSTRAINT UQ_FrameworkStepItems_StepItemKey UNIQUE(StepItemKey)
+CREATE TABLE [dbo].[FrameworkStepItems](
+	[StepItemID] [int] NOT NULL,
+	[UserCreated] [int] NOT NULL,
+	[DateCreated] [datetime2](0) NOT NULL,
+	[UserModified] [int] NULL,
+	[DateModified] [datetime2](0) NULL,
+	[VersionNum] [int] NOT NULL,
+	[FrameworkID] [int] NULL,
+	[StepID] [int] NOT NULL,
+	[StepItemName] [nvarchar](100) NOT NULL,
+	[StepItemType] [nvarchar](100) NOT NULL,
+	[StepItemKey] [nvarchar](100) NOT NULL,
+	[OrderBy] [int] NULL,
+	ClientID INT NOT NULL,
+ CONSTRAINT [UQ_FrameworkStepItems_StepItemKey] UNIQUE NONCLUSTERED 
+(
+	[StepItemKey] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[FrameworkStepItems] ADD  CONSTRAINT [DF_FrameworkStepItems_DateCreated]  DEFAULT (getutcdate()) FOR [DateCreated]
 GO
 
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_StepID FOREIGN KEY(StepID) REFERENCES dbo.FrameworkSteps(StepID)
 --ALTER TABLE dbo.FrameworkStepItems ADD CONSTRAINT FK_FrameworkStepItems_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
 DROP TABLE  IF EXISTS dbo.FrameworkAttributes
-CREATE TABLE dbo.FrameworkAttributes
+CREATE TABLE [dbo].[FrameworkAttributes](
+	[AttributeID] [int] IDENTITY(1,1) NOT NULL,
+	[UserCreated] [int] NOT NULL,
+	[DateCreated] [datetime2](0) NOT NULL,
+	[UserModified] [int] NULL,
+	[DateModified] [datetime2](0) NULL,
+	[VersionNum] [int] NOT NULL,
+	[FrameworkID] [int] NULL,
+	[StepItemID] [int] NOT NULL,
+	[AttributeKey] [nvarchar](1000) NOT NULL,
+	[AttributeValue] [nvarchar](max) NOT NULL,
+	[OrderBy] [int] NULL,
+	ClientID INT NOT NULL,
+ CONSTRAINT [PK_FrameworkAttributes_AttributeID] PRIMARY KEY CLUSTERED 
 (
-AttributeID INT IDENTITY(1,1),
-UserCreated INT NOT NULL,
-DateCreated DATETIME2(0) NOT NULL,
-UserModified INT,
-DateModified DATETIME2(0),
-VersionNum INT NOT NULL,
-FrameworkID INT,
-StepItemID INT NOT NULL,
-AttributeKey NVARCHAR(1000) NOT NULL,	
-AttributeValue NVARCHAR(MAX) NOT NULL,
-OrderBy INT,
-CONSTRAINT PK_FrameworkAttributes_AttributeID PRIMARY KEY(AttributeID)
-)
+	[AttributeID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
 
-	
-	ALTER TABLE [dbo].FrameworkAttributes ADD CONSTRAINT DF_FrameworkAttributes_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+ALTER TABLE [dbo].[FrameworkAttributes] ADD  CONSTRAINT [DF_FrameworkAttributes_DateCreated]  DEFAULT (getutcdate()) FOR [DateCreated]
+GO
 GO
 
 --ALTER TABLE dbo.FrameworkAttributes ADD CONSTRAINT FK_FrameworkAttributess_StepItemID FOREIGN KEY(StepItemID) REFERENCES dbo.FrameworkStepItems(StepItemID)
 --ALTER TABLE dbo.FrameworkAttributes ADD CONSTRAINT FK_FrameworkAttributes_FrameworkID FOREIGN KEY(FrameworkID) REFERENCES dbo.Frameworks(FrameworkID)
 
 DROP TABLE  IF EXISTS dbo.FrameworkLookups
-CREATE TABLE dbo.FrameworkLookups
+CREATE TABLE [dbo].[FrameworkLookups](
+	[LookupID] [int] NOT NULL,
+	[UserCreated] [int] NOT NULL,
+	[DateCreated] [datetime2](0) NOT NULL,
+	[UserModified] [int] NULL,
+	[DateModified] [datetime2](0) NULL,
+	[VersionNum] [int] NOT NULL,
+	[FrameworkID] [int] NULL,
+	[StepItemID] [int] NOT NULL,
+	[LookupName] [nvarchar](845) NOT NULL,
+	[LookupValue] [nvarchar](max) NOT NULL,
+	[LookupType] [nvarchar](100) NULL,
+	[Color] [nvarchar](100) NULL,
+	[MinValue] [nvarchar](100) NULL,
+	[MaxValue] [nvarchar](100) NULL,
+	[OrderBy] [int] NULL,
+	[StepItemKey] [nvarchar](100) NOT NULL,
+	ClientID INT NOT NULL,
+ CONSTRAINT [UQ_FrameworkLookups_LookupName] UNIQUE NONCLUSTERED 
 (
---LookupID INT IDENTITY(1,1),
-LookupID INT NOT NULL,
-UserCreated INT NOT NULL,
-DateCreated DATETIME2(0) NOT NULL,
-UserModified INT,
-DateModified DATETIME2(0),
-VersionNum INT NOT NULL,
-FrameworkID INT,
-StepItemID INT NOT NULL,
-LookupName NVARCHAR(845) NOT NULL,
-LookupValue NVARCHAR(MAX) NOT NULL,
-LookupType NVARCHAR(100) NULL,
-Color  NVARCHAR(100) NULL,
-MinValue NVARCHAR(100) NULL,
-MaxValue NVARCHAR(100) NULL,
-OrderBy INT,
-StepItemKey NVARCHAR(100) NOT NULL
-)
+	[FrameworkID] ASC,
+	[StepItemID] ASC,
+	[LookupName] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
 
-	
-	ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT DF_FrameworkLookups_DateCreated DEFAULT GETUTCDATE() FOR [DateCreated] 
+ALTER TABLE [dbo].[FrameworkLookups] ADD  CONSTRAINT [DF_FrameworkLookups_DateCreated]  DEFAULT (getutcdate()) FOR [DateCreated]
+GO
 	--ALTER TABLE [dbo].FrameworkLookups ADD CONSTRAINT UQ_FrameworkLookups_LookupName UNIQUE(FrameworkID,StepItemID,LookupName)
 GO
 
