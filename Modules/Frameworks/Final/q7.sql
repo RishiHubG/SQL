@@ -44,10 +44,10 @@ DECLARE @SQL VARCHAR(MAX)
 SELECT @SQL=ObjectNameWithParam FROM OBJECTLOG WHERE ID = 71839
 EXEC dbo.LongPrint @SQL
 
-SP_tABLES '%DemoClientCode%'
+SP_tABLES '%ComplianceActNew1%'
 
 SELECT CONCAT('DROP TABLE ', TABLE_NAME, CHAR(10))
-FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME like '%SmallerVersionDemo%'
+FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME like '%ClientDemo%'
 
 
 exec ParseFrameworkJSONData 
@@ -82,3 +82,8 @@ DROP TABLE ClientDemo_SmallerVersionDemo_FrameworkStepItems
 DROP TABLE ClientDemo_SmallerVersionDemo_FrameworkStepItems_history 
 DROP TABLE ClientDemo_SmallerVersionDemo_FrameworkSteps 
 DROP TABLE ClientDemo_SmallerVersionDemo_FrameworkSteps_history 
+
+ 
+SELECT COLUMNPROPERTY(object_id('UserAccessControlledResource'),'clientid','isdeterministic');
+
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.ClientDemo_SmallerVersionDemo_data'), 'IsDeterministic')

@@ -8,6 +8,7 @@ GO
 
 CREATE FUNCTION dbo.fnGetClientID(@UserLoginID INT)
 RETURNS INT
+WITH SCHEMABINDING
 AS
 BEGIN 
    RETURN (SELECT ClientID FROM dbo.userlogin WHERE UserLoginID=@UserLoginID)
