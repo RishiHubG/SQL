@@ -1,5 +1,5 @@
---CreateTables_v1.sql and ParseJSON_v2.sql
 
+/****** Object:  StoredProcedure [dbo].[CreateFrameworkSchemaTables]    Script Date: 7/4/2023 1:06:53 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -15,7 +15,7 @@ USAGE:          	EXEC dbo.CreateFrameworkSchemaTables @FrameworkID=1,@VersionNum
 CHANGE HISTORY:
 SNo.	Modification Date		Modified By				Comments
 *****************************************************************************************************/
- CREATE OR ALTER PROCEDURE dbo.CreateFrameworkSchemaTables
+ CREATE OR ALTER   PROCEDURE [dbo].[CreateFrameworkSchemaTables]
 @NewTableName VARCHAR(100),
 @FrameworkID INT,
 @VersionNum INT
@@ -105,6 +105,11 @@ BEGIN
 		 SELECT @cols = CONCAT(@cols,N', [' , [NAME], '] ' , system_type_name , CASE WHEN is_identity_column = 1 THEN ' IDENTITY(1,1) PRIMARY KEY ' END,case is_nullable WHEN 1 THEN ' NULL' ELSE ' NOT NULL' END)
 		 FROM sys.dm_exec_describe_first_result_set(N'SELECT * FROM dbo.'+ @TemplateTableName , NULL, 1);
 
+		 
+		 --Handle ClientID----------------------------------------------------------------------------------------------
+		 SET @cols = REPLACE(@cols,'[ClientID] int NULL','[ClientID]  AS ([dbo].[fnGetClientID]([UserCreated]))');
+		 ---------------------------------------------------------------------------------------------------------------
+		 		 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 				
 		IF @TemplateTableName LIKE '%FrameworkLookups%' OR @TemplateTableName LIKE '%FrameworkAttributes%'
@@ -122,7 +127,8 @@ BEGIN
 
 		--INSERT DATA INTO MAIN TABLE
 		SELECT @cols += N', [' + name + '] ' 
-		FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM dbo.', @TemplateTableName) , NULL, 1);		
+		FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM dbo.', @TemplateTableName) , NULL, 1)
+		WHERE name <> 'clientId';		
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 
@@ -163,20 +169,20 @@ BEGIN
 		-------------------------------------------------------------------------
 		
 		SET @SQL = CONCAT('INSERT INTO dbo.[',@NewTableName,'](', @cols, ') ', CHAR(10))	
-		--IF @TemplateTableName = 'FrameworkSteps'
-		--BEGIN			  
-		--	/*
-		--	SELECT * FROM FrameworkSteps
+		IF @TemplateTableName = 'FrameworkSteps'
+		BEGIN			  
+			/*
+			SELECT * FROM FrameworkSteps
 			
-		--	SELECT  [UserCreated] , [DateCreated] , [UserModified] , [DateModified] , [VersionNum] , [FrameworkID] , [StepName] , ROW_NUMBER()OVER(ORDER BY (SELECT NULL))+ ISNULL(@MaxID,0) AS StepID
-		--	 FROM FrameworkSteps T
-		--	WHERE NOT EXISTS(SELECT 1 FROM dbo.[BWEFindings_FrameworkSteps] WHERE FrameworkID=4 AND StepName = T.StepName);
-		--	SELECT @cols,@PK
-		--	*/
-		--	IF @MaxID IS NULL SET @MaxID = 0
+			SELECT  [UserCreated] , [DateCreated] , [UserModified] , [DateModified] , [VersionNum] , [FrameworkID] , [StepName] , ROW_NUMBER()OVER(ORDER BY (SELECT NULL))+ ISNULL(@MaxID,0) AS StepID
+			 FROM FrameworkSteps T
+			WHERE NOT EXISTS(SELECT 1 FROM dbo.[BWEFindings_FrameworkSteps] WHERE FrameworkID=4 AND StepName = T.StepName);
+			SELECT @cols,@PK
+			*/
+			IF @MaxID IS NULL SET @MaxID = 0
 
-		--	--SET @cols = REPLACE(@cols,CONCAT('[',@PK,']'),CONCAT('ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + ',@MaxID))
-		--END
+			SET @cols = REPLACE(@cols,CONCAT('[',@PK,']'),CONCAT('ROW_NUMBER()OVER(ORDER BY (SELECT NULL)) + ',@MaxID))
+		END
 		SET @SQL = CONCAT(@SQL, 'SELECT ', @cols, CHAR(10), ' FROM ', @TemplateTableName,' T', CHAR(10))		
 		SET @SQL = CONCAT(@SQL, 'WHERE NOT EXISTS(SELECT 1 FROM dbo.[',@NewTableName, '] WHERE FrameworkID=',@FrameworkID,' AND ',@KeyColName,' = T.',@KeyColName,');', CHAR(10))
 		IF @TemplateTableName NOT LIKE '%FrameworkStepItems%' AND @TemplateTableName NOT LIKE '%FrameworkLookups%' 
@@ -259,6 +265,10 @@ BEGIN
 		 SELECT @cols = CONCAT(@cols,N', [' + name + '] ', system_type_name,  CASE WHEN is_identity_column = 1 THEN ' IDENTITY(1,1) PRIMARY KEY ' END,case is_nullable when 1 then ' NULL' else ' NOT NULL' end)
 		 FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM dbo.', @TemplateTableName,@HistoryTable) , NULL, 1);
 
+		 --Handle ClientID----------------------------------------------------------------------------------------------
+		 SET @cols = REPLACE(@cols,'[ClientID] int NULL','[ClientID]  AS ([dbo].[fnGetClientID]([UserCreated]))');
+		 ---------------------------------------------------------------------------------------------------------------
+
 		SET @cols = STUFF(@cols, 1, 1, N'');
 
 		--SET @SQL = CONCAT('DROP TABLE IF EXISTS ',@NewTableName)
@@ -276,7 +286,7 @@ BEGIN
 		--INSERT DATA INTO HISTORY TABLE		
 		SELECT @cols += N', [' + name + '] ' 
 		FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM dbo.', @TemplateTableName,@HistoryTable) , NULL, 1)
-		WHERE NAME <> 'HistoryID';
+		WHERE NAME NOT IN ('ClientID','HistoryID');
 
 		SET @cols = STUFF(@cols, 1, 1, N'');
 

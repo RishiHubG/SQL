@@ -1,3 +1,6 @@
+USE [ClientDemo]
+GO
+
 --SELECT dbo.fnGetClientID(1)
 
 DROP FUNCTION IF EXISTS dbo.fnGetClientID 
