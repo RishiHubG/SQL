@@ -66,7 +66,7 @@ BEGIN
 						SET @HistoryTableName = CONCAT(@TableInitial,'_',@TemplateTableName,@HistTableSuffix)
 
 						DROP TABLE IF EXISTS #TMP_Items
-						CREATE TABLE #TMP_Items(CommonID INT,KeyName VARCHAR(100),KeyValue VARCHAR(1000),VersionNum INT)
+						CREATE TABLE #TMP_Items(CommonID INT,KeyName NVARCHAR(MAX),KeyValue NVARCHAR(MAX),VersionNum INT)
 						
 						IF @TableType = 'Steps'		
 							SET @Query = CONCAT('SELECT CommonID,KeyName,KeyValue,VersionNum			
@@ -191,7 +191,7 @@ BEGIN
 						
 						SELECT @cols = CONCAT(@cols,N', ', name , ' ')
 						FROM sys.dm_exec_describe_first_result_set(CONCAT(N'SELECT * FROM [', @HistoryTableName,']') , NULL, 1)
-						WHERE NAME <> 'HistoryID';
+						WHERE NAME NOT IN ('HistoryID', 'ClientID');
 
 						SET @cols = STUFF(@cols, 1, 1, N'');						  
 							
